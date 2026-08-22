@@ -19,7 +19,7 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 .ls{display:flex;gap:10px;justify-content:center;margin-bottom:20px;position:relative;z-index:10}
 .lb{padding:10px 20px;border:2px solid #FFD700;background:rgba(255,255,255,.2);color:#fff;border-radius:25px;cursor:pointer;font-size:16px;pointer-events:auto;transition:all .3s}
 .lb.ac{background:#FFD700;color:#333;font-weight:bold;box-shadow:0 0 15px rgba(255,215,0,.5)}
-.sb{padding:18px 35px;font-size:22px;background:linear-gradient(145deg,#FFD700,#FFA500);border:3px solid #fff;border-radius:50px;cursor:pointer;font-weight:bold;color:#333;box-shadow:0 6px 12px rgba(0,0,0,.3);transition:all .3s;position:relative;z-index:10;display:block;margin:5px auto;pointer-events:auto}
+.sb{padding:18px 35px;font-size:22px;background:linear-gradient(145deg,#FFD700,#FFA500);border:3px solid #fff;border-radius:50px;cursor:pointer;font-weight:bold;color:#333;box-shadow:0 6px 12px rgba(0,0,0,.3),0 0 20px rgba(255,215,0,.3);transition:all .3s;position:relative;z-index:10;display:block;margin:5px auto;pointer-events:auto}
 .sb:active{transform:scale(.95)}
 .ib{padding:12px 25px;font-size:14px;background:linear-gradient(145deg,#4CAF50,#2E7D32);border:2px solid #fff;border-radius:25px;cursor:pointer;font-weight:bold;color:#fff;box-shadow:0 4px 8px rgba(0,0,0,.3);display:none;margin:5px auto;position:relative;z-index:10;pointer-events:auto}
 .rb{padding:10px 25px;font-size:14px;background:rgba(255,0,0,.3);border:2px solid #f44;border-radius:25px;cursor:pointer;font-weight:bold;color:#fff;margin-top:10px;display:none;position:relative;z-index:10;pointer-events:auto}
@@ -51,7 +51,7 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 <button class="sb" id="sb" style="pointer-events:auto" onclick="startGameBtn()">▶️ Start Game</button>
 <button class="ib" id="ib" style="pointer-events:auto" onclick="installApp()">📲 Install App</button>
 <button class="rb" id="rb" style="pointer-events:auto" onclick="restartGame()">🔄 Restart Game</button>
-<p class="vr">v2.0.0</p>
+<p class="vr">v3.0.0</p>
 </div>
 <div id="gs">
 <div id="w">
@@ -72,67 +72,55 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 <div class="btn" id="a" style="pointer-events:auto;touch-action:none">⚔️</div>
 </div>
 </div>
-<div id="cs"><div id="cp" style="font-size:80px">👨‍🌾</div><div id="ct" style="color:#FFD700;font-size:20px;text-align:center;margin:20px"></div><button onclick="skipCutscene()" style="background:#FFD700;border:none;padding:15px 40px;border-radius:25px;font-weight:bold;font-size:18px;cursor:pointer;pointer-events:auto;z-index:101">Skip ⏭️</button></div>
+<div id="cs"><div id="cp" style="font-size:80px">👨‍🌾</div><div id="ct" style="color:#FFD700;font-size:20px;text-align:center;margin:20px"></div><button onclick="skipCutscene()" style="background:#FFD700;border:none;padding:15px 40px;border-radius:25px;font-weight:bold;font-size:18px;cursor:pointer;pointer-events:auto;z-index:101" id="skb">Skip ⏭️</button></div>
 <div id="lc"><h2>🎉 Complete!</h2><p id="ls"></p></div>
 </div>
 </div>
 </div>
 <script>
-// ============ GLOBAL FUNCTIONS ============
-let globalSkipFn=null;
-let deferredPrompt=null;
-let gameInstance=null;
-let currentLang='en';
-
+let globalSkipFn=null,deferredPrompt=null,gameInstance=null,currentLang='en';
 function skipCutscene(){if(globalSkipFn){globalSkipFn();globalSkipFn=null;}}
-function installApp(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;document.getElementById('ib').style.display='none';}else{alert('To install: Open in Chrome → Menu (⋮) → "Add to Home Screen"');}}
+function installApp(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;document.getElementById('ib').style.display='none';}else{alert('To install: Open in Chrome → Menu → "Add to Home Screen"');}}
 function startGameBtn(){document.getElementById('ss').style.display='none';document.getElementById('gs').style.display='block';initGame();}
-function restartGame(){if(confirm(currentLang=='en'?'Restart from beginning?':'Recommencer depuis le début ?')){localStorage.removeItem('cmsave');localStorage.removeItem('cmcuts');location.reload();}}
-function setLang(l){currentLang=l;document.getElementById('st').textContent=TRANSLATIONS[l].st;document.getElementById('sb').textContent=TRANSLATIONS[l].sb;document.getElementById('rb').textContent=TRANSLATIONS[l].rb;document.getElementById('le').classList.toggle('ac',l=='en');document.getElementById('lf').classList.toggle('ac',l=='fr');localStorage.setItem('cml',l);}
+function restartGame(){if(confirm(currentLang=='en'?'Restart from beginning?':'Recommencer ?')){localStorage.removeItem('cmsave');localStorage.removeItem('cmcuts');location.reload();}}
+function setLang(l){currentLang=l;document.getElementById('st').textContent=TRANSLATIONS[l].st;document.getElementById('sb').textContent=TRANSLATIONS[l].sb;document.getElementById('rb').textContent=TRANSLATIONS[l].rb;document.getElementById('skb').textContent=TRANSLATIONS[l].sk;document.getElementById('le').classList.toggle('ac',l=='en');document.getElementById('lf').classList.toggle('ac',l=='fr');localStorage.setItem('cml',l);}
 function t(key){return TRANSLATIONS[currentLang][key]||key;}
-
-// PWA Install
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;document.getElementById('ib').style.display='block';});
 window.addEventListener('appinstalled',function(){deferredPrompt=null;document.getElementById('ib').style.display='none';});
-
-// Translations
-const TRANSLATIONS={en:{st:'A Farm Adventure',sb:'▶️ Start Game',rb:'🔄 Restart Game',lv:'Level',cm:'🎉 CONGRATULATIONS! 🎉',tc:'Total Coins',bn:'Bonus Coins',dt:'Deaths',tm:'Time'},fr:{st:'Une Aventure à la Ferme',sb:'▶️ Commencer',rb:'🔄 Recommencer',lv:'Niveau',cm:'🎉 FÉLICITATIONS ! 🎉',tc:'Pièces Totales',bn:'Pièces Bonus',dt:'Morts',tm:'Temps'}};
-currentLang=localStorage.getItem('cml')||'en';
-setLang(currentLang);
+const TRANSLATIONS={en:{st:'A Farm Adventure',sb:'▶️ Start Game',rb:'🔄 Restart Game',lv:'Level',sk:'Skip ⏭️',cm:'🎉 CONGRATULATIONS! 🎉',tc:'Total Coins',bn:'Bonus Coins',dt:'Deaths',tm:'Time',needBonus:'You need all 30 bonus coins to unlock the bonus level!'},fr:{st:'Une Aventure à la Ferme',sb:'▶️ Commencer',rb:'🔄 Recommencer',lv:'Niveau',sk:'Passer ⏭️',cm:'🎉 FÉLICITATIONS ! 🎉',tc:'Pièces Totales',bn:'Pièces Bonus',dt:'Morts',tm:'Temps',needBonus:'Il vous faut 30 pièces bonus pour débloquer le niveau bonus !'}};
+currentLang=localStorage.getItem('cml')||'en';setLang(currentLang);
 if(localStorage.getItem('cmsave')){document.getElementById('rb').style.display='block';document.getElementById('sb').textContent='▶️ '+(currentLang=='en'?'Continue':'Continuer');}
 
-// ============ GAME ============
 function initGame(){
 if(gameInstance){gameInstance.stop();gameInstance=null;}
 const C=document.getElementById('c'),X=C.getContext('2d'),W=500,H=500;
 let running=true,animId=null,skipTimer=null;
 let S='playing',L=1,coins=0,tc=0,bc=0,tb=0,deaths=0,tt=0,lt=0,ci=0,cs=[],lC=0,lB=0;
 let cutscenesShown=JSON.parse(localStorage.getItem('cmcuts')||'{}');
-const P={x:50,y:350,w:35,h:45,vx:0,vy:0,s:5,j:-12,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,dj:true,dja:true,au:false,su:false};
+const P={x:50,y:350,w:35,h:45,vx:0,vy:0,s:5,j:-12,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,dj:true,dja:true,au:false,su:false,attackCombo:0};
 const I={left:false,right:false,jump:false,attack:false};
 let pf=[],en=[],cl=[],bcl=[],hp=[],pr=[],pa=[],de=[],bo=null,cx=0,lw=0,gx=0,bg=[],fg=[],we=[];
 const save=JSON.parse(localStorage.getItem('cmsave')||'null');
 if(save){L=save.L||1;coins=save.coins||0;tc=save.tc||0;bc=save.bc||0;tb=save.tb||0;deaths=save.deaths||0;tt=save.tt||0;}
-
 const cuts={1:[['👨‍🌾',currentLang=='fr'?'Fermier Joe : Quelle belle matinée !':'Farmer Joe: What a morning!'],['🐔',currentLang=='fr'?'Poulet : Quelque chose ne va pas...':'Chicken: Something is wrong...'],['🐗',currentLang=='fr'?'Un sanglier sauvage apparaît !':'A wild boar appears!'],['👨‍🌾',currentLang=='fr'?'Je dois protéger la ferme !':'I must protect the farm!']],3:[['🧙',currentLang=='fr'?'Sorcier : J\'ai corrompu ta ferme !':'Wizard: I corrupted your farm!'],['👨‍🌾',currentLang=='fr'?'Tu ne gagneras pas !':'You will not win!']],5:[['👨‍🌾',currentLang=='fr'?'La corruption se propage...':'The corruption spreads...'],['🐔',currentLang=='fr'?'Nous devons sauver les animaux !':'We must save the animals!']],7:[['🧙',currentLang=='fr'?'Tu es plus fort que je pensais !':'You are stronger than I thought!'],['👨‍🌾',currentLang=='fr'?'Je n\'abandonnerai jamais !':'I will never give up!']],10:[['🔥',currentLang=='fr'?'La Bataille Finale !':'The Final Battle!'],['🧙',currentLang=='fr'?'IL EST TEMPS D\'EN FINIR !':'TIME TO END THIS!']],11:[['🎉',currentLang=='fr'?'NIVEAU BONUS !':'BONUS LEVEL!'],['👨‍🌾',currentLang=='fr'?'Tu as collecté toutes les pièces bonus !':'You collected all bonus coins!']]};
 
-function stop(){running=false;if(animId)cancelAnimationFrame(animId);if(skipTimer)clearTimeout(skipTimer);globalSkipFn=null;document.getElementById('cs').style.display='none';}
+function stop(){running=false;if(animId)cancelAnimationFrame(animId);if(skipTimer)clearTimeout(skipTimer);globalSkipFn=null;document.getElementById('cs').style.display='none';document.getElementById('lc').style.display='none';}
 function saveGame(){localStorage.setItem('cmsave',JSON.stringify({L:L,coins:coins,tc:tc,bc:bc,tb:tb,deaths:deaths,tt:tt}));}
 function col(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;}
-function dp(a){if(P.i>0)return;P.hp-=a;P.i=30;if(P.hp<=0){deaths++;mk(L);}}
-function mke(x,y,ty){const e={boar:{w:40,h:30,hp:40,s:3,c:'#8B4513'},crow:{w:30,h:30,hp:25,s:3.5,c:'#333'},robot:{w:35,h:40,hp:50,s:2,c:'#808080'},cf:{w:45,h:50,hp:80,s:1.5,c:'#556B2F'}}[ty];return{x:x,y:y-e.h,w:e.w,h:e.h,hp:e.hp,mh:e.hp,s:e.s,c:e.c,ty:ty,vx:e.s,vy:0,ac:true,at:0,acd:60,og:false,kb:0,kn:0};}
+function dp(a){if(P.i>0)return;P.hp-=a;P.i=30;if(P.hp<=0){deaths++;mk(L);return;}}
+function mke(x,y,ty){const e={boar:{w:40,h:30,hp:40,s:3,c:'#8B4513'},crow:{w:30,h:30,hp:25,s:3.5,c:'#333'},robot:{w:35,h:40,hp:50,s:2,c:'#808080'},cf:{w:45,h:50,hp:80,s:1.5,c:'#556B2F'}}[ty];return{x:x,y:y-e.h,w:e.w,h:e.h,hp:e.hp,mh:e.hp,s:e.s,c:e.c,ty:ty,vx:e.s,vy:0,ac:true,at:0,acd:60,og:false,kb:0,kn:0,hitCooldown:0};}
 
 function mk(L){
 pf=[];en=[];cl=[];bcl=[];hp=[];pr=[];pa=[];de=[];bg=[];fg=[];we=[];bo=null;cx=0;lt=0;lC=0;lB=0;
-Object.assign(P,{x:50,y:350,vx:0,vy:0,hp:100,i:0,dj:true,dja:true,au:L>=5,su:L>=7});
+Object.assign(P,{x:50,y:350,vx:0,vy:0,hp:100,i:0,dj:true,dja:true,au:L>=5,su:L>=7,attackCombo:0});
 lw=2000+L*400;gx=lw-150;
 const isBoss=(L==3||L==7||L==10||L==11);
 if(isBoss){
 for(let i=0;i<lw;i+=50)pf.push({x:i,y:450,w:50,h:50,t:'g'});
 for(let i=0;i<3;i++)pf.push({x:300+i*200,y:350,w:80,h:15,t:'f'});
-if(L==3||L==7)bo={x:lw-300,y:350,w:55,h:80,hp:150+L*30,mh:150+L*30,ph:1,at:0,ac:60,ac:true,ty:'w'};
-else if(L==10)bo={x:lw-300,y:330,w:60,h:90,hp:400,mh:400,ph:1,at:0,ac:40,ac:true,ty:'sw'};
-else bo={x:lw-300,y:310,w:70,h:100,hp:600,mh:600,ph:1,at:0,ac:25,ac:true,ty:'bb'};
+if(L==3||L==7)bo={x:lw-300,y:350,w:55,h:80,hp:150+L*30,mh:150+L*30,ph:1,at:0,ac:60,ac:true,ty:'w',hitCooldown:0};
+else if(L==10)bo={x:lw-300,y:330,w:60,h:90,hp:400,mh:400,ph:1,at:0,ac:40,ac:true,ty:'sw',hitCooldown:0};
+else bo={x:lw-300,y:310,w:70,h:100,hp:600,mh:600,ph:1,at:0,ac:25,ac:true,ty:'bb',hitCooldown:0};
 }else{
 if(L%3==1){for(let i=0;i<lw;i+=50){if(i>400&&i<500)continue;if(i>1200&&i<1350)continue;if(i>lw/2&&i<lw/2+150)continue;pf.push({x:i,y:450,w:50,h:50,t:'g'})}pf.push({x:400,y:380,w:100,h:15,t:'f'});pf.push({x:1200,y:360,w:100,h:15,t:'f'});pf.push({x:lw/2,y:370,w:100,h:15,t:'f'});}
 else if(L%3==2){for(let i=0;i<lw;i+=50)pf.push({x:i,y:450,w:50,h:50,t:'g'});for(let i=0;i<8;i++)pf.push({x:300+i*100,y:400-i*20,w:80,h:15,t:'f'});for(let i=0;i<8;i++)pf.push({x:1100+i*100,y:300+i*20,w:80,h:15,t:'f'});}
@@ -156,10 +144,12 @@ globalSkipFn=function(){if(skipTimer)clearTimeout(skipTimer);document.getElement
 if(ci<cs.length){document.getElementById('cp').textContent=cs[ci][0];document.getElementById('ct').textContent=cs[ci][1];ci++;skipTimer=setTimeout(function(){if(S=='cutscene'&&running)showCuts();},2500);}else{if(globalSkipFn)globalSkipFn();}
 }
 
-function upd(){if(!running||S!='playing')return;lt++;tt++;
+function upd(){
+if(!running||S!='playing')return;
+lt++;tt++;
 if(I.left){P.vx=-P.s;P.f=-1;}else if(I.right){P.vx=P.s;P.f=1;}else{P.vx=0;}
 if(I.jump){if(P.g){P.vy=P.j;P.g=false;P.dja=true;I.jump=false;}else if(P.dj&&P.dja){P.vy=P.j*.8;P.dja=false;I.jump=false;jp();}}
-if(I.attack&&P.ac<=0){P.ac=15;P.ad=8;}
+if(I.attack&&P.ac<=0){P.ac=20;P.ad=8;P.attackCombo++;if(P.attackCombo>3){P.ac=40;P.attackCombo=0;}}
 if(P.ac>0)P.ac--;if(P.ad>0)P.ad--;
 P.vy+=.6;if(P.vy>15)P.vy=15;P.x+=P.vx;P.y+=P.vy;P.g=false;
 for(let p of pf){if(col(P,p)){if(P.vy>0&&P.y-P.vy+P.h<=p.y+10){P.y=p.y-P.h;P.vy=0;P.g=true;}}}
@@ -167,11 +157,11 @@ if(P.x<0)P.x=0;if(P.x>lw-P.w)P.x=lw-P.w;
 if(P.y>500||P.hp<=0){deaths++;mk(L);return;}
 if(P.i>0)P.i--;
 ue();if(bo&&bo.ac)ub();up();cc();cx=Math.max(0,Math.min(P.x-W/2,lw-W));
-if(bo&&bo.ac&&bo.hp<=0){cl__();return;}
+if(bo&&bo.ac&&bo.hp<=0){bo.ac=false;coins+=100;saveGame();vp();S='lc';setTimeout(function(){document.getElementById('lc').style.display='none';if(L==10){if(tb>=30){L=11;mk(11);}else{gc(false);}}else if(L==11){gc(true);}else{L++;mk(L);}},2000);return;}
 if(!bo&&P.x>=gx)cl__();
 }
 
-function ue(){for(let e of en){if(!e.ac)continue;if(e.kn>0)e.kn--;
+function ue(){for(let e of en){if(!e.ac)continue;if(e.kn>0)e.kn--;if(e.hitCooldown>0)e.hitCooldown--;
 if(e.ty=='boar'){e.x+=e.vx;if(e.x<50||e.x>lw-50)e.vx*=-1;let dx=P.x-e.x;if(Math.abs(dx)<200&&Math.abs(P.y-e.y)<80)e.vx=Math.sign(dx)*6;else e.vx=Math.sign(e.vx)*e.s;}
 else if(e.ty=='crow'){let dx=P.x-e.x,dy=P.y-e.y,d=Math.sqrt(dx*dx+dy*dy);if(d>60){e.vx=dx/d*e.s;e.vy=dy/d*e.s;}}
 else if(e.ty=='robot'){let dx=P.x-e.x;if(Math.abs(dx)>120)e.vx=Math.sign(dx)*e.s;else{e.vx=0;e.at++;if(e.at>=e.acd){e.at=0;pr.push({x:e.x,y:e.y+e.h/2,vx:Math.sign(dx)*7,vy:0,w:8,h:5,c:'#F00',fe:true,life:120});}}}
@@ -180,29 +170,31 @@ e.x+=e.vx;e.y+=e.vy;
 if(e.ty!='crow'){e.og=false;for(let p of pf){if(p.t=='g'&&col(e,p)){if(e.vy>0&&e.y+e.h-p.y<20){e.y=p.y-e.h;e.vy=0;e.og=true;}}}if(!e.og){e.vy+=.5;}else{e.vy=0;}if(e.y>440){e.y=440-e.h;e.vy=0;e.og=true;}}
 }}
 
-function ub(){if(!bo||!bo.ac)return;bo.at++;
+function ub(){if(!bo||!bo.ac)return;bo.at++;if(bo.hitCooldown>0)bo.hitCooldown--;
 let dx=P.x-bo.x,dy=P.y-bo.y,d=Math.sqrt(dx*dx+dy*dy);
 if(d>80){bo.vx=dx/d*2.5;bo.vy=dy/d*1.5;bo.x+=bo.vx;bo.y+=bo.vy;}
 if(bo.ph==1){if(bo.at>=bo.ac){bo.at=0;let n=bo.ty=='sw'?7:bo.ty=='bb'?10:5;for(let i=0;i<n;i++)pr.push({x:bo.x,y:bo.y+bo.h/2,vx:Math.sign(dx)*5-i,vy:Math.sin(i*1.5)*3,w:12,h:12,c:bo.ty=='bb'?'#F0F':'#F50',fe:true,life:150});}if(bo.hp<=bo.mh/2){bo.ph=2;bo.ac=20;bp();}}
 else{if(bo.at>=bo.ac){bo.at=0;let n=bo.ty=='bb'?15:10;for(let i=0;i<n;i++)pr.push({x:bo.x,y:bo.y+bo.h/2,vx:Math.sign(dx)*8-i*.5,vy:(i-n/2)*2,w:10,h:10,c:bo.ty=='bb'?'#F00':'#F60',fe:true,life:120});}}
-if(bo.x<100)bo.x=100;if(bo.x>lw-100)bo.x=lw-100;if(bo.y<100)bo.y=100;if(bo.y>400)bo.y=400;
-if(bo.hp<=0){bo.ac=false;coins+=100;saveGame();vp();cl__();}
-}
+if(bo.x<100)bo.x=100;if(bo.x>lw-100)bo.x=lw-100;if(bo.y<100)bo.y=100;if(bo.y>400)bo.y=400;}
 
 function up(){for(let i=pr.length-1;i>=0;i--){let p=pr[i];p.x+=p.vx;p.y+=p.vy;if(p.life!==undefined){p.life--;if(p.life<=0){pr.splice(i,1);continue;}}if(p.x<-50||p.x>lw+50||p.y<-50||p.y>550){pr.splice(i,1);continue;}if(p.fe&&col(p,P)){dp(10);pr.splice(i,1);}}}
 function upa(){for(let i=pa.length-1;i>=0;i--){let p=pa[i];p.x+=p.vx;p.y+=p.vy;p.li--;if(p.li<=0)pa.splice(i,1);}}
 function uw(){for(let p of pf){if(p.m)p.x=p.ox+Math.sin(tt*p.ms*.02)*p.mr;}for(let e of we){e.x+=e.vx;e.y+=e.vy;e.li--;if(e.li<=0||e.y>H){e.x=Math.random()*W;e.y=-20;e.li=Math.random()*100;}}}
 
 function cc(){
-if(P.ad>0){let r=P.au?55:35,b={x:P.f>0?P.x+P.w:P.x-r,y:P.y,w:r,h:P.h};for(let e of en){if(e.ac&&col(b,e)){e.hp-=P.au?35:20;e.kb=P.f*8;e.kn=5;hp_(e);if(e.hp<=0){e.ac=false;coins+=10;dp_(e);}}}if(bo&&bo.ac&&col(b,bo)){bo.hp-=P.au?15:8;hp_(bo);}}
+if(P.ad>0){let r=P.au?55:35,b={x:P.f>0?P.x+P.w:P.x-r,y:P.y,w:r,h:P.h};
+for(let e of en){if(e.ac&&col(b,e)&&e.hitCooldown<=0){e.hp-=P.au?35:20;e.hitCooldown=30;e.kb=P.f*8;e.kn=5;hp_(e);if(e.hp<=0){e.ac=false;coins+=10;dp_(e);}}}
+if(bo&&bo.ac&&col(b,bo)&&bo.hitCooldown<=0){bo.hp-=P.au?15:8;bo.hitCooldown=30;hp_(bo);}}
 for(let c of cl){if(!c.c&&col(P,{x:c.x-8,y:c.y-8,w:16,h:16})){c.c=true;coins+=5;tc+=5;lC+=5;}}
 for(let c of bcl){if(!c.c&&col(P,{x:c.x-10,y:c.y-10,w:20,h:20})){c.c=true;bc++;tb++;coins+=20;lB++;vp();}}
 for(let h of hp){if(!h.c&&col(P,{x:h.x-8,y:h.y-8,w:16,h:16})){h.c=true;P.hp=Math.min(P.hp+25,P.mh);}}
 for(let e of en){if(e.ac&&col(P,e)&&e.kn<=0){dp(e.ty=='cf'?20:12);e.kb=-P.f*10;e.kn=10;}}
 }
 
-function cl__(){S='lc';saveGame();document.getElementById('ls').textContent='Coins: '+lC+' | Bonus: '+lB+'/3 | Time: '+Math.floor(lt/60)+'s';document.getElementById('lc').style.display='block';setTimeout(function(){document.getElementById('lc').style.display='none';if(L==10&&tb>=30){L=11;mk(11);}else if(L<10){L++;mk(L);}else if(L==11){gc();}},2000);}
-function gc(){saveGame();alert(t('cm')+'\n\n'+t('tc')+': '+tc+'\n'+t('bn')+': '+tb+'\n'+t('dt')+': '+deaths+'\n'+t('tm')+': '+Math.floor(tt/60)+'s');localStorage.removeItem('cmsave');localStorage.removeItem('cmcuts');setTimeout(function(){location.reload();},2000);}
+function cl__(){S='lc';saveGame();document.getElementById('ls').textContent='Coins: '+lC+' | Bonus: '+lB+'/3 | Time: '+Math.floor(lt/60)+'s';document.getElementById('lc').style.display='block';setTimeout(function(){document.getElementById('lc').style.display='none';if(L<10){L++;mk(L);}},2000);}
+
+function gc(completed){saveGame();if(completed){alert(t('cm')+'\n\n'+t('tc')+': '+tc+'\n'+t('bn')+': '+tb+'\n'+t('dt')+': '+deaths+'\n'+t('tm')+': '+Math.floor(tt/60)+'s');}else{alert(t('cm')+'\n\n'+t('tc')+': '+tc+'\n'+t('bn')+': '+tb+'/30\n'+t('needBonus'));}localStorage.removeItem('cmsave');localStorage.removeItem('cmcuts');setTimeout(function(){location.reload();},2000);}
+
 function dp_(e){for(let i=0;i<15;i++)pa.push({x:e.x+e.w/2,y:e.y+e.h/2,vx:Math.random()*8-4,vy:Math.random()*-10,li:40,c:e.c||'#F00'});}
 function hp_(e){for(let i=0;i<8;i++)pa.push({x:e.x+e.w/2,y:e.y+e.h/2,vx:Math.random()*6-3,vy:Math.random()*-7,li:20,c:'#FFD700'});}
 function jp(){for(let i=0;i<8;i++)pa.push({x:P.x+P.w/2,y:P.y+P.h,vx:Math.random()*3-1.5,vy:Math.random()*4,li:15,c:'#FFF'});}
@@ -311,12 +303,19 @@ el.addEventListener('mouseleave',function(){I[action]=false;});
 bind('l','left');bind('r','right');bind('j','jump');bind('a','attack');
 }
 
-function loop(){if(!running)return;if(S=='playing'){upd();upa();uw();}dr();document.getElementById('hp').style.width=(P.hp/P.mh*100)+'%';document.getElementById('cc').textContent=coins;document.getElementById('bc').textContent=lB+'/3';document.getElementById('lv').textContent=t('lv')+' '+L;animId=requestAnimationFrame(loop);}
+function loop(){
+if(!running)return;
+if(S=='playing'){upd();upa();uw();}
+dr();
+document.getElementById('hp').style.width=(P.hp/P.mh*100)+'%';
+document.getElementById('cc').textContent=coins;
+document.getElementById('bc').textContent=lB+'/3';
+document.getElementById('lv').textContent=t('lv')+' '+L;
+animId=requestAnimationFrame(loop);
+}
 
 gameInstance={stop:stop};
-setupControls();
-mk(L);
-loop();
+setupControls();mk(L);loop();
 }
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){});}
 </script>
