@@ -1,6 +1,6 @@
 {
     "name": "Chicken Mania",
-    "short_name": "ChickenMania",
+    "short_name": "Chicken Mania",
     "description": "A farm adventure game",
     "start_url": "./index.html",
     "display": "fullscreen",
