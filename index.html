@@ -500,14 +500,22 @@ scene.add(group);
 gameObjects.push(group);
 return group;
 }
-function createCoin3D(x,y,z){
+function createCoin3D(x,y,z,isBonus){
 const group=new THREE.Group();
-const coin=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,0.1,20),new THREE.MeshStandardMaterial({color:0xFFD700,metalness:0.9,roughness:0.1,emissive:0xFFD700,emissiveIntensity:0.3}));
+if(isBonus){
+const starGeo=new THREE.OctahedronGeometry(0.5,0);
+const starMat=new THREE.MeshStandardMaterial({color:0xFFD700,metalness:0.9,roughness:0.1,emissive:0xFFD700,emissiveIntensity:0.8});
+const star=new THREE.Mesh(starGeo,starMat);
+star.scale.set(1,1.5,1);
+group.add(star);
+const glow=new THREE.Mesh(new THREE.SphereGeometry(0.7,8,8),new THREE.MeshBasicMaterial({color:0xFFD700,transparent:true,opacity:0.3}));
+group.add(glow);
+}else{
+const coin=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,0.1,20),new THREE.MeshStandardMaterial({color:0xFFD700,metalness:0.9,roughness:0.1,emissive:0xFFD700,emissiveIntensity:0.3}));
 coin.rotation.x=Math.PI/2;group.add(coin);
-const shine=new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.25,0.12,10),new THREE.MeshStandardMaterial({color:0xFFFF00,metalness:1,roughness:0,emissive:0xFFFF00,emissiveIntensity:0.5}));
+const shine=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,0.12,10),new THREE.MeshStandardMaterial({color:0xFFFF00,metalness:1,roughness:0,emissive:0xFFFF00,emissiveIntensity:0.5}));
 shine.rotation.x=Math.PI/2;group.add(shine);
-const star=new THREE.Mesh(new THREE.SphereGeometry(0.1,6,6),new THREE.MeshStandardMaterial({color:0xFFFFFF,emissive:0xFFFFFF,emissiveIntensity:1}));
-star.position.set(0.2,0.1,0);group.add(star);
+}
 group.position.set(x,y,z);
 scene.add(group);
 gameObjects.push(group);
@@ -1000,51 +1008,52 @@ if(!boss&&P.x>=gx)cl__();
 function showNPCDialogue(npc){
 if(npc.userData.isTalking)return;
 npc.userData.isTalking=true;
-S='paused';
-if(window._gameState)window._gameState.S='paused';
-stopMusic();
 const msg=npc.userData.message;
 const dialogue=document.createElement('div');
-dialogue.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.9);color:#FFD700;padding:20px;border-radius:15px;text-align:center;z-index:95;border:3px solid #FFD700;max-width:80%;pointer-events:auto';
+dialogue.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.95);color:#FFD700;padding:20px;border-radius:15px;text-align:center;z-index:95;border:3px solid #FFD700;max-width:80%;pointer-events:auto';
 dialogue.innerHTML='<div style="font-size:40px;margin-bottom:10px">'+(npc.userData.type=='chicken'?'🐔':npc.userData.type=='villager'?'👨‍🌾':'🛒')+'</div><p style="margin-bottom:15px">'+msg+'</p>';
 if(npc.userData.type=='merchant'){
 const buySpeedBtn=document.createElement('button');
 buySpeedBtn.textContent='⚡ '+t('buySpeed');
 buySpeedBtn.style.cssText='padding:8px 15px;margin:3px;background:#FFD700;border:none;border-radius:10px;cursor:pointer;display:block;width:100%';
-buySpeedBtn.addEventListener('click',function(){
+buySpeedBtn.onclick=function(){
 if(coins>=50){coins-=50;P.s=0.35;playVictorySound();alert(t('purchased'));}
 else{alert(t('insufficient'));}
-closeDialogueNow();
+dialogue.remove();
+npc.userData.isTalking=false;
 saveGame();
-});
+};
 dialogue.appendChild(buySpeedBtn);
 const buyAttackBtn=document.createElement('button');
 buyAttackBtn.textContent='⚔️ '+t('buyAttack');
 buyAttackBtn.style.cssText='padding:8px 15px;margin:3px;background:#FFD700;border:none;border-radius:10px;cursor:pointer;display:block;width:100%';
-buyAttackBtn.addEventListener('click',function(){
+buyAttackBtn.onclick=function(){
 if(coins>=50){coins-=50;P.au=true;playVictorySound();alert(t('purchased'));}
 else{alert(t('insufficient'));}
-closeDialogueNow();
+dialogue.remove();
+npc.userData.isTalking=false;
 saveGame();
-});
+};
 dialogue.appendChild(buyAttackBtn);
 const buyShieldBtn=document.createElement('button');
 buyShieldBtn.textContent='🛡️ '+t('buyShield');
 buyShieldBtn.style.cssText='padding:8px 15px;margin:3px;background:#FFD700;border:none;border-radius:10px;cursor:pointer;display:block;width:100%';
-buyShieldBtn.addEventListener('click',function(){
+buyShieldBtn.onclick=function(){
 if(coins>=75){coins-=75;P.hasShield=true;playVictorySound();alert(t('purchased'));}
 else{alert(t('insufficient'));}
-closeDialogueNow();
+dialogue.remove();
+npc.userData.isTalking=false;
 saveGame();
-});
+};
 dialogue.appendChild(buyShieldBtn);
 }
 const exitBtn=document.createElement('button');
 exitBtn.textContent=t('exit');
 exitBtn.style.cssText='padding:8px 20px;margin-top:10px;background:#333;color:#fff;border:none;border-radius:10px;cursor:pointer;display:block;width:100%';
-exitBtn.addEventListener('click',function(){
-closeDialogueNow();
-});
+exitBtn.onclick=function(){
+dialogue.remove();
+npc.userData.isTalking=false;
+};
 dialogue.appendChild(exitBtn);
 dialogue.id='npcDialogue';
 document.getElementById('w').appendChild(dialogue);
