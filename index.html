@@ -83,36 +83,21 @@ document.write('<script src="https://unpkg.com/three@0.128.0/build/three.min.js"
 </script>
 <script>
 let globalSkipFn=null,deferredPrompt=null,gameInstance=null,currentLang='en';
-let audioContext=null,musicInterval=null,currentMusic=null;
+let audioContext=null,musicInterval=null,currentMusic=null,currentBeat=0;
 function skipCutscene(){if(globalSkipFn){globalSkipFn();globalSkipFn=null;}}
 function installApp(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;document.getElementById('ib').style.display='none';}else{alert('To install: Open in Chrome → Menu → "Add to Home Screen"');}}
 function startGameBtn(){document.getElementById('ss').style.display='none';document.getElementById('gs').style.display='block';initGame();}
 function restartGame(){if(confirm(currentLang=='en'?'Restart from beginning?':'Recommencer ?')){localStorage.removeItem('cmsave');localStorage.removeItem('cmcuts');location.reload();}}
 function setLang(l){currentLang=l;document.getElementById('st').textContent=TRANSLATIONS[l].st;document.getElementById('sb').textContent=TRANSLATIONS[l].sb;document.getElementById('rb').textContent=TRANSLATIONS[l].rb;document.getElementById('skb').textContent=TRANSLATIONS[l].sk;document.getElementById('le').classList.toggle('ac',l=='en');document.getElementById('lf').classList.toggle('ac',l=='fr');localStorage.setItem('cml',l);}
 function t(key){return TRANSLATIONS[currentLang][key]||key;}
-function closeDialogue(){
-if(typeof closeDialogueNow==='function'){
-closeDialogueNow();
-}else{
-const d=document.getElementById('npcDialogue');
-if(d)d.remove();
-}
-}
-function buyItem(type){
-if(type=='speed'&&coins>=50){coins-=50;P.s=0.35;playVictorySound();alert(t('purchased'));}
-else if(type=='attack'&&coins>=50){coins-=50;P.au=true;playVictorySound();alert(t('purchased'));}
-else if(type=='shield'&&coins>=75){coins-=75;P.hasShield=true;playVictorySound();alert(t('purchased'));}
-else{alert(t('insufficient'));}
-if(typeof closeDialogueNow==='function')closeDialogueNow();
-saveGame();
-}
+function closeDialogue(){const d=document.getElementById('npcDialogue');if(d)d.remove();if(typeof S!=='undefined')S='playing';if(typeof npcs!=='undefined'){for(let n of npcs){n.userData.isTalking=false;}}if(typeof startMusic==='function'){startMusic(typeof L!=='undefined'&&(L==3||L==7||L==10||L==11)?'boss':'farm');}}
+function buyItem(type){if(type=='speed'&&coins>=50){coins-=50;P.s=0.35;playVictorySound();alert(t('purchased'));}else if(type=='attack'&&coins>=50){coins-=50;P.au=true;playVictorySound();alert(t('purchased'));}else if(type=='shield'&&coins>=75){coins-=75;P.hasShield=true;playVictorySound();alert(t('purchased'));}else{alert(t('insufficient'));}closeDialogue();saveGame();}
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;document.getElementById('ib').style.display='block';});
 window.addEventListener('appinstalled',function(){deferredPrompt=null;document.getElementById('ib').style.display='none';});
 const TRANSLATIONS={en:{st:'A Farm Adventure',sb:'▶️ Start Game',rb:'🔄 Restart Game',lv:'Level',sk:'Skip ⏭️',cm:'🎉 CONGRATULATIONS! 🎉',tc:'Total Coins',bn:'Bonus Coins',dt:'Deaths',tm:'Time',needBonus:'You need all 30 bonus coins!',quest1:'Quest',quest2:'Defeat enemies',quest3:'Collect bonus coins',quest4:'Rescue the chicken!',shop:'🛒 Shop',buySpeed:'Speed Boost (50)',buyAttack:'Attack Boost (50)',buyShield:'Shield (75)',insufficient:'Not enough coins!',purchased:'Purchased!',pause:'Paused',resume:'Resume',talk:'Talk',exit:'Exit',hint1:'The wizard went to the mountains!',hint2:'Beware of robots!',hint3:'Collect golden stars!'},fr:{st:'Une Aventure à la Ferme',sb:'▶️ Commencer',rb:'🔄 Recommencer',lv:'Niveau',sk:'Passer ⏭️',cm:'🎉 FÉLICITATIONS ! 🎉',tc:'Pièces Totales',bn:'Pièces Bonus',dt:'Morts',tm:'Temps',needBonus:'Il vous faut 30 pièces bonus !',quest1:'Quête',quest2:'Vaincre les ennemis',quest3:'Collecter les bonus',quest4:'Sauver le poulet !',shop:'🛒 Boutique',buySpeed:'Boost Vitesse (50)',buyAttack:'Boost Attaque (50)',buyShield:'Bouclier (75)',insufficient:'Pas assez !',purchased:'Acheté !',pause:'Pause',resume:'Reprendre',talk:'Parler',exit:'Sortir',hint1:'Le sorcier est aux montagnes !',hint2:'Attention aux robots !',hint3:'Collectez les étoiles !'}};
 currentLang=localStorage.getItem('cml')||'en';setLang(currentLang);
 if(localStorage.getItem('cmsave')){document.getElementById('rb').style.display='block';document.getElementById('sb').textContent='▶️ '+(currentLang=='en'?'Continue':'Continuer');}
 let cuts={1:[['👨‍🌾',currentLang=='fr'?'Fermier Joe : Quelle belle matinée !':'Farmer Joe: What a beautiful morning!'],['🐔',currentLang=='fr'?'Poulet : *cot cot* Bonjour !':'Chicken: *cluck cluck* Hello!'],['🧙',currentLang=='fr'?'Sorcier : HAHAHA ! Je vole ton poulet !':'Wizard: HAHAHA! I\'m taking your chicken!'],['🐔',currentLang=='fr'?'Poulet : AU SECOURS !':'Chicken: HELP ME!'],['👨‍🌾',currentLang=='fr'?'Fermier Joe : Je vais te sauver !':'Farmer Joe: I will save you!']],3:[['🧙',currentLang=='fr'?'Sorcier : Tu ne retrouveras jamais ton poulet !':'Wizard: You\'ll never find your chicken!'],['👨‍🌾',currentLang=='fr'?'Fermier Joe : Je te retrouverai !':'Farmer Joe: I will find you!']],5:[['👨‍🌾',currentLang=='fr'?'Le repaire est proche...':'The lair is near...'],['🐔',currentLang=='fr'?'Poulet : *cot cot* (au loin)':'Chicken: *cluck cluck* (distant)']],7:[['🧙',currentLang=='fr'?'Tu es plus fort que je pensais !':'You\'re stronger than I thought!'],['👨‍🌾',currentLang=='fr'?'Rends-moi mon poulet !':'Give me back my chicken!']],10:[['🔥',currentLang=='fr'?'LE REPAIRE DU SORCIER !':'THE WIZARD\'S LAIR!'],['🧙',currentLang=='fr'?'Ton poulet est à moi !':'Your chicken is mine!'],['🐔',currentLang=='fr'?'Sauve-moi Joe !':'Save me Joe!'],['👨‍🌾',currentLang=='fr'?'JE VAIS TE SAUVER !':'I WILL SAVE YOU!']],11:[['🎉',currentLang=='fr'?'NIVEAU BONUS !':'BONUS LEVEL!'],['👨‍🌾',currentLang=='fr'?'Tu as sauvé le poulet !':'You saved the chicken!'],['🐔',currentLang=='fr'?'Merci Joe ! *cot cot*':'Thank you Joe! *cluck cluck*']]};
-let audioContext=null,musicInterval=null,currentMusic=null,currentBeat=0;
 function initAudio(){if(!audioContext){try{audioContext=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}}
 function playTone(freq,duration,type,volume,delay){
 if(!audioContext)return;
