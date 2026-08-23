@@ -771,15 +771,21 @@ if(Math.abs(P.x-p.x)<p.w/2&&Math.abs(P.z-p.z)<p.d/2&&Math.abs(P.y-p.y)<1&&P.vy<=
 P.y=p.y+0.5;P.vy=0;P.g=true;
 }
 }
+let onBridge=false;
+for(let b of bridges){
+if(Math.abs(P.x-b.x)<b.w/2&&Math.abs(P.z-b.z)<1.5){
+if(P.y>0.2&&P.y<1){
+P.y=0.35;P.vy=0;P.g=true;
+onBridge=true;
+}
+}
+}
+if(!onBridge){
 for(let w of waterAreas){
 if(Math.abs(P.x-w.x)<w.w/2&&Math.abs(P.z-w.z)<w.d/2){
 P.hp-=0.5;
 if(P.hp<=0){deaths++;playDeathSound();restartLevel();return;}
 }
-}
-for(let b of bridges){
-if(Math.abs(P.x-b.x)<b.w/2&&Math.abs(P.z-b.z)<1&&P.vy<=0&&P.y>0.2){
-P.y=0.35;P.vy=0;P.g=true;
 }
 }
 if(P.x<0)P.x=0;if(P.x>lw)P.x=lw;
