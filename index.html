@@ -93,10 +93,14 @@ function t(key){return TRANSLATIONS[currentLang][key]||key;}
 function closeDialogue(){
 const d=document.getElementById('npcDialogue');
 if(d)d.remove();
-if(window._gameState){window._gameState.S='playing';window._gameState.P.i=0;}
-if(window._gameNPCs){for(let n of window._gameNPCs){n.userData.isTalking=false;}}
-if(typeof startMusic==='function'){
-startMusic(window._gameState&&(window._gameState.L==3||window._gameState.L==7||window._gameState.L==10||window._gameState.L==11)?'boss':'farm');
+if(window._gameState){
+window._gameState.S='playing';
+}
+if(window._gameNPCs){
+for(let n of window._gameNPCs){n.userData.isTalking=false;}
+}
+if(typeof window._resumeGame==='function'){
+window._resumeGame();
 }
 }
 function buyItem(type){
@@ -148,6 +152,10 @@ let platforms=[],enemies=[],coinList=[],bonusList=[],healthList=[],projectiles=[
 window._gameState={S:S,L:L,coins:coins,P:P};
 window._gameNPCs=npcs;
 window._saveGame=saveGame;
+window._resumeGame=function(){
+S='playing';
+if(startMusic)startMusic(L==3||L==7||L==10||L==11?'boss':'farm');
+};
 const save=JSON.parse(localStorage.getItem('cmsave')||'null');
 if(save){L=save.L||1;coins=save.coins||0;tc=save.tc||0;bc=save.bc||0;tb=save.tb||0;deaths=save.deaths||0;tt=save.tt||0;}
 window._gameState.S=S;window._gameState.L=L;window._gameState.coins=coins;
@@ -716,7 +724,6 @@ scene.add(p);
 weatherEffects.push({mesh:p,type:type,vy:type=='rain'?0.3:0.15});
 }
 function upd(){
-if(window._gameState&&window._gameState.S=='paused'){S='paused';}
 if(window._gameState&&window._gameState.S=='playing'&&S=='paused'){S='playing';}
 if(!running||S!='playing')return;
 lt++;tt++;
@@ -999,7 +1006,7 @@ function showNPCDialogue(npc){
 if(npc.userData.isTalking)return;
 npc.userData.isTalking=true;
 S='paused';
-window._gameState.S='paused';
+if(window._gameState)window._gameState.S='paused';
 stopMusic();
 const msg=npc.userData.message;
 const dialogue=document.createElement('div');
@@ -1146,7 +1153,6 @@ ctx.fillRect(95,22,5,15);
 }
 function loop(){
 if(!running)return;
-if(window._gameState&&window._gameState.S=='paused'){S='paused';}
 if(window._gameState&&window._gameState.S=='playing'&&S=='paused'){S='playing';}
 if(S=='playing'){upd();}
 renderer.render(scene,camera);
@@ -1156,7 +1162,7 @@ document.getElementById('bc').textContent=lB+'/3';
 document.getElementById('lv').textContent=t('lv')+' '+L;
 drawMiniMap();
 animId=requestAnimationFrame(loop);
-    }
+}
 gameInstance={stop:stop};
 setupControls();
 mk(L);
