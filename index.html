@@ -578,7 +578,6 @@ function mk(L){
 clearObjects();
 enemies=[];coinList=[];bonusList=[];healthList=[];projectiles=[];particles=[];
 boss=null;lt=0;lC=0;lB=0;
-questLog=[];
 checkpointX=0;hasCheckpoint=false;
 P.x=0;P.y=1;P.z=0;P.vx=0;P.vy=0;P.vz=0;P.hp=100;P.i=0;P.rotY=0;
 P.hasShield=false;P.au=L>=5;P.su=L>=7;
@@ -602,7 +601,6 @@ const pillar2=pillar.clone();pillar2.position.z=4;scene.add(pillar2);gameObjects
 if(L==3||L==7)boss={mesh:createBoss3D(lw-5,0,0,'w'),x:lw-5,y:0,z:0,hp:200+L*40,mh:200+L*40,ph:1,at:0,ac:40,ac:true};
 else if(L==10)boss={mesh:createBoss3D(lw-5,0,0,'sw'),x:lw-5,y:0,z:0,hp:500,mh:500,ph:1,at:0,ac:30,ac:true};
 else boss={mesh:createBoss3D(lw-5,0,0,'bb'),x:lw-5,y:0,z:0,hp:800,mh:800,ph:1,at:0,ac:20,ac:true};
-questLog.push(t('quest4'));
 }else{
 scene.background=new THREE.Color(0x87CEEB);
 scene.fog=new THREE.Fog(0x87CEEB,30,100);
@@ -666,9 +664,6 @@ if(L==8){createPowerUp(30,0,'speed');}
 if(L>=3){checkpointX=Math.floor(lw/2);hasCheckpoint=true;}
 if(!boss)createPipe3D(gx,0);
 if(L>=8&&!isBoss){for(let i=0;i<30;i++)createWeatherEffect(L>=10?'ember':'rain');}
-questLog.push(t('quest1'));
-questLog.push(t('quest2'));
-if(bonusList.length>0)questLog.push(t('quest3'));
 }
 if(cuts[L]&&!cutscenesShown[L]){
 cutscenesShown[L]=true;
@@ -865,7 +860,7 @@ projectiles.splice(i,1);
 if(dist<1.2){
 if(P.hasShield){P.hasShield=false;createHitParticle(P.x,P.y+1,P.z,0x4488FF);}
 else{
-P.hp-=10;createHitParticle(P.x,P.y+1,P.z,0xFF0000);playHitSound();
+P.hp-=3;createHitParticle(P.x,P.y+1,P.z,0xFF0000);playHitSound();
 if(P.hp<=0){deaths++;restartLevel();return;}
 }
 }
@@ -1078,6 +1073,7 @@ if(e.key=='x'||e.key=='k')I.attack=false;
 });
 }
 function togglePause(){
+if(window._gameState)window._gameState.S=S;
 if(S=='playing'){
 S='paused';
 stopMusic();
@@ -1088,18 +1084,6 @@ S='playing';
 document.getElementById('lc').style.display='none';
 startMusic(L==3||L==7||L==10||L==11?'boss':'farm');
 }
-}
-function updateQuestLog(){
-let qDiv=document.getElementById('questLog');
-if(!qDiv){
-qDiv=document.createElement('div');
-qDiv.id='questLog';
-qDiv.style.cssText='position:absolute;bottom:110px;right:10px;background:rgba(0,0,0,.7);color:#FFD700;padding:10px;border-radius:10px;z-index:50;font-size:11px;border:1px solid #FFD700;max-width:180px;pointer-events:none';
-document.getElementById('w').appendChild(qDiv);
-}
-let html='<div style="font-weight:bold;margin-bottom:5px">📋 '+t('quest1')+':</div>';
-for(let q of questLog){html+='<div>• '+q+'</div>';}
-qDiv.innerHTML=html;
 }
 function drawMiniMap(){
 let mm=document.getElementById('miniMap');
@@ -1160,13 +1144,14 @@ ctx.fillRect(95,22,5,15);
 }
 function loop(){
 if(!running)return;
+if(window._gameState&&window._gameState.S=='paused'){S='paused';}
+if(window._gameState&&window._gameState.S=='playing'&&S=='paused'){S='playing';}
 if(S=='playing'){upd();}
 renderer.render(scene,camera);
 document.getElementById('hp').style.width=(P.hp/P.mh*100)+'%';
 document.getElementById('cc').textContent=coins;
 document.getElementById('bc').textContent=lB+'/3';
 document.getElementById('lv').textContent=t('lv')+' '+L;
-updateQuestLog();
 drawMiniMap();
 animId=requestAnimationFrame(loop);
 }
