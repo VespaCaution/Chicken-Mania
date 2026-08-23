@@ -716,6 +716,8 @@ scene.add(p);
 weatherEffects.push({mesh:p,type:type,vy:type=='rain'?0.3:0.15});
 }
 function upd(){
+if(window._gameState&&window._gameState.S=='paused'){S='paused';}
+if(window._gameState&&window._gameState.S=='playing'&&S=='paused'){S='playing';}
 if(!running||S!='playing')return;
 lt++;tt++;
 let moveX=0,moveZ=0;
@@ -1154,7 +1156,7 @@ document.getElementById('bc').textContent=lB+'/3';
 document.getElementById('lv').textContent=t('lv')+' '+L;
 drawMiniMap();
 animId=requestAnimationFrame(loop);
-}
+    }
 gameInstance={stop:stop};
 setupControls();
 mk(L);
