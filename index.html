@@ -503,13 +503,21 @@ return group;
 function createCoin3D(x,y,z,isBonus){
 const group=new THREE.Group();
 if(isBonus){
-const star=new THREE.Mesh(new THREE.OctahedronGeometry(0.7,0),new THREE.MeshStandardMaterial({color:0xFF6600,emissive:0xFF4400,emissiveIntensity:2}));
+const starShape=new THREE.Group();
+const starMat=new THREE.MeshBasicMaterial({color:0xFFD700});
+const starGeo=new THREE.OctahedronGeometry(0.6,0);
+const star=new THREE.Mesh(starGeo,starMat);
 star.scale.set(1,1.5,1);
-group.add(star);
-const glow=new THREE.Mesh(new THREE.SphereGeometry(1,8,8),new THREE.MeshBasicMaterial({color:0xFFAA00,transparent:true,opacity:0.5}));
+starShape.add(star);
+const star2=star.clone();
+star2.rotation.z=Math.PI/2;
+star2.scale.set(0.5,0.5,1.5);
+starShape.add(star2);
+group.add(starShape);
+const glow=new THREE.Mesh(new THREE.SphereGeometry(0.8,8,8),new THREE.MeshBasicMaterial({color:0xFFD700,transparent:true,opacity:0.4}));
 group.add(glow);
 }else{
-const coin=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,0.08,16),new THREE.MeshStandardMaterial({color:0xFFD700,emissive:0xFFD700,emissiveIntensity:0.5}));
+const coin=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,0.08,16),new THREE.MeshBasicMaterial({color:0xFFD700}));
 coin.rotation.x=Math.PI/2;
 group.add(coin);
 }
@@ -632,10 +640,6 @@ let moving=(i%4==0&&L>=4);
 createPlatform3D(x,y,z,moving,2,0.5);
 platforms.push({x:x,y:y,z:z,w:2,h:0.4,d:1.5,moving:moving,moveRange:moving?2:0,moveSpeed:moving?0.5:0,originalX:x,originalY:y,phase:Math.random()*Math.PI*2,mesh:gameObjects[gameObjects.length-1]});
 }
-for(let i=4;i<lw-3;i+=6){
-let barrier=createEnemy3D(i,0,0,'barrier');
-enemies.push({mesh:barrier,x:i,y:0,z:0,hp:999,ac:true,type:'barrier',stationary:true});
-}
 for(let i=0;i<5+L;i++){
 let x=5+i*(lw/(5+L));
 let z=(i%3-1)*2;
@@ -650,9 +654,9 @@ let c=createCoin3D(x,1.5,z);
 coinList.push({mesh:c,x:x,y:1.5,z:z,c:false});
 }
 for(let i=0;i<3;i++){
-let x=6+i*(lw/3.5);
-let c=createCoin3D(x,4.5,0);
-bonusList.push({mesh:c,x:x,y:4.5,z:0,c:false});
+let x=8+i*(lw/3);
+let c=createCoin3D(x,5,0,true);
+bonusList.push({mesh:c,x:x,y:5,z:0,c:false});
 }
 for(let i=0;i<Math.floor(L/3);i++){
 let x=6+i*(lw/Math.floor(L/3));
