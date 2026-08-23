@@ -503,24 +503,28 @@ return group;
 function createCoin3D(x,y,z,isBonus){
 const group=new THREE.Group();
 if(isBonus){
-const starGeo=new THREE.OctahedronGeometry(0.5,0);
-const starMat=new THREE.MeshStandardMaterial({color:0xFFD700,metalness:0.9,roughness:0.1,emissive:0xFFD700,emissiveIntensity:0.8});
+const starMat=new THREE.MeshStandardMaterial({color:0xFF6600,metalness:0.5,roughness:0.2,emissive:0xFF4400,emissiveIntensity:1});
+const starGeo=new THREE.OctahedronGeometry(0.6,0);
 const star=new THREE.Mesh(starGeo,starMat);
-star.scale.set(1,1.5,1);
+star.scale.set(1,1.8,1);
+star.rotation.y=Math.PI/4;
 group.add(star);
-const glow=new THREE.Mesh(new THREE.SphereGeometry(0.7,8,8),new THREE.MeshBasicMaterial({color:0xFFD700,transparent:true,opacity:0.3}));
+const glow=new THREE.Mesh(new THREE.SphereGeometry(0.9,10,10),new THREE.MeshBasicMaterial({color:0xFF6600,transparent:true,opacity:0.4}));
 group.add(glow);
+const ring=new THREE.Mesh(new THREE.TorusGeometry(0.7,0.05,8,12),new THREE.MeshBasicMaterial({color:0xFFFF00,transparent:true,opacity:0.6}));
+ring.rotation.x=Math.PI/2;
+group.add(ring);
 }else{
-const coin=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,0.1,20),new THREE.MeshStandardMaterial({color:0xFFD700,metalness:0.9,roughness:0.1,emissive:0xFFD700,emissiveIntensity:0.3}));
-coin.rotation.x=Math.PI/2;group.add(coin);
-const shine=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,0.12,10),new THREE.MeshStandardMaterial({color:0xFFFF00,metalness:1,roughness:0,emissive:0xFFFF00,emissiveIntensity:0.5}));
-shine.rotation.x=Math.PI/2;group.add(shine);
+const coinMat=new THREE.MeshStandardMaterial({color:0xFFD700,metalness:0.9,roughness:0.1});
+const coin=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,0.08,16),coinMat);
+coin.rotation.x=Math.PI/2;
+group.add(coin);
 }
 group.position.set(x,y,z);
 scene.add(group);
 gameObjects.push(group);
 return group;
-}
+    }
 function createPlatform3D(x,y,z,moving,moveRange,moveSpeed){
 const mesh=new THREE.Mesh(new THREE.BoxGeometry(2,0.4,1.5),new THREE.MeshStandardMaterial({color:0xD2691E,roughness:0.6}));
 mesh.position.set(x,y,z);
