@@ -91,25 +91,20 @@ function restartGame(){if(confirm(currentLang=='en'?'Restart from beginning?':'R
 function setLang(l){currentLang=l;document.getElementById('st').textContent=TRANSLATIONS[l].st;document.getElementById('sb').textContent=TRANSLATIONS[l].sb;document.getElementById('rb').textContent=TRANSLATIONS[l].rb;document.getElementById('skb').textContent=TRANSLATIONS[l].sk;document.getElementById('le').classList.toggle('ac',l=='en');document.getElementById('lf').classList.toggle('ac',l=='fr');localStorage.setItem('cml',l);}
 function t(key){return TRANSLATIONS[currentLang][key]||key;}
 function closeDialogue(){
+if(typeof closeDialogueNow==='function'){
+closeDialogueNow();
+}else{
 const d=document.getElementById('npcDialogue');
 if(d)d.remove();
-if(window._gameState){
-window._gameState.S='playing';
-}
-if(window._gameNPCs){
-for(let n of window._gameNPCs){n.userData.isTalking=false;}
-}
-if(typeof window._resumeGame==='function'){
-window._resumeGame();
 }
 }
 function buyItem(type){
-if(window._gameState&&window._gameState.coins>=50&&type=='speed'){window._gameState.coins-=50;window._gameState.P.s=0.35;playVictorySound();alert(t('purchased'));}
-else if(window._gameState&&window._gameState.coins>=50&&type=='attack'){window._gameState.coins-=50;window._gameState.P.au=true;playVictorySound();alert(t('purchased'));}
-else if(window._gameState&&window._gameState.coins>=75&&type=='shield'){window._gameState.coins-=75;window._gameState.P.hasShield=true;playVictorySound();alert(t('purchased'));}
+if(type=='speed'&&coins>=50){coins-=50;P.s=0.35;playVictorySound();alert(t('purchased'));}
+else if(type=='attack'&&coins>=50){coins-=50;P.au=true;playVictorySound();alert(t('purchased'));}
+else if(type=='shield'&&coins>=75){coins-=75;P.hasShield=true;playVictorySound();alert(t('purchased'));}
 else{alert(t('insufficient'));}
-closeDialogue();
-if(window._saveGame)window._saveGame();
+if(typeof closeDialogueNow==='function')closeDialogueNow();
+saveGame();
 }
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;document.getElementById('ib').style.display='block';});
 window.addEventListener('appinstalled',function(){deferredPrompt=null;document.getElementById('ib').style.display='none';});
@@ -1010,17 +1005,58 @@ if(window._gameState)window._gameState.S='paused';
 stopMusic();
 const msg=npc.userData.message;
 const dialogue=document.createElement('div');
-dialogue.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.9);color:#FFD700;padding:20px;border-radius:15px;text-align:center;z-index:95;border:3px solid #FFD700;max-width:80%';
+dialogue.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.9);color:#FFD700;padding:20px;border-radius:15px;text-align:center;z-index:95;border:3px solid #FFD700;max-width:80%;pointer-events:auto';
 dialogue.innerHTML='<div style="font-size:40px;margin-bottom:10px">'+(npc.userData.type=='chicken'?'🐔':npc.userData.type=='villager'?'👨‍🌾':'🛒')+'</div><p style="margin-bottom:15px">'+msg+'</p>';
 if(npc.userData.type=='merchant'){
-dialogue.innerHTML+='<button onclick="buyItem(\'speed\')" style="padding:8px 15px;margin:3px;background:#FFD700;border:none;border-radius:10px;cursor:pointer">⚡ '+t('buySpeed')+'</button><br>';
-dialogue.innerHTML+='<button onclick="buyItem(\'attack\')" style="padding:8px 15px;margin:3px;background:#FFD700;border:none;border-radius:10px;cursor:pointer">⚔️ '+t('buyAttack')+'</button><br>';
-dialogue.innerHTML+='<button onclick="buyItem(\'shield\')" style="padding:8px 15px;margin:3px;background:#FFD700;border:none;border-radius:10px;cursor:pointer">🛡️ '+t('buyShield')+'</button>';
+const buySpeedBtn=document.createElement('button');
+buySpeedBtn.textContent='⚡ '+t('buySpeed');
+buySpeedBtn.style.cssText='padding:8px 15px;margin:3px;background:#FFD700;border:none;border-radius:10px;cursor:pointer;display:block;width:100%';
+buySpeedBtn.addEventListener('click',function(){
+if(coins>=50){coins-=50;P.s=0.35;playVictorySound();alert(t('purchased'));}
+else{alert(t('insufficient'));}
+closeDialogueNow();
+saveGame();
+});
+dialogue.appendChild(buySpeedBtn);
+const buyAttackBtn=document.createElement('button');
+buyAttackBtn.textContent='⚔️ '+t('buyAttack');
+buyAttackBtn.style.cssText='padding:8px 15px;margin:3px;background:#FFD700;border:none;border-radius:10px;cursor:pointer;display:block;width:100%';
+buyAttackBtn.addEventListener('click',function(){
+if(coins>=50){coins-=50;P.au=true;playVictorySound();alert(t('purchased'));}
+else{alert(t('insufficient'));}
+closeDialogueNow();
+saveGame();
+});
+dialogue.appendChild(buyAttackBtn);
+const buyShieldBtn=document.createElement('button');
+buyShieldBtn.textContent='🛡️ '+t('buyShield');
+buyShieldBtn.style.cssText='padding:8px 15px;margin:3px;background:#FFD700;border:none;border-radius:10px;cursor:pointer;display:block;width:100%';
+buyShieldBtn.addEventListener('click',function(){
+if(coins>=75){coins-=75;P.hasShield=true;playVictorySound();alert(t('purchased'));}
+else{alert(t('insufficient'));}
+closeDialogueNow();
+saveGame();
+});
+dialogue.appendChild(buyShieldBtn);
 }
-dialogue.innerHTML+='<br><button onclick="closeDialogue()" style="padding:8px 20px;margin-top:10px;background:#333;color:#fff;border:none;border-radius:10px;cursor:pointer">'+t('exit')+'</button>';
+const exitBtn=document.createElement('button');
+exitBtn.textContent=t('exit');
+exitBtn.style.cssText='padding:8px 20px;margin-top:10px;background:#333;color:#fff;border:none;border-radius:10px;cursor:pointer;display:block;width:100%';
+exitBtn.addEventListener('click',function(){
+closeDialogueNow();
+});
+dialogue.appendChild(exitBtn);
 dialogue.id='npcDialogue';
 document.getElementById('w').appendChild(dialogue);
 }
+function closeDialogueNow(){
+const d=document.getElementById('npcDialogue');
+if(d)d.remove();
+S='playing';
+if(window._gameState)window._gameState.S='playing';
+for(let n of npcs){n.userData.isTalking=false;}
+startMusic(L==3||L==7||L==10||L==11?'boss':'farm');
+    }
 function cl__(){
 S='lc';
 saveGame();
