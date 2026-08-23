@@ -615,8 +615,13 @@ pillar.castShadow=true;scene.add(pillar);gameObjects.push(pillar);
 const pillar2=pillar.clone();pillar2.position.z=4;scene.add(pillar2);gameObjects.push(pillar2);
 }
 if(L==3||L==7)boss={mesh:createBoss3D(lw-5,0,0,'w'),x:lw-5,y:0,z:0,hp:200+L*40,mh:200+L*40,ph:1,at:0,ac:40,ac:true};
-else if(L==10)boss={mesh:createBoss3D(lw-5,0,0,'sw'),x:lw-5,y:0,z:0,hp:500,mh:500,ph:1,at:0,ac:30,ac:true};
+else if(L==10)boss={mesh:createBoss3D(lw-5,0,0,'sw'),x:lw-5,y:0,z:0,hp:500,mh:500,ph:1,at:0,ac:30,ac:30,ac:true};
 else boss={mesh:createBoss3D(lw-5,0,0,'bb'),x:lw-5,y:0,z:0,hp:800,mh:800,ph:1,at:0,ac:20,ac:true};
+for(let i=0;i<3;i++){
+let x=10+i*(lw/3);
+let c=createCoin3D(x,5,0,true);
+bonusList.push({mesh:c,x:x,y:5,z:0,c:false});
+}
 }else{
 scene.background=new THREE.Color(0x87CEEB);
 scene.fog=new THREE.Fog(0x87CEEB,30,100);
@@ -650,7 +655,7 @@ enemies.push({mesh:e,x:x,y:0,z:z,hp:40,ac:true,type:type});
 for(let i=0;i<12+L*2;i++){
 let x=3+i*(lw/(12+L*2));
 let z=(i%4-1.5);
-let c=createCoin3D(x,1.5,z);
+let c=createCoin3D(x,1.5,z,false);
 coinList.push({mesh:c,x:x,y:1.5,z:z,c:false});
 }
 for(let i=0;i<3;i++){
