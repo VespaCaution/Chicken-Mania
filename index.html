@@ -7,7 +7,19 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1a0a00">
 <link rel="icon" href="icon.png">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script>
+if(typeof THREE==='undefined'){
+    document.write('<script src="https://unpkg.com/three@0.128.0/build/three.min.js"><\/script>');
+}
+</script>
+<script>
+window.addEventListener('load',function(){
+    if(typeof THREE==='undefined'){
+        document.body.innerHTML='<div style="color:white;text-align:center;padding:50px;font-family:Arial;background:#1a0a00;min-height:100vh"><h1>❌ Failed to load 3D engine</h1><p>Please check your internet connection.</p><button onclick="location.reload()" style="padding:15px 30px;font-size:18px;background:#FFD700;border:none;border-radius:10px;cursor:pointer">🔄 Reload</button></div>';
+    }
+});
+</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 body{background:#1a0a00;display:flex;justify-content:center;align-items:center;height:100vh;font-family:'Comic Sans MS',Arial,sans-serif;overflow:hidden;touch-action:none}
@@ -26,7 +38,7 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 .vr{margin-top:15px;color:rgba(255,255,255,.7);font-size:12px;position:relative;z-index:10}
 #gs{width:100%;height:100%;display:none}
 #w{position:relative;width:100%;height:100%;display:flex;flex-direction:column}
-#c{width:100%;flex:1;background:#87CEEB;touch-action:none;border-bottom:3px solid #8B4513;position:relative}
+#c{width:100%;flex:1;min-height:300px;background:#87CEEB;touch-action:none;border-bottom:3px solid #8B4513;position:relative}
 #t{background:#2a1508;padding:8px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #FFD700;min-height:40px}
 #b{background:#2a1508;padding:10px;display:flex;justify-content:space-between;gap:10px;min-height:100px;border-top:2px solid #FFD700}
 .h{display:flex;align-items:center;gap:5px;color:#fff;font-weight:bold;font-size:14px;background:rgba(0,0,0,.5);padding:5px 10px;border-radius:15px;border:2px solid rgba(255,215,0,.5)}
@@ -99,7 +111,7 @@ const TRANSLATIONS={en:{st:'A Farm Adventure',sb:'▶️ Start Game',rb:'🔄 Re
 currentLang=localStorage.getItem('cml')||'en';setLang(currentLang);
 if(localStorage.getItem('cmsave')){document.getElementById('rb').style.display='block';document.getElementById('sb').textContent='▶️ '+(currentLang=='en'?'Continue':'Continuer');}
 
-// ============ CUTSCENES (DEFINED HERE - BEFORE GAME) ============
+// ============ CUTSCENES ============
 let cuts={1:[['👨‍🌾',currentLang=='fr'?'Fermier Joe : Quelle belle matinée !':'Farmer Joe: What a beautiful morning!'],['🐔',currentLang=='fr'?'Poulet : *cot cot* Bonjour !':'Chicken: *cluck cluck* Hello!'],['🧙',currentLang=='fr'?'Sorcier : HAHAHA ! Je vole ton poulet !':'Wizard: HAHAHA! I\'m taking your chicken!'],['🐔',currentLang=='fr'?'Poulet : AU SECOURS !':'Chicken: HELP ME!'],['👨‍🌾',currentLang=='fr'?'Fermier Joe : Je vais te sauver !':'Farmer Joe: I will save you!']],3:[['🧙',currentLang=='fr'?'Sorcier : Tu ne retrouveras jamais ton poulet !':'Wizard: You\'ll never find your chicken!'],['👨‍🌾',currentLang=='fr'?'Fermier Joe : Je te retrouverai !':'Farmer Joe: I will find you!']],5:[['👨‍🌾',currentLang=='fr'?'Le repaire est proche...':'The lair is near...'],['🐔',currentLang=='fr'?'Poulet : *cot cot* (au loin)':'Chicken: *cluck cluck* (distant)']],7:[['🧙',currentLang=='fr'?'Tu es plus fort que je pensais !':'You\'re stronger than I thought!'],['👨‍🌾',currentLang=='fr'?'Rends-moi mon poulet !':'Give me back my chicken!']],10:[['🔥',currentLang=='fr'?'LE REPAIRE DU SORCIER !':'THE WIZARD\'S LAIR!'],['🧙',currentLang=='fr'?'Ton poulet est à moi !':'Your chicken is mine!'],['🐔',currentLang=='fr'?'Sauve-moi Joe !':'Save me Joe!'],['👨‍🌾',currentLang=='fr'?'JE VAIS TE SAUVER !':'I WILL SAVE YOU!']],11:[['🎉',currentLang=='fr'?'NIVEAU BONUS !':'BONUS LEVEL!'],['👨‍🌾',currentLang=='fr'?'Tu as sauvé le poulet !':'You saved the chicken!'],['🐔',currentLang=='fr'?'Merci Joe ! *cot cot*':'Thank you Joe! *cluck cluck*']]};
 
 // ============ AUDIO SYSTEM ============
@@ -117,9 +129,23 @@ function stopMusic(){if(musicInterval){clearInterval(musicInterval);musicInterva
 
 // ============ INIT GAME ============
 function initGame(){
+if(typeof THREE==='undefined'){
+    alert('3D engine still loading. Please wait a moment and try again.');
+    return;
+}
 if(gameInstance){gameInstance.stop();gameInstance=null;}
+// Check WebGL support
+const testCanvas=document.createElement('canvas');
+const gl=testCanvas.getContext('webgl')||testCanvas.getContext('experimental-webgl');
+if(!gl){
+    alert('Your browser does not support 3D graphics. Please use Chrome or Safari.');
+    return;
+}
 initAudio();
 const container=document.getElementById('c');
+container.style.width='100%';
+container.style.height='100%';
+container.style.minHeight='300px';
 const W=container.clientWidth||500,H=container.clientHeight||420;
 let running=true,animId=null,skipTimer=null;
 let S='playing',L=1,coins=0,tc=0,bc=0,tb=0,deaths=0,tt=0,lt=0,ci=0,cs=[],lC=0,lB=0;
@@ -138,7 +164,13 @@ scene.fog=new THREE.Fog(0x87CEEB,30,100);
 const camera=new THREE.PerspectiveCamera(50,W/H,0.1,200);
 camera.position.set(0,10,20);
 camera.lookAt(0,0,0);
-const renderer=new THREE.WebGLRenderer({antialias:true});
+let renderer;
+try{
+    renderer=new THREE.WebGLRenderer({antialias:true});
+}catch(e){
+    alert('Failed to create 3D renderer. Please try Chrome browser.');
+    return;
+}
 renderer.setSize(W,H);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
 renderer.shadowMap.enabled=true;
@@ -184,7 +216,7 @@ function createTorch(x,z){const torch=new THREE.Group();const pole=new THREE.Mes
 function createWater(x,z,w,d){const waterGeo=new THREE.PlaneGeometry(w,d);const waterMat=new THREE.MeshStandardMaterial({color:0x4488FF,roughness:0.1,metalness:0.5,transparent:true,opacity:0.8});const water=new THREE.Mesh(waterGeo,waterMat);water.rotation.x=-Math.PI/2;water.position.set(x,0.05,z);scene.add(water);waterAreas.push({x:x,z:z,w:w,d:d,mesh:water});return water;}
 
 function createBridge(x,z,w){const bridgeGroup=new THREE.Group();const plankMat=new THREE.MeshStandardMaterial({color:0x8B4513,roughness:0.7});for(let i=0;i<w;i+=0.5){const plank=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.1,1.5),plankMat);plank.position.set(i,0.3,0);bridgeGroup.add(plank);}const railMat=new THREE.MeshStandardMaterial({color:0x654321});const rail1=new THREE.Mesh(new THREE.BoxGeometry(w,0.1,0.1),railMat);rail1.position.set(w/2,0.6,0.6);bridgeGroup.add(rail1);const rail2=rail1.clone();rail2.position.z=-0.6;bridgeGroup.add(rail2);bridgeGroup.position.set(x,0,z);scene.add(bridgeGroup);bridges.push({x:x,z:z,w:w,mesh:bridgeGroup});return bridgeGroup;}
-
+  
 // ============ DETAILED PLAYER ============
 const playerGroup=new THREE.Group();
 const playerParts={};
