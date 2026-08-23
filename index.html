@@ -7,19 +7,6 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1a0a00">
 <link rel="icon" href="icon.png">
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-<script>
-if(typeof THREE==='undefined'){
-    document.write('<script src="https://unpkg.com/three@0.128.0/build/three.min.js"><\/script>');
-}
-</script>
-<script>
-window.addEventListener('load',function(){
-    if(typeof THREE==='undefined'){
-        document.body.innerHTML='<div style="color:white;text-align:center;padding:50px;font-family:Arial;background:#1a0a00;min-height:100vh"><h1>❌ Failed to load 3D engine</h1><p>Please check your internet connection.</p><button onclick="location.reload()" style="padding:15px 30px;font-size:18px;background:#FFD700;border:none;border-radius:10px;cursor:pointer">🔄 Reload</button></div>';
-    }
-});
-</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 body{background:#1a0a00;display:flex;justify-content:center;align-items:center;height:100vh;font-family:'Comic Sans MS',Arial,sans-serif;overflow:hidden;touch-action:none}
@@ -64,7 +51,7 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 <button class="sb" id="sb" style="pointer-events:auto" onclick="startGameBtn()">▶️ Start Game</button>
 <button class="ib" id="ib" style="pointer-events:auto" onclick="installApp()">📲 Install App</button>
 <button class="rb" id="rb" style="pointer-events:auto" onclick="restartGame()">🔄 Restart Game</button>
-<p class="vr">v10.0.0</p>
+<p class="vr">v10.1.0</p>
 </div>
 <div id="gs">
 <div id="w">
@@ -88,7 +75,22 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 </div>
 </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script>
+// Wait for Three.js to load before continuing
+if(typeof THREE==='undefined'){
+    document.write('<script src="https://unpkg.com/three@0.128.0/build/three.min.js"><\/script>');
+}
+</script>
+<script>
+// All game code goes here - wrapped in DOM ready
+document.addEventListener('DOMContentLoaded',function(){
+    if(typeof THREE==='undefined'){
+        alert('Failed to load 3D engine. Please check internet and reload.');
+        return;
+    }
+    // ============ GAME CODE STARTS HERE ============
 
 // ============ GLOBAL VARIABLES ============
 let globalSkipFn=null,deferredPrompt=null,gameInstance=null,currentLang='en';
@@ -102,19 +104,15 @@ function restartGame(){if(confirm(currentLang=='en'?'Restart from beginning?':'R
 function setLang(l){currentLang=l;document.getElementById('st').textContent=TRANSLATIONS[l].st;document.getElementById('sb').textContent=TRANSLATIONS[l].sb;document.getElementById('rb').textContent=TRANSLATIONS[l].rb;document.getElementById('skb').textContent=TRANSLATIONS[l].sk;document.getElementById('le').classList.toggle('ac',l=='en');document.getElementById('lf').classList.toggle('ac',l=='fr');localStorage.setItem('cml',l);}
 function t(key){return TRANSLATIONS[currentLang][key]||key;}
 
-// ============ PWA ============
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;document.getElementById('ib').style.display='block';});
 window.addEventListener('appinstalled',function(){deferredPrompt=null;document.getElementById('ib').style.display='none';});
 
-// ============ TRANSLATIONS ============
 const TRANSLATIONS={en:{st:'A Farm Adventure',sb:'▶️ Start Game',rb:'🔄 Restart Game',lv:'Level',sk:'Skip ⏭️',cm:'🎉 CONGRATULATIONS! 🎉',tc:'Total Coins',bn:'Bonus Coins',dt:'Deaths',tm:'Time',needBonus:'You need all 30 bonus coins!',quest1:'Quest',quest2:'Defeat enemies',quest3:'Collect bonus coins',quest4:'Rescue the chicken!',shop:'🛒 Shop',buySpeed:'Speed Boost (50)',buyAttack:'Attack Boost (50)',buyShield:'Shield (75)',insufficient:'Not enough coins!',purchased:'Purchased!',pause:'Paused',resume:'Resume',talk:'Talk',exit:'Exit',hint1:'The wizard went to the mountains!',hint2:'Beware of robots!',hint3:'Collect golden stars!'},fr:{st:'Une Aventure à la Ferme',sb:'▶️ Commencer',rb:'🔄 Recommencer',lv:'Niveau',sk:'Passer ⏭️',cm:'🎉 FÉLICITATIONS ! 🎉',tc:'Pièces Totales',bn:'Pièces Bonus',dt:'Morts',tm:'Temps',needBonus:'Il vous faut 30 pièces bonus !',quest1:'Quête',quest2:'Vaincre les ennemis',quest3:'Collecter les bonus',quest4:'Sauver le poulet !',shop:'🛒 Boutique',buySpeed:'Boost Vitesse (50)',buyAttack:'Boost Attaque (50)',buyShield:'Bouclier (75)',insufficient:'Pas assez !',purchased:'Acheté !',pause:'Pause',resume:'Reprendre',talk:'Parler',exit:'Sortir',hint1:'Le sorcier est aux montagnes !',hint2:'Attention aux robots !',hint3:'Collectez les étoiles !'}};
 currentLang=localStorage.getItem('cml')||'en';setLang(currentLang);
 if(localStorage.getItem('cmsave')){document.getElementById('rb').style.display='block';document.getElementById('sb').textContent='▶️ '+(currentLang=='en'?'Continue':'Continuer');}
 
-// ============ CUTSCENES ============
 let cuts={1:[['👨‍🌾',currentLang=='fr'?'Fermier Joe : Quelle belle matinée !':'Farmer Joe: What a beautiful morning!'],['🐔',currentLang=='fr'?'Poulet : *cot cot* Bonjour !':'Chicken: *cluck cluck* Hello!'],['🧙',currentLang=='fr'?'Sorcier : HAHAHA ! Je vole ton poulet !':'Wizard: HAHAHA! I\'m taking your chicken!'],['🐔',currentLang=='fr'?'Poulet : AU SECOURS !':'Chicken: HELP ME!'],['👨‍🌾',currentLang=='fr'?'Fermier Joe : Je vais te sauver !':'Farmer Joe: I will save you!']],3:[['🧙',currentLang=='fr'?'Sorcier : Tu ne retrouveras jamais ton poulet !':'Wizard: You\'ll never find your chicken!'],['👨‍🌾',currentLang=='fr'?'Fermier Joe : Je te retrouverai !':'Farmer Joe: I will find you!']],5:[['👨‍🌾',currentLang=='fr'?'Le repaire est proche...':'The lair is near...'],['🐔',currentLang=='fr'?'Poulet : *cot cot* (au loin)':'Chicken: *cluck cluck* (distant)']],7:[['🧙',currentLang=='fr'?'Tu es plus fort que je pensais !':'You\'re stronger than I thought!'],['👨‍🌾',currentLang=='fr'?'Rends-moi mon poulet !':'Give me back my chicken!']],10:[['🔥',currentLang=='fr'?'LE REPAIRE DU SORCIER !':'THE WIZARD\'S LAIR!'],['🧙',currentLang=='fr'?'Ton poulet est à moi !':'Your chicken is mine!'],['🐔',currentLang=='fr'?'Sauve-moi Joe !':'Save me Joe!'],['👨‍🌾',currentLang=='fr'?'JE VAIS TE SAUVER !':'I WILL SAVE YOU!']],11:[['🎉',currentLang=='fr'?'NIVEAU BONUS !':'BONUS LEVEL!'],['👨‍🌾',currentLang=='fr'?'Tu as sauvé le poulet !':'You saved the chicken!'],['🐔',currentLang=='fr'?'Merci Joe ! *cot cot*':'Thank you Joe! *cluck cluck*']]};
 
-// ============ AUDIO SYSTEM ============
 function initAudio(){if(!audioContext){try{audioContext=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}}
 function playTone(freq,duration,type,volume){if(!audioContext)return;try{const osc=audioContext.createOscillator();const gain=audioContext.createGain();osc.type=type||'square';osc.frequency.setValueAtTime(freq,audioContext.currentTime);gain.gain.setValueAtTime(volume||0.1,audioContext.currentTime);gain.gain.exponentialRampToValueAtTime(0.001,audioContext.currentTime+duration);osc.connect(gain);gain.connect(audioContext.destination);osc.start();osc.stop(audioContext.currentTime+duration);}catch(e){}}
 function playJumpSound(){playTone(400,0.1,'sine',0.15);playTone(600,0.1,'sine',0.1);}
@@ -129,94 +127,80 @@ function stopMusic(){if(musicInterval){clearInterval(musicInterval);musicInterva
 
 // ============ INIT GAME ============
 function initGame(){
-if(typeof THREE==='undefined'){
-    alert('3D engine still loading. Please wait a moment and try again.');
-    return;
-}
-if(gameInstance){gameInstance.stop();gameInstance=null;}
-// Check WebGL support
-const testCanvas=document.createElement('canvas');
-const gl=testCanvas.getContext('webgl')||testCanvas.getContext('experimental-webgl');
-if(!gl){
-    alert('Your browser does not support 3D graphics. Please use Chrome or Safari.');
-    return;
-}
-initAudio();
-const container=document.getElementById('c');
-container.style.width='100%';
-container.style.height='100%';
-container.style.minHeight='300px';
-const W=container.clientWidth||500,H=container.clientHeight||420;
-let running=true,animId=null,skipTimer=null;
-let S='playing',L=1,coins=0,tc=0,bc=0,tb=0,deaths=0,tt=0,lt=0,ci=0,cs=[],lC=0,lB=0;
-let cutscenesShown=JSON.parse(localStorage.getItem('cmcuts')||'{}');
-let questLog=[],checkpointX=0,hasCheckpoint=false;
-const I={left:false,right:false,forward:false,backward:false,jump:false,attack:false,pause:false};
-const P={x:0,y:1,z:0,vx:0,vy:0,vz:0,s:0.25,j:0.5,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,dj:false,dja:false,au:false,su:false,attackCombo:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false};
-let platforms=[],enemies=[],coinList=[],bonusList=[],healthList=[],projectiles=[],particles=[],boss=null,lw=0,gx=0,weatherEffects=[],decorations=[],npcs=[],powerUps=[],bridges=[],waterAreas=[];
-const save=JSON.parse(localStorage.getItem('cmsave')||'null');
-if(save){L=save.L||1;coins=save.coins||0;tc=save.tc||0;bc=save.bc||0;tb=save.tb||0;deaths=save.deaths||0;tt=save.tt||0;}
+    if(typeof THREE==='undefined'){alert('3D engine not loaded. Reload page.');return;}
+    if(gameInstance){gameInstance.stop();gameInstance=null;}
+    const testCanvas=document.createElement('canvas');
+    const gl=testCanvas.getContext('webgl')||testCanvas.getContext('experimental-webgl');
+    if(!gl){alert('WebGL not supported. Use Chrome or Safari.');return;}
+    initAudio();
+    const container=document.getElementById('c');
+    if(!container){alert('Canvas container not found!');return;}
+    container.style.width='100%';
+    container.style.height='100%';
+    container.style.minHeight='300px';
+    const W=container.clientWidth||500;
+    const H=container.clientHeight||420;
+    let running=true,animId=null,skipTimer=null;
+    let S='playing',L=1,coins=0,tc=0,bc=0,tb=0,deaths=0,tt=0,lt=0,ci=0,cs=[],lC=0,lB=0;
+    let cutscenesShown=JSON.parse(localStorage.getItem('cmcuts')||'{}');
+    let questLog=[],checkpointX=0,hasCheckpoint=false;
+    const I={left:false,right:false,forward:false,backward:false,jump:false,attack:false,pause:false};
+    const P={x:0,y:1,z:0,vx:0,vy:0,vz:0,s:0.25,j:0.5,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,dj:false,dja:false,au:false,su:false,attackCombo:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false};
+    let platforms=[],enemies=[],coinList=[],bonusList=[],healthList=[],projectiles=[],particles=[],boss=null,lw=0,gx=0,weatherEffects=[],decorations=[],npcs=[],powerUps=[],bridges=[],waterAreas=[];
+    const save=JSON.parse(localStorage.getItem('cmsave')||'null');
+    if(save){L=save.L||1;coins=save.coins||0;tc=save.tc||0;bc=save.bc||0;tb=save.tb||0;deaths=save.deaths||0;tt=save.tt||0;}
 
-// ============ SCENE ============
-const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x87CEEB);
-scene.fog=new THREE.Fog(0x87CEEB,30,100);
-const camera=new THREE.PerspectiveCamera(50,W/H,0.1,200);
-camera.position.set(0,10,20);
-camera.lookAt(0,0,0);
-let renderer;
-try{
-    renderer=new THREE.WebGLRenderer({antialias:true});
-}catch(e){
-    alert('Failed to create 3D renderer. Please try Chrome browser.');
-    return;
-}
-renderer.setSize(W,H);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-renderer.shadowMap.enabled=true;
-renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-container.appendChild(renderer.domElement);
+    // Scene
+    const scene=new THREE.Scene();
+    scene.background=new THREE.Color(0x87CEEB);
+    scene.fog=new THREE.Fog(0x87CEEB,30,100);
+    const camera=new THREE.PerspectiveCamera(50,W/H,0.1,200);
+    camera.position.set(0,10,20);
+    camera.lookAt(0,0,0);
+    let renderer;
+    try{renderer=new THREE.WebGLRenderer({antialias:true});}
+    catch(e){alert('Renderer failed: '+e.message);return;}
+    renderer.setSize(W,H);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+    renderer.shadowMap.enabled=true;
+    renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
 
-const ambient=new THREE.AmbientLight(0xffffff,0.5);
-scene.add(ambient);
-const sun=new THREE.DirectionalLight(0xffffff,0.9);
-sun.position.set(20,30,10);sun.castShadow=true;
-sun.shadow.camera.left=-40;sun.shadow.camera.right=40;sun.shadow.camera.top=40;sun.shadow.camera.bottom=-40;sun.shadow.camera.far=100;
-sun.shadow.mapSize.width=2048;sun.shadow.mapSize.height=2048;
-scene.add(sun);
-scene.add(new THREE.HemisphereLight(0x87CEEB,0x228B22,0.3));
+    const ambient=new THREE.AmbientLight(0xffffff,0.5);scene.add(ambient);
+    const sun=new THREE.DirectionalLight(0xffffff,0.9);sun.position.set(20,30,10);sun.castShadow=true;
+    sun.shadow.camera.left=-40;sun.shadow.camera.right=40;sun.shadow.camera.top=40;sun.shadow.camera.bottom=-40;sun.shadow.camera.far=100;
+    sun.shadow.mapSize.width=2048;sun.shadow.mapSize.height=2048;scene.add(sun);
+    scene.add(new THREE.HemisphereLight(0x87CEEB,0x228B22,0.3));
+    const sky=new THREE.Mesh(new THREE.SphereGeometry(100,32,32),new THREE.MeshBasicMaterial({color:0x87CEEB,side:THREE.BackSide}));scene.add(sky);
+    
+    // Clouds
+    const cloudMat=new THREE.MeshStandardMaterial({color:0xFFFFFF,roughness:0.9});
+    for(let i=0;i<15;i++){const cloud=new THREE.Group();const c1=new THREE.Mesh(new THREE.SphereGeometry(2+Math.random(),8,8),cloudMat);cloud.add(c1);const c2=new THREE.Mesh(new THREE.SphereGeometry(1.5+Math.random(),8,8),cloudMat);c2.position.set(2,0.5,0);cloud.add(c2);const c3=new THREE.Mesh(new THREE.SphereGeometry(1.8+Math.random(),8,8),cloudMat);c3.position.set(-1.5,0.3,0.5);cloud.add(c3);cloud.position.set(Math.random()*80-40,20+Math.random()*10,Math.random()*60-30);scene.add(cloud);decorations.push(cloud);}
+    
+    // Mountains
+    const mountainMat=new THREE.MeshStandardMaterial({color:0x666666,roughness:0.8});
+    for(let i=0;i<20;i++){const m=new THREE.Mesh(new THREE.ConeGeometry(5+Math.random()*8,15+Math.random()*10,8),mountainMat);m.position.set(i*10-50,5,-40+Math.random()*10);scene.add(m);const snow=new THREE.Mesh(new THREE.ConeGeometry(m.geometry.parameters.radius*0.3,m.geometry.parameters.height*0.2,8),new THREE.MeshStandardMaterial({color:0xFFFFFF}));snow.position.set(m.position.x,m.position.y+m.geometry.parameters.height*0.4,m.position.z);scene.add(snow);}
+    
+    // Ground
+    const ground=new THREE.Mesh(new THREE.PlaneGeometry(300,300),new THREE.MeshStandardMaterial({color:0x8B4513,roughness:0.9}));
+    ground.rotation.x=-Math.PI/2;ground.position.y=0;ground.receiveShadow=true;scene.add(ground);
+    
+    // Grass
+    const grassMat=new THREE.MeshStandardMaterial({color:0x228B22,roughness:0.8});
+    for(let i=0;i<80;i++){const g=new THREE.Mesh(new THREE.CircleGeometry(1.5+Math.random()*2.5,8),grassMat);g.rotation.x=-Math.PI/2;g.position.set(Math.random()*100-50,0.01,Math.random()*100-50);scene.add(g);}
+    
+    // Flowers
+    const flowerColors=[0xFF69B4,0xFFD700,0xFF4500,0xFF6347,0x9370DB];
+    for(let i=0;i<40;i++){const flower=new THREE.Group();const stem=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,0.5,6),new THREE.MeshStandardMaterial({color:0x228B22}));stem.position.y=0.25;flower.add(stem);const petal=new THREE.Mesh(new THREE.SphereGeometry(0.15,6,6),new THREE.MeshStandardMaterial({color:flowerColors[i%5]}));petal.position.y=0.5;flower.add(petal);flower.position.set(Math.random()*80-40,0,Math.random()*80-40);scene.add(flower);decorations.push(flower);}
+    
+    function createTree(x,z,far){const tree=new THREE.Group();const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.5,3,8),new THREE.MeshStandardMaterial({color:0x654321,roughness:0.9}));trunk.position.y=1.5;tree.add(trunk);const leafMat=new THREE.MeshStandardMaterial({color:far?'#1a5a1a':'#228B22',roughness:0.7});const size=far?4:2.5;const leaf1=new THREE.Mesh(new THREE.SphereGeometry(size,10,10),leafMat);leaf1.position.y=4;leaf1.castShadow=true;tree.add(leaf1);const leaf2=new THREE.Mesh(new THREE.SphereGeometry(size*0.7,8,8),leafMat);leaf2.position.set(size*0.5,3.5,size*0.3);tree.add(leaf2);const leaf3=new THREE.Mesh(new THREE.SphereGeometry(size*0.6,8,8),leafMat);leaf3.position.set(-size*0.4,4,size*0.2);tree.add(leaf3);const leaf4=new THREE.Mesh(new THREE.SphereGeometry(size*0.5,8,8),leafMat);leaf4.position.set(size*0.2,4.5,-size*0.3);tree.add(leaf4);tree.position.set(x,0,z);scene.add(tree);return tree;}
+    
+    function createTorch(x,z){const torch=new THREE.Group();const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.15,2,6),new THREE.MeshStandardMaterial({color:0x8B4513}));pole.position.y=1;torch.add(pole);const flame=new THREE.Mesh(new THREE.SphereGeometry(0.35,10,10),new THREE.MeshStandardMaterial({color:0xFF6600,emissive:0xFF4400,emissiveIntensity:2}));flame.position.y=2.3;torch.add(flame);torch.userData={flame:flame};const glow=new THREE.Mesh(new THREE.SphereGeometry(0.5,8,8),new THREE.MeshBasicMaterial({color:0xFF6600,transparent:true,opacity:0.3}));glow.position.y=2.3;torch.add(glow);torch.position.set(x,0,z);scene.add(torch);decorations.push(torch);return torch;}
+    
+    function createWater(x,z,w,d){const waterGeo=new THREE.PlaneGeometry(w,d);const waterMat=new THREE.MeshStandardMaterial({color:0x4488FF,roughness:0.1,metalness:0.5,transparent:true,opacity:0.8});const water=new THREE.Mesh(waterGeo,waterMat);water.rotation.x=-Math.PI/2;water.position.set(x,0.05,z);scene.add(water);waterAreas.push({x:x,z:z,w:w,d:d,mesh:water});return water;}
+    
+    function createBridge(x,z,w){const bridgeGroup=new THREE.Group();const plankMat=new THREE.MeshStandardMaterial({color:0x8B4513,roughness:0.7});for(let i=0;i<w;i+=0.5){const plank=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.1,1.5),plankMat);plank.position.set(i,0.3,0);bridgeGroup.add(plank);}const railMat=new THREE.MeshStandardMaterial({color:0x654321});const rail1=new THREE.Mesh(new THREE.BoxGeometry(w,0.1,0.1),railMat);rail1.position.set(w/2,0.6,0.6);bridgeGroup.add(rail1);const rail2=rail1.clone();rail2.position.z=-0.6;bridgeGroup.add(rail2);bridgeGroup.position.set(x,0,z);scene.add(bridgeGroup);bridges.push({x:x,z:z,w:w,mesh:bridgeGroup});return bridgeGroup;}
 
-const sky=new THREE.Mesh(new THREE.SphereGeometry(100,32,32),new THREE.MeshBasicMaterial({color:0x87CEEB,side:THREE.BackSide}));
-scene.add(sky);
-
-// Clouds
-const cloudMat=new THREE.MeshStandardMaterial({color:0xFFFFFF,roughness:0.9});
-for(let i=0;i<15;i++){const cloud=new THREE.Group();const c1=new THREE.Mesh(new THREE.SphereGeometry(2+Math.random(),8,8),cloudMat);cloud.add(c1);const c2=new THREE.Mesh(new THREE.SphereGeometry(1.5+Math.random(),8,8),cloudMat);c2.position.set(2,0.5,0);cloud.add(c2);const c3=new THREE.Mesh(new THREE.SphereGeometry(1.8+Math.random(),8,8),cloudMat);c3.position.set(-1.5,0.3,0.5);cloud.add(c3);cloud.position.set(Math.random()*80-40,20+Math.random()*10,Math.random()*60-30);scene.add(cloud);decorations.push(cloud);}
-
-// Mountains
-const mountainMat=new THREE.MeshStandardMaterial({color:0x666666,roughness:0.8});
-for(let i=0;i<20;i++){const m=new THREE.Mesh(new THREE.ConeGeometry(5+Math.random()*8,15+Math.random()*10,8),mountainMat);m.position.set(i*10-50,5,-40+Math.random()*10);scene.add(m);const snow=new THREE.Mesh(new THREE.ConeGeometry(m.geometry.parameters.radius*0.3,m.geometry.parameters.height*0.2,8),new THREE.MeshStandardMaterial({color:0xFFFFFF}));snow.position.set(m.position.x,m.position.y+m.geometry.parameters.height*0.4,m.position.z);scene.add(snow);}
-
-// Ground
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(300,300),new THREE.MeshStandardMaterial({color:0x8B4513,roughness:0.9}));
-ground.rotation.x=-Math.PI/2;ground.position.y=0;ground.receiveShadow=true;scene.add(ground);
-
-// Grass
-const grassMat=new THREE.MeshStandardMaterial({color:0x228B22,roughness:0.8});
-for(let i=0;i<80;i++){const g=new THREE.Mesh(new THREE.CircleGeometry(1.5+Math.random()*2.5,8),grassMat);g.rotation.x=-Math.PI/2;g.position.set(Math.random()*100-50,0.01,Math.random()*100-50);scene.add(g);}
-
-// Flowers
-const flowerColors=[0xFF69B4,0xFFD700,0xFF4500,0xFF6347,0x9370DB];
-for(let i=0;i<40;i++){const flower=new THREE.Group();const stem=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,0.5,6),new THREE.MeshStandardMaterial({color:0x228B22}));stem.position.y=0.25;flower.add(stem);const petal=new THREE.Mesh(new THREE.SphereGeometry(0.15,6,6),new THREE.MeshStandardMaterial({color:flowerColors[i%5]}));petal.position.y=0.5;flower.add(petal);flower.position.set(Math.random()*80-40,0,Math.random()*80-40);scene.add(flower);decorations.push(flower);}
-
-function createTree(x,z,far){const tree=new THREE.Group();const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.5,3,8),new THREE.MeshStandardMaterial({color:0x654321,roughness:0.9}));trunk.position.y=1.5;tree.add(trunk);const leafMat=new THREE.MeshStandardMaterial({color:far?'#1a5a1a':'#228B22',roughness:0.7});const size=far?4:2.5;const leaf1=new THREE.Mesh(new THREE.SphereGeometry(size,10,10),leafMat);leaf1.position.y=4;leaf1.castShadow=true;tree.add(leaf1);const leaf2=new THREE.Mesh(new THREE.SphereGeometry(size*0.7,8,8),leafMat);leaf2.position.set(size*0.5,3.5,size*0.3);tree.add(leaf2);const leaf3=new THREE.Mesh(new THREE.SphereGeometry(size*0.6,8,8),leafMat);leaf3.position.set(-size*0.4,4,size*0.2);tree.add(leaf3);const leaf4=new THREE.Mesh(new THREE.SphereGeometry(size*0.5,8,8),leafMat);leaf4.position.set(size*0.2,4.5,-size*0.3);tree.add(leaf4);tree.position.set(x,0,z);scene.add(tree);return tree;}
-
-function createTorch(x,z){const torch=new THREE.Group();const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.15,2,6),new THREE.MeshStandardMaterial({color:0x8B4513}));pole.position.y=1;torch.add(pole);const flame=new THREE.Mesh(new THREE.SphereGeometry(0.35,10,10),new THREE.MeshStandardMaterial({color:0xFF6600,emissive:0xFF4400,emissiveIntensity:2}));flame.position.y=2.3;torch.add(flame);torch.userData={flame:flame};const glow=new THREE.Mesh(new THREE.SphereGeometry(0.5,8,8),new THREE.MeshBasicMaterial({color:0xFF6600,transparent:true,opacity:0.3}));glow.position.y=2.3;torch.add(glow);torch.position.set(x,0,z);scene.add(torch);decorations.push(torch);return torch;}
-
-function createWater(x,z,w,d){const waterGeo=new THREE.PlaneGeometry(w,d);const waterMat=new THREE.MeshStandardMaterial({color:0x4488FF,roughness:0.1,metalness:0.5,transparent:true,opacity:0.8});const water=new THREE.Mesh(waterGeo,waterMat);water.rotation.x=-Math.PI/2;water.position.set(x,0.05,z);scene.add(water);waterAreas.push({x:x,z:z,w:w,d:d,mesh:water});return water;}
-
-function createBridge(x,z,w){const bridgeGroup=new THREE.Group();const plankMat=new THREE.MeshStandardMaterial({color:0x8B4513,roughness:0.7});for(let i=0;i<w;i+=0.5){const plank=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.1,1.5),plankMat);plank.position.set(i,0.3,0);bridgeGroup.add(plank);}const railMat=new THREE.MeshStandardMaterial({color:0x654321});const rail1=new THREE.Mesh(new THREE.BoxGeometry(w,0.1,0.1),railMat);rail1.position.set(w/2,0.6,0.6);bridgeGroup.add(rail1);const rail2=rail1.clone();rail2.position.z=-0.6;bridgeGroup.add(rail2);bridgeGroup.position.set(x,0,z);scene.add(bridgeGroup);bridges.push({x:x,z:z,w:w,mesh:bridgeGroup});return bridgeGroup;}
-  
 // ============ DETAILED PLAYER ============
 const playerGroup=new THREE.Group();
 const playerParts={};
@@ -1469,6 +1453,8 @@ console.log('📱 Mobile: Use on-screen D-pad and buttons');
 console.log('💾 Progress saves automatically');
 console.log('🔊 Audio requires user interaction first (tap Start)');
 
+    // Close DOMContentLoaded
+});
 </script>
 </body>
 </html>
