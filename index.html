@@ -90,8 +90,23 @@ function startGameBtn(){document.getElementById('ss').style.display='none';docum
 function restartGame(){if(confirm(currentLang=='en'?'Restart from beginning?':'Recommencer ?')){localStorage.removeItem('cmsave');localStorage.removeItem('cmcuts');location.reload();}}
 function setLang(l){currentLang=l;document.getElementById('st').textContent=TRANSLATIONS[l].st;document.getElementById('sb').textContent=TRANSLATIONS[l].sb;document.getElementById('rb').textContent=TRANSLATIONS[l].rb;document.getElementById('skb').textContent=TRANSLATIONS[l].sk;document.getElementById('le').classList.toggle('ac',l=='en');document.getElementById('lf').classList.toggle('ac',l=='fr');localStorage.setItem('cml',l);}
 function t(key){return TRANSLATIONS[currentLang][key]||key;}
-function closeDialogue(){const d=document.getElementById('npcDialogue');if(d)d.remove();if(typeof S!=='undefined')S='playing';if(typeof npcs!=='undefined'){for(let n of npcs){n.userData.isTalking=false;}}if(typeof startMusic==='function'){startMusic(typeof L!=='undefined'&&(L==3||L==7||L==10||L==11)?'boss':'farm');}}
-function buyItem(type){if(type=='speed'&&coins>=50){coins-=50;P.s=0.35;playVictorySound();alert(t('purchased'));}else if(type=='attack'&&coins>=50){coins-=50;P.au=true;playVictorySound();alert(t('purchased'));}else if(type=='shield'&&coins>=75){coins-=75;P.hasShield=true;playVictorySound();alert(t('purchased'));}else{alert(t('insufficient'));}closeDialogue();saveGame();}
+function closeDialogue(){
+const d=document.getElementById('npcDialogue');
+if(d)d.remove();
+if(window._gameState){window._gameState.S='playing';window._gameState.P.i=0;}
+if(window._gameNPCs){for(let n of window._gameNPCs){n.userData.isTalking=false;}}
+if(typeof startMusic==='function'){
+startMusic(window._gameState&&(window._gameState.L==3||window._gameState.L==7||window._gameState.L==10||window._gameState.L==11)?'boss':'farm');
+}
+}
+function buyItem(type){
+if(window._gameState&&window._gameState.coins>=50&&type=='speed'){window._gameState.coins-=50;window._gameState.P.s=0.35;playVictorySound();alert(t('purchased'));}
+else if(window._gameState&&window._gameState.coins>=50&&type=='attack'){window._gameState.coins-=50;window._gameState.P.au=true;playVictorySound();alert(t('purchased'));}
+else if(window._gameState&&window._gameState.coins>=75&&type=='shield'){window._gameState.coins-=75;window._gameState.P.hasShield=true;playVictorySound();alert(t('purchased'));}
+else{alert(t('insufficient'));}
+closeDialogue();
+if(window._saveGame)window._saveGame();
+}
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;document.getElementById('ib').style.display='block';});
 window.addEventListener('appinstalled',function(){deferredPrompt=null;document.getElementById('ib').style.display='none';});
 const TRANSLATIONS={en:{st:'A Farm Adventure',sb:'▶️ Start Game',rb:'🔄 Restart Game',lv:'Level',sk:'Skip ⏭️',cm:'🎉 CONGRATULATIONS! 🎉',tc:'Total Coins',bn:'Bonus Coins',dt:'Deaths',tm:'Time',needBonus:'You need all 30 bonus coins!',quest1:'Quest',quest2:'Defeat enemies',quest3:'Collect bonus coins',quest4:'Rescue the chicken!',shop:'🛒 Shop',buySpeed:'Speed Boost (50)',buyAttack:'Attack Boost (50)',buyShield:'Shield (75)',insufficient:'Not enough coins!',purchased:'Purchased!',pause:'Paused',resume:'Resume',talk:'Talk',exit:'Exit',hint1:'The wizard went to the mountains!',hint2:'Beware of robots!',hint3:'Collect golden stars!'},fr:{st:'Une Aventure à la Ferme',sb:'▶️ Commencer',rb:'🔄 Recommencer',lv:'Niveau',sk:'Passer ⏭️',cm:'🎉 FÉLICITATIONS ! 🎉',tc:'Pièces Totales',bn:'Pièces Bonus',dt:'Morts',tm:'Temps',needBonus:'Il vous faut 30 pièces bonus !',quest1:'Quête',quest2:'Vaincre les ennemis',quest3:'Collecter les bonus',quest4:'Sauver le poulet !',shop:'🛒 Boutique',buySpeed:'Boost Vitesse (50)',buyAttack:'Boost Attaque (50)',buyShield:'Bouclier (75)',insufficient:'Pas assez !',purchased:'Acheté !',pause:'Pause',resume:'Reprendre',talk:'Parler',exit:'Sortir',hint1:'Le sorcier est aux montagnes !',hint2:'Attention aux robots !',hint3:'Collectez les étoiles !'}};
@@ -130,8 +145,12 @@ let questLog=[],checkpointX=0,hasCheckpoint=false;
 const I={left:false,right:false,forward:false,backward:false,jump:false,attack:false,pause:false};
 const P={x:0,y:1,z:0,vx:0,vy:0,vz:0,s:0.25,j:0.5,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,dj:false,dja:false,au:false,su:false,attackCombo:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false};
 let platforms=[],enemies=[],coinList=[],bonusList=[],healthList=[],projectiles=[],particles=[],boss=null,lw=0,gx=0,weatherEffects=[],decorations=[],npcs=[],powerUps=[],bridges=[],waterAreas=[],gameObjects=[];
+window._gameState={S:S,L:L,coins:coins,P:P};
+window._gameNPCs=npcs;
+window._saveGame=saveGame;
 const save=JSON.parse(localStorage.getItem('cmsave')||'null');
 if(save){L=save.L||1;coins=save.coins||0;tc=save.tc||0;bc=save.bc||0;tb=save.tb||0;deaths=save.deaths||0;tt=save.tt||0;}
+window._gameState.S=S;window._gameState.L=L;window._gameState.coins=coins;
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x87CEEB);
 scene.fog=new THREE.Fog(0x87CEEB,30,100);
@@ -983,6 +1002,7 @@ function showNPCDialogue(npc){
 if(npc.userData.isTalking)return;
 npc.userData.isTalking=true;
 S='paused';
+window._gameState.S='paused';
 stopMusic();
 const msg=npc.userData.message;
 const dialogue=document.createElement('div');
