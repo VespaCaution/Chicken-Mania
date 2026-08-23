@@ -82,10 +82,8 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 if(typeof THREE==='undefined'){
     document.write('<script src="https://unpkg.com/three@0.128.0/build/three.min.js"><\/script>');
 }
-</script>
 <script>
 // All game code goes here - wrapped in DOM ready
-document.addEventListener('DOMContentLoaded',function(){
     if(typeof THREE==='undefined'){
         alert('Failed to load 3D engine. Please check internet and reload.');
         return;
@@ -1452,9 +1450,7 @@ console.log('🎮 Controls: Arrow keys/WASD to move, Space/J to jump, X/K to att
 console.log('📱 Mobile: Use on-screen D-pad and buttons');
 console.log('💾 Progress saves automatically');
 console.log('🔊 Audio requires user interaction first (tap Start)');
-
-    // Close DOMContentLoaded
-});
+  
 </script>
 </body>
 </html>
