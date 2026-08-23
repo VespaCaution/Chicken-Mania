@@ -112,16 +112,60 @@ const TRANSLATIONS={en:{st:'A Farm Adventure',sb:'▶️ Start Game',rb:'🔄 Re
 currentLang=localStorage.getItem('cml')||'en';setLang(currentLang);
 if(localStorage.getItem('cmsave')){document.getElementById('rb').style.display='block';document.getElementById('sb').textContent='▶️ '+(currentLang=='en'?'Continue':'Continuer');}
 let cuts={1:[['👨‍🌾',currentLang=='fr'?'Fermier Joe : Quelle belle matinée !':'Farmer Joe: What a beautiful morning!'],['🐔',currentLang=='fr'?'Poulet : *cot cot* Bonjour !':'Chicken: *cluck cluck* Hello!'],['🧙',currentLang=='fr'?'Sorcier : HAHAHA ! Je vole ton poulet !':'Wizard: HAHAHA! I\'m taking your chicken!'],['🐔',currentLang=='fr'?'Poulet : AU SECOURS !':'Chicken: HELP ME!'],['👨‍🌾',currentLang=='fr'?'Fermier Joe : Je vais te sauver !':'Farmer Joe: I will save you!']],3:[['🧙',currentLang=='fr'?'Sorcier : Tu ne retrouveras jamais ton poulet !':'Wizard: You\'ll never find your chicken!'],['👨‍🌾',currentLang=='fr'?'Fermier Joe : Je te retrouverai !':'Farmer Joe: I will find you!']],5:[['👨‍🌾',currentLang=='fr'?'Le repaire est proche...':'The lair is near...'],['🐔',currentLang=='fr'?'Poulet : *cot cot* (au loin)':'Chicken: *cluck cluck* (distant)']],7:[['🧙',currentLang=='fr'?'Tu es plus fort que je pensais !':'You\'re stronger than I thought!'],['👨‍🌾',currentLang=='fr'?'Rends-moi mon poulet !':'Give me back my chicken!']],10:[['🔥',currentLang=='fr'?'LE REPAIRE DU SORCIER !':'THE WIZARD\'S LAIR!'],['🧙',currentLang=='fr'?'Ton poulet est à moi !':'Your chicken is mine!'],['🐔',currentLang=='fr'?'Sauve-moi Joe !':'Save me Joe!'],['👨‍🌾',currentLang=='fr'?'JE VAIS TE SAUVER !':'I WILL SAVE YOU!']],11:[['🎉',currentLang=='fr'?'NIVEAU BONUS !':'BONUS LEVEL!'],['👨‍🌾',currentLang=='fr'?'Tu as sauvé le poulet !':'You saved the chicken!'],['🐔',currentLang=='fr'?'Merci Joe ! *cot cot*':'Thank you Joe! *cluck cluck*']]};
+let audioContext=null,musicInterval=null,currentMusic=null,currentBeat=0;
 function initAudio(){if(!audioContext){try{audioContext=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}}
-function playTone(freq,duration,type,volume){if(!audioContext)return;try{const osc=audioContext.createOscillator();const gain=audioContext.createGain();osc.type=type||'square';osc.frequency.setValueAtTime(freq,audioContext.currentTime);gain.gain.setValueAtTime(volume||0.1,audioContext.currentTime);gain.gain.exponentialRampToValueAtTime(0.001,audioContext.currentTime+duration);osc.connect(gain);gain.connect(audioContext.destination);osc.start();osc.stop(audioContext.currentTime+duration);}catch(e){}}
-function playJumpSound(){playTone(400,0.1,'sine',0.15);playTone(600,0.1,'sine',0.1);}
-function playAttackSound(){playTone(200,0.08,'sawtooth',0.15);}
-function playCoinSound(){playTone(800,0.08,'square',0.1);playTone(1200,0.1,'square',0.1);}
-function playHitSound(){playTone(150,0.15,'sawtooth',0.2);}
-function playDeathSound(){playTone(300,0.2,'sawtooth',0.2);playTone(150,0.3,'sawtooth',0.15);}
-function playBossSound(){playTone(100,0.3,'sawtooth',0.25);}
-function playVictorySound(){playTone(500,0.1,'square',0.15);playTone(600,0.1,'square',0.15);playTone(800,0.1,'square',0.15);playTone(1000,0.2,'square',0.2);}
-function startMusic(type){if(!audioContext)initAudio();if(!audioContext)return;stopMusic();currentMusic=type;let beat=0;musicInterval=setInterval(function(){if(type=='farm'){if(beat%4==0)playTone(261,0.2,'triangle',0.05);if(beat%4==2)playTone(329,0.2,'triangle',0.05);if(beat%8==4)playTone(392,0.2,'triangle',0.05);if(beat%8==0)playTone(261,0.3,'sine',0.03);}else if(type=='dungeon'){if(beat%4==0)playTone(130,0.3,'sawtooth',0.04);if(beat%4==2)playTone(98,0.3,'sawtooth',0.04);if(beat%8==0)playTone(65,0.5,'sine',0.05);}else if(type=='boss'){if(beat%2==0)playTone(110,0.15,'square',0.08);if(beat%4==0)playTone(165,0.15,'square',0.08);if(beat%8==0)playTone(220,0.2,'square',0.1);}beat++;if(beat>64)beat=0;},250);}
+function playTone(freq,duration,type,volume,delay){
+if(!audioContext)return;
+try{
+const osc=audioContext.createOscillator();
+const gain=audioContext.createGain();
+const startTime=audioContext.currentTime+(delay||0);
+osc.type=type||'square';
+osc.frequency.setValueAtTime(freq,startTime);
+gain.gain.setValueAtTime(volume||0.1,startTime);
+gain.gain.exponentialRampToValueAtTime(0.001,startTime+duration);
+osc.connect(gain);
+gain.connect(audioContext.destination);
+osc.start(startTime);
+osc.stop(startTime+duration);
+}catch(e){}
+}
+function playJumpSound(){playTone(300,0.1,'sine',0.15);playTone(500,0.1,'sine',0.1);}
+function playAttackSound(){playTone(150,0.08,'sawtooth',0.2);playTone(100,0.05,'square',0.1);}
+function playCoinSound(){playTone(800,0.06,'square',0.12);playTone(1200,0.08,'square',0.12);playTone(1600,0.1,'sine',0.08);}
+function playHitSound(){playTone(120,0.15,'sawtooth',0.25);playTone(80,0.1,'square',0.15);}
+function playDeathSound(){playTone(300,0.15,'sawtooth',0.2);playTone(200,0.15,'sawtooth',0.2);playTone(100,0.3,'sawtooth',0.25);}
+function playBossSound(){playTone(60,0.4,'sawtooth',0.3);playTone(80,0.3,'square',0.25);playTone(100,0.2,'sawtooth',0.2);}
+function playVictorySound(){playTone(400,0.1,'square',0.15);playTone(500,0.1,'square',0.15);playTone(600,0.1,'square',0.15);playTone(800,0.2,'square',0.2);playTone(1000,0.3,'sine',0.15);}
+const SOUNDTRACKS={
+farm:{bpm:110,melody:[261,261,329,261,392,329,261,261,329,261,440,392,293,293,349,293,440,349,293,293,349,293,523,440,261,261,329,261,392,329,261,261,329,261,440,392,293,349,392,440,523,440,392,349,293,261,329,261],bass:[130,130,164,130,196,164,130,130,164,130,220,196,146,146,174,146,220,174,146,146,174,146,261,220,130,130,164,130,196,164,130,130,164,130,220,196,146,174,196,220,261,220,196,174,146,130,164,130],percussion:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0]},
+forest:{bpm:95,melody:[329,329,392,329,493,392,329,293,261,293,329,261,349,349,440,349,523,440,349,329,293,329,349,293,392,392,440,392,523,440,392,349,329,349,392,329,493,440,392,349,329,293,261,293,329,392,493,523],bass:[164,164,196,164,246,196,164,146,130,146,164,130,174,174,220,174,261,220,174,164,146,164,174,146,196,196,220,196,261,220,196,174,164,174,196,164,246,220,196,174,164,146,130,146,164,196,246,261],percussion:[1,0,0,1,0,0,1,0,0,1,0,0]},
+dungeon:{bpm:80,melody:[130,130,146,130,196,146,130,146,110,110,130,110,164,130,110,130,98,98,110,98,146,110,98,110,87,87,98,87,130,98,87,98],bass:[65,65,73,65,98,73,65,73,55,55,65,55,82,65,55,65,49,49,55,49,73,55,49,55,43,43,49,43,65,49,43,49],percussion:[1,0,0,0,1,0,0,0]},
+cave:{bpm:85,melody:[196,196,220,196,293,220,196,220,174,174,196,174,261,196,174,196,220,220,261,220,329,261,220,261,196,196,220,196,293,220,196,174],bass:[98,98,110,98,146,110,98,110,87,87,98,87,130,98,87,98,110,110,130,110,164,130,110,130,98,98,110,98,146,110,98,87],percussion:[1,0,1,0,0,1,0,0]},
+boss:{bpm:150,melody:[110,110,165,110,220,165,110,165,98,98,146,98,196,146,98,146,130,130,196,130,261,196,130,196,110,110,165,110,220,165,110,165],bass:[55,55,82,55,110,82,55,82,49,49,73,49,98,73,49,73,65,65,98,65,130,98,65,98,55,55,82,55,110,82,55,82],percussion:[1,1,1,1,1,1,1,1]},
+victory:{bpm:120,melody:[392,392,392,523,440,440,440,523,392,392,392,523,659,587,523,494,440,440,440,587,523,523,523,587,494,494,494,659,587,523,440,392],bass:[196,196,196,261,220,220,220,261,196,196,196,261,329,293,261,247,220,220,220,293,261,261,261,293,247,247,247,329,293,261,220,196],percussion:[1,0,1,0,1,0,1,0]},
+bonus:{bpm:130,melody:[523,494,440,494,523,587,523,494,440,392,440,494,523,587,659,587,523,494,440,494,523,587,659,698,659,587,523,494,440,494,523,440],bass:[261,247,220,247,261,293,261,247,220,196,220,247,261,293,329,293,261,247,220,247,261,293,329,349,329,293,261,247,220,247,261,220],percussion:[1,0,1,1,0,1,0,1]}
+};
+function startMusic(type){
+if(!audioContext)initAudio();
+if(!audioContext)return;
+stopMusic();
+currentMusic=type;
+currentBeat=0;
+const song=SOUNDTRACKS[type]||SOUNDTRACKS.farm;
+const beatDuration=(60/song.bpm)*1000/2;
+musicInterval=setInterval(function(){
+const melodyNote=song.melody[currentBeat%song.melody.length];
+const bassNote=song.bass[currentBeat%song.bass.length];
+const hasPercussion=song.percussion[currentBeat%song.percussion.length];
+playTone(melodyNote,0.25,'triangle',0.06);
+playTone(bassNote,0.35,'sine',0.04);
+if(hasPercussion){playTone(200,0.05,'square',0.03);playTone(150,0.03,'sawtooth',0.02);}
+if(type=='boss'||type=='dungeon'){if(currentBeat%4==0)playTone(100,0.3,'sawtooth',0.03);}
+currentBeat++;
+if(currentBeat>=song.melody.length)currentBeat=0;
+},beatDuration);
+}
 function stopMusic(){if(musicInterval){clearInterval(musicInterval);musicInterval=null;}currentMusic=null;}
 function initGame(){
 if(typeof THREE==='undefined'){alert('3D engine not loaded. Reload page.');return;}
