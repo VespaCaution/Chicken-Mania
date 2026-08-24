@@ -140,141 +140,41 @@ let globalSkipFn=null,deferredPrompt=null,gameInstance=null,currentLang='en';
 let audioContext=null,musicInterval=null,currentMusic=null,currentBeat=0;
 let selectedCharacter='farmer';
 let selectedDifficulty='normal';
-let currentLevelUnlocked=1;
-let achievementList={};
-let loreCollected={};
+let twoPlayerMode=false;
+const CHARACTERS={
+farmer:{name:'Farmer Joe',desc:'Balanced stats',icon:'👨‍🌾',speed:0.25,jump:0.5,attack:20,color:0x4A90E2},
+chicken:{name:'Chicken',desc:'Fast but weak',icon:'🐔',speed:0.35,jump:0.55,attack:10,color:0xFFFFFF},
+dog:{name:'Dog',desc:'Strong but slow',icon:'🐕',speed:0.2,jump:0.45,attack:35,color:0x8B4513},
+cat:{name:'Cat',desc:'High jump',icon:'🐱',speed:0.28,jump:0.7,attack:15,color:0xFF6600}
+};
+const DIFFICULTIES={
+easy:{enemyHpMult:0.7,enemyDmgMult:0.7,bossHpMult:0.7},
+normal:{enemyHpMult:1,enemyDmgMult:1,bossHpMult:1},
+hard:{enemyHpMult:1.5,enemyDmgMult:1.5,bossHpMult:1.5}
+};
 function skipCutscene(){if(globalSkipFn){globalSkipFn();globalSkipFn=null;}}
 function installApp(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;document.getElementById('ib').style.display='none';}else{alert('To install: Open in Chrome → Menu → "Add to Home Screen"');}}
-function startGameBtn(){
-document.getElementById('ss').style.display='none';
-document.getElementById('gs').style.display='block';
-initGame();
-}
-function restartGame(){
-if(confirm(currentLang=='en'?'Restart from beginning?':'Recommencer ?')){
-localStorage.removeItem('cmsave');
-localStorage.removeItem('cmcuts');
-localStorage.removeItem('cmlevels');
-localStorage.removeItem('cmachievements');
-localStorage.removeItem('cmlore');
-location.reload();
-}
-}
-function selectCharacter(char){
-selectedCharacter=char;
-document.getElementById('charFarmer').classList.toggle('ac',char=='farmer');
-document.getElementById('charChicken').classList.toggle('ac',char=='chicken');
-document.getElementById('charDog').classList.toggle('ac',char=='dog');
-document.getElementById('charCat').classList.toggle('ac',char=='cat');
-const descs={
-farmer:{en:'Farmer Joe - Balanced stats',fr:'Fermier Joe - Stats équilibrées'},
-chicken:{en:'Chicken - Fast, double jump',fr:'Poulet - Rapide, double saut'},
-dog:{en:'Dog - Strong attack',fr:'Chien - Attaque puissante'},
-cat:{en:'Cat - High jump',fr:'Chat - Saut élevé'}
-};
-document.getElementById('charDesc').textContent=descs[char][currentLang]||descs[char].en;
-localStorage.setItem('cmchar',char);
-}
-function selectDifficulty(diff){
-selectedDifficulty=diff;
-document.getElementById('diffEasy').classList.toggle('ac',diff=='easy');
-document.getElementById('diffNormal').classList.toggle('ac',diff=='normal');
-document.getElementById('diffHard').classList.toggle('ac',diff=='hard');
-localStorage.setItem('cmdiff',diff);
-}
-function setLang(l){
-currentLang=l;
-document.getElementById('st').textContent=TRANSLATIONS[l].st;
-document.getElementById('sb').textContent=TRANSLATIONS[l].sb;
-document.getElementById('rb').textContent=TRANSLATIONS[l].rb;
-document.getElementById('skb').textContent=TRANSLATIONS[l].sk;
-document.getElementById('charSelectTitle').textContent=TRANSLATIONS[l].charSelect;
-document.getElementById('difficultyTitle').textContent=TRANSLATIONS[l].difficulty;
-document.getElementById('le').classList.toggle('ac',l=='en');
-document.getElementById('lf').classList.toggle('ac',l=='fr');
-localStorage.setItem('cml',l);
-selectCharacter(selectedCharacter);
-}
+function startGameBtn(){twoPlayerMode=false;document.getElementById('p2controls').style.display='none';document.getElementById('ss').style.display='none';document.getElementById('gs').style.display='block';initGame();}
+function startTwoPlayer(){twoPlayerMode=true;document.getElementById('ss').style.display='none';document.getElementById('gs').style.display='block';document.getElementById('p2controls').style.display='flex';initGame();}
+function restartGame(){if(confirm(currentLang=='en'?'Restart from beginning?':'Recommencer ?')){localStorage.removeItem('cmsave');localStorage.removeItem('cmcuts');location.reload();}}
+function setLang(l){currentLang=l;document.getElementById('st').textContent=TRANSLATIONS[l].st;document.getElementById('sb').textContent=TRANSLATIONS[l].sb;document.getElementById('rb').textContent=TRANSLATIONS[l].rb;document.getElementById('skb').textContent=TRANSLATIONS[l].sk;document.getElementById('charSelectTitle').textContent=TRANSLATIONS[l].charSelect;document.getElementById('difficultyTitle').textContent=TRANSLATIONS[l].difficulty;document.getElementById('le').classList.toggle('ac',l=='en');document.getElementById('lf').classList.toggle('ac',l=='fr');localStorage.setItem('cml',l);}
 function t(key){return TRANSLATIONS[currentLang][key]||key;}
-function closeDialogue(){
-const d=document.getElementById('npcDialogue');
-if(d)d.remove();
-if(typeof S!=='undefined')S='playing';
-if(typeof npcs!=='undefined'){for(let n of npcs){n.userData.isTalking=false;}}
-if(typeof startMusic==='function'){startMusic(typeof L!=='undefined'&&(L==3||L==7||L==10||L==11)?'boss':'farm');}
-}
-function buyItem(type){
-if(type=='speed'&&coins>=50){coins-=50;P.s=0.35;playVictorySound();alert(t('purchased'));}
-else if(type=='attack'&&coins>=50){coins-=50;P.au=true;playVictorySound();alert(t('purchased'));}
-else if(type=='shield'&&coins>=75){coins-=75;P.hasShield=true;playVictorySound();alert(t('purchased'));}
-else{alert(t('insufficient'));}
-closeDialogue();saveGame();
-}
-function togglePauseMenu(){
-const pm=document.getElementById('pauseMenu');
-if(pm.style.display=='block'){resumeGame();}else{
-pm.style.display='block';
-if(typeof S!=='undefined')S='paused';
-if(typeof stopMusic==='function')stopMusic();
-}
-}
-function resumeGame(){
-document.getElementById('pauseMenu').style.display='none';
-if(typeof S!=='undefined')S='playing';
-if(typeof startMusic==='function'){startMusic(typeof L!=='undefined'&&(L==3||L==7||L==10||L==11)?'boss':'farm');}
-}
-function openMapFromPause(){
-document.getElementById('pauseMenu').style.display='none';
-showMapScreen();
-}
-function quitToMenu(){
-document.getElementById('pauseMenu').style.display='none';
-document.getElementById('gs').style.display='none';
-document.getElementById('ss').style.display='flex';
-if(gameInstance){gameInstance.stop();gameInstance=null;}
-if(typeof stopMusic==='function')stopMusic();
-}
-function showMapScreen(){
-document.getElementById('mapScreen').style.display='flex';
-buildMapScreen();
-}
-function closeMapScreen(){
-document.getElementById('mapScreen').style.display='none';
-}
-function buildMapScreen(){
-const container=document.getElementById('mapLevels');
-const unlocked=parseInt(localStorage.getItem('cmlevels')||'1');
-let html='';
-for(let i=1;i<=30;i++){
-const isUnlocked=i<=unlocked;
-const isCompleted=i<unlocked;
-const isCurrent=i==unlocked;
-let cls='mapLevel';
-if(!isUnlocked)cls+=' locked';
-if(isCompleted)cls+=' completed';
-if(isCurrent)cls+=' current';
-const chapter=Math.ceil(i/5);
-const chapterNames={1:'Farm',2:'Forest',3:'Mountains',4:'Dungeon',5:'Castle',6:'Bonus'};
-html+='<div class="'+cls+'" onclick="jumpToLevel('+i+')">Level '+i+' - '+chapterNames[chapter]+'</div>';
-}
-container.innerHTML=html;
-}
-function jumpToLevel(level){
-const unlocked=parseInt(localStorage.getItem('cmlevels')||'1');
-if(level<=unlocked){
-closeMapScreen();
-document.getElementById('ss').style.display='none';
-document.getElementById('gs').style.display='block';
-if(gameInstance){gameInstance.stop();gameInstance=null;}
-initGame(level);
-}
-}
+function selectCharacter(c){selectedCharacter=c;document.getElementById('charFarmer').classList.toggle('ac',c=='farmer');document.getElementById('charChicken').classList.toggle('ac',c=='chicken');document.getElementById('charDog').classList.toggle('ac',c=='dog');document.getElementById('charCat').classList.toggle('ac',c=='cat');document.getElementById('charDesc').textContent=CHARACTERS[c].name+' - '+CHARACTERS[c].desc;localStorage.setItem('cmchar',c);}
+function selectDifficulty(d){selectedDifficulty=d;document.getElementById('diffEasy').classList.toggle('ac',d=='easy');document.getElementById('diffNormal').classList.toggle('ac',d=='normal');document.getElementById('diffHard').classList.toggle('ac',d=='hard');localStorage.setItem('cmdiff',d);}
+function togglePauseMenu(){const pm=document.getElementById('pauseMenu');if(pm.style.display=='block'){resumeGame();}else{pm.style.display='block';if(typeof stopMusic==='function')stopMusic();}}
+function resumeGame(){document.getElementById('pauseMenu').style.display='none';if(typeof startMusic==='function')startMusic(typeof L!=='undefined'&&(L==3||L==7||L==10||L==15||L==20||L==25||L==30)?'boss':'farm');}
+function openMapFromPause(){document.getElementById('pauseMenu').style.display='none';showMapScreen();}
+function quitToMenu(){document.getElementById('pauseMenu').style.display='none';document.getElementById('gs').style.display='none';document.getElementById('ss').style.display='flex';if(gameInstance){gameInstance.stop();gameInstance=null;}}
+function showMapScreen(){document.getElementById('mapScreen').style.display='flex';if(typeof buildMapLevels==='function')buildMapLevels();}
+function closeMapScreen(){document.getElementById('mapScreen').style.display='none';}
+function closeDialogue(){const d=document.getElementById('npcDialogue');if(d)d.remove();if(typeof S!=='undefined')S='playing';if(typeof npcs!=='undefined'){for(let n of npcs){n.userData.isTalking=false;}}if(typeof startMusic==='function'){startMusic(typeof L!=='undefined'&&(L==3||L==7||L==10||L==15||L==20||L==25||L==30)?'boss':'farm');}}
+function buyItem(type){if(type=='speed'&&coins>=50){coins-=50;P.s=CHARACTERS[selectedCharacter].speed+0.15;playVictorySound();alert(t('purchased'));}else if(type=='attack'&&coins>=50){coins-=50;P.au=true;playVictorySound();alert(t('purchased'));}else if(type=='shield'&&coins>=75){coins-=75;P.hasShield=true;playVictorySound();alert(t('purchased'));}else{alert(t('insufficient'));}closeDialogue();saveGame();}
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;document.getElementById('ib').style.display='block';});
 window.addEventListener('appinstalled',function(){deferredPrompt=null;document.getElementById('ib').style.display='none';});
 const savedChar=localStorage.getItem('cmchar');
-if(savedChar){selectedCharacter=savedChar;}
+if(savedChar)selectCharacter(savedChar);
 const savedDiff=localStorage.getItem('cmdiff');
-if(savedDiff){selectedDifficulty=savedDiff;}
+if(savedDiff)selectDifficulty(savedDiff);
 const TRANSLATIONS={
 en:{
 st:'A Farm Adventure',sb:'▶️ Start Game',rb:'🔄 Restart Game',lv:'Level',sk:'Skip ⏭️',
@@ -1509,7 +1409,7 @@ skipTimer=setTimeout(function(){if(S=='cutscene'&&running)showCuts();},2500);
 }else{
 if(globalSkipFn)globalSkipFn();
 }
-   }
+}
 function upd(){
 if(!running||S!='playing')return;
 lt++;tt++;
