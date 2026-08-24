@@ -97,15 +97,19 @@ window.addEventListener('appinstalled',function(){deferredPrompt=null;document.g
 const TRANSLATIONS={en:{st:'A Farm Adventure',sb:'▶️ Start Game',rb:'🔄 Restart Game',lv:'Level',sk:'Skip ⏭️',cm:'🎉 CONGRATULATIONS! 🎉',tc:'Total Coins',bn:'Bonus Coins',dt:'Deaths',tm:'Time',needBonus:'You need all 30 bonus coins!',quest1:'Quest',quest2:'Defeat enemies',quest3:'Collect bonus coins',quest4:'Rescue the chicken!',shop:'🛒 Shop',buySpeed:'Speed Boost (50)',buyAttack:'Attack Boost (50)',buyShield:'Shield (75)',insufficient:'Not enough coins!',purchased:'Purchased!',pause:'Paused',resume:'Resume',talk:'Talk',exit:'Exit',hint1:'The wizard went to the mountains!',hint2:'Beware of robots!',hint3:'Collect golden stars!'},fr:{st:'Une Aventure à la Ferme',sb:'▶️ Commencer',rb:'🔄 Recommencer',lv:'Niveau',sk:'Passer ⏭️',cm:'🎉 FÉLICITATIONS ! 🎉',tc:'Pièces Totales',bn:'Pièces Bonus',dt:'Morts',tm:'Temps',needBonus:'Il vous faut 30 pièces bonus !',quest1:'Quête',quest2:'Vaincre les ennemis',quest3:'Collecter les bonus',quest4:'Sauver le poulet !',shop:'🛒 Boutique',buySpeed:'Boost Vitesse (50)',buyAttack:'Boost Attaque (50)',buyShield:'Bouclier (75)',insufficient:'Pas assez !',purchased:'Acheté !',pause:'Pause',resume:'Reprendre',talk:'Parler',exit:'Sortir',hint1:'Le sorcier est aux montagnes !',hint2:'Attention aux robots !',hint3:'Collectez les étoiles !'}};
 currentLang=localStorage.getItem('cml')||'en';setLang(currentLang);
 if(localStorage.getItem('cmsave')){document.getElementById('rb').style.display='block';document.getElementById('sb').textContent='▶️ '+(currentLang=='en'?'Continue':'Continuer');}
-function getCuts(){
+let cuts={};
+function buildCuts(){
 const fr=currentLang=='fr';
-return {1:fr?[['👨‍🌾','Fermier Joe : Quelle belle matinée !'],['🐔','Poulet : *cot cot* Bonjour !'],['🧙','Sorcier : HAHAHA ! Je vole ton poulet !'],['🐔','Poulet : AU SECOURS !'],['👨‍🌾','Fermier Joe : Je vais te sauver !']]:[['👨‍🌾','Farmer Joe: What a beautiful morning!'],['🐔','Chicken: *cluck cluck* Hello!'],['🧙','Wizard: HAHAHA! I\'m taking your chicken!'],['🐔','Chicken: HELP ME!'],['👨‍🌾','Farmer Joe: I will save you!']],
+cuts={
+1:fr?[['👨‍🌾','Fermier Joe : Quelle belle matinée !'],['🐔','Poulet : *cot cot* Bonjour !'],['🧙','Sorcier : HAHAHA ! Je vole ton poulet !'],['🐔','Poulet : AU SECOURS !'],['👨‍🌾','Fermier Joe : Je vais te sauver !']]:[['👨‍🌾','Farmer Joe: What a beautiful morning!'],['🐔','Chicken: *cluck cluck* Hello!'],['🧙','Wizard: HAHAHA! I\'m taking your chicken!'],['🐔','Chicken: HELP ME!'],['👨‍🌾','Farmer Joe: I will save you!']],
 3:fr?[['🧙','Sorcier : Tu ne retrouveras jamais ton poulet !'],['👨‍🌾','Fermier Joe : Je te retrouverai !']]:[['🧙','Wizard: You\'ll never find your chicken!'],['👨‍🌾','Farmer Joe: I will find you!']],
 5:fr?[['👨‍🌾','Le repaire est proche...'],['🐔','Poulet : *cot cot* (au loin)']]:[['👨‍🌾','The lair is near...'],['🐔','Chicken: *cluck cluck* (distant)']],
 7:fr?[['🧙','Tu es plus fort que je pensais !'],['👨‍🌾','Rends-moi mon poulet !']]:[['🧙','You\'re stronger than I thought!'],['👨‍🌾','Give me back my chicken!']],
 10:fr?[['🔥','LE REPAIRE DU SORCIER !'],['🧙','Ton poulet est à moi !'],['🐔','Sauve-moi Joe !'],['👨‍🌾','JE VAIS TE SAUVER !']]:[['🔥','THE WIZARD\'S LAIR!'],['🧙','Your chicken is mine!'],['🐔','Save me Joe!'],['👨‍🌾','I WILL SAVE YOU!']],
-11:fr?[['🎉','NIVEAU BONUS !'],['👨‍🌾','Tu as sauvé le poulet !'],['🐔','Merci Joe ! *cot cot*']]:[['🎉','BONUS LEVEL!'],['👨‍🌾','You saved the chicken!'],['🐔','Thank you Joe! *cluck cluck*']]};
+11:fr?[['🎉','NIVEAU BONUS !'],['👨‍🌾','Tu as sauvé le poulet !'],['🐔','Merci Joe ! *cot cot*']]:[['🎉','BONUS LEVEL!'],['👨‍🌾','You saved the chicken!'],['🐔','Thank you Joe! *cluck cluck*']]
+};
 }
+buildCuts();
 function initAudio(){if(!audioContext){try{audioContext=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}}
 function playTone(freq,duration,type,volume,delay){
 if(!audioContext)return;
