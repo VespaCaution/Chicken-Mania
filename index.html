@@ -97,19 +97,7 @@ window.addEventListener('appinstalled',function(){deferredPrompt=null;document.g
 const TRANSLATIONS={en:{st:'A Farm Adventure',sb:'▶️ Start Game',rb:'🔄 Restart Game',lv:'Level',sk:'Skip ⏭️',cm:'🎉 CONGRATULATIONS! 🎉',tc:'Total Coins',bn:'Bonus Coins',dt:'Deaths',tm:'Time',needBonus:'You need all 30 bonus coins!',quest1:'Quest',quest2:'Defeat enemies',quest3:'Collect bonus coins',quest4:'Rescue the chicken!',shop:'🛒 Shop',buySpeed:'Speed Boost (50)',buyAttack:'Attack Boost (50)',buyShield:'Shield (75)',insufficient:'Not enough coins!',purchased:'Purchased!',pause:'Paused',resume:'Resume',talk:'Talk',exit:'Exit',hint1:'The wizard went to the mountains!',hint2:'Beware of robots!',hint3:'Collect golden stars!'},fr:{st:'Une Aventure à la Ferme',sb:'▶️ Commencer',rb:'🔄 Recommencer',lv:'Niveau',sk:'Passer ⏭️',cm:'🎉 FÉLICITATIONS ! 🎉',tc:'Pièces Totales',bn:'Pièces Bonus',dt:'Morts',tm:'Temps',needBonus:'Il vous faut 30 pièces bonus !',quest1:'Quête',quest2:'Vaincre les ennemis',quest3:'Collecter les bonus',quest4:'Sauver le poulet !',shop:'🛒 Boutique',buySpeed:'Boost Vitesse (50)',buyAttack:'Boost Attaque (50)',buyShield:'Bouclier (75)',insufficient:'Pas assez !',purchased:'Acheté !',pause:'Pause',resume:'Reprendre',talk:'Parler',exit:'Sortir',hint1:'Le sorcier est aux montagnes !',hint2:'Attention aux robots !',hint3:'Collectez les étoiles !'}};
 currentLang=localStorage.getItem('cml')||'en';setLang(currentLang);
 if(localStorage.getItem('cmsave')){document.getElementById('rb').style.display='block';document.getElementById('sb').textContent='▶️ '+(currentLang=='en'?'Continue':'Continuer');}
-let cuts={};
-function buildCuts(){
-const fr=currentLang=='fr';
-cuts={
-1:fr?[['👨‍🌾','Fermier Joe : Quelle belle matinée !'],['🐔','Poulet : *cot cot* Bonjour !'],['🧙','Sorcier : HAHAHA ! Je vole ton poulet !'],['🐔','Poulet : AU SECOURS !'],['👨‍🌾','Fermier Joe : Je vais te sauver !']]:[['👨‍🌾','Farmer Joe: What a beautiful morning!'],['🐔','Chicken: *cluck cluck* Hello!'],['🧙','Wizard: HAHAHA! I\'m taking your chicken!'],['🐔','Chicken: HELP ME!'],['👨‍🌾','Farmer Joe: I will save you!']],
-3:fr?[['🧙','Sorcier : Tu ne retrouveras jamais ton poulet !'],['👨‍🌾','Fermier Joe : Je te retrouverai !']]:[['🧙','Wizard: You\'ll never find your chicken!'],['👨‍🌾','Farmer Joe: I will find you!']],
-5:fr?[['👨‍🌾','Le repaire est proche...'],['🐔','Poulet : *cot cot* (au loin)']]:[['👨‍🌾','The lair is near...'],['🐔','Chicken: *cluck cluck* (distant)']],
-7:fr?[['🧙','Tu es plus fort que je pensais !'],['👨‍🌾','Rends-moi mon poulet !']]:[['🧙','You\'re stronger than I thought!'],['👨‍🌾','Give me back my chicken!']],
-10:fr?[['🔥','LE REPAIRE DU SORCIER !'],['🧙','Ton poulet est à moi !'],['🐔','Sauve-moi Joe !'],['👨‍🌾','JE VAIS TE SAUVER !']]:[['🔥','THE WIZARD\'S LAIR!'],['🧙','Your chicken is mine!'],['🐔','Save me Joe!'],['👨‍🌾','I WILL SAVE YOU!']],
-11:fr?[['🎉','NIVEAU BONUS !'],['👨‍🌾','Tu as sauvé le poulet !'],['🐔','Merci Joe ! *cot cot*']]:[['🎉','BONUS LEVEL!'],['👨‍🌾','You saved the chicken!'],['🐔','Thank you Joe! *cluck cluck*']]
-};
-}
-buildCuts();
+let cuts={1:[['👨‍🌾',currentLang=='fr'?'Fermier Joe : Quelle belle matinée !':'Farmer Joe: What a beautiful morning!'],['🐔',currentLang=='fr'?'Poulet : *cot cot* Bonjour !':'Chicken: *cluck cluck* Hello!'],['🧙',currentLang=='fr'?'Sorcier : HAHAHA ! Je vole ton poulet !':'Wizard: HAHAHA! I\'m taking your chicken!'],['🐔',currentLang=='fr'?'Poulet : AU SECOURS !':'Chicken: HELP ME!'],['👨‍🌾',currentLang=='fr'?'Fermier Joe : Je vais te sauver !':'Farmer Joe: I will save you!']],3:[['🧙',currentLang=='fr'?'Sorcier : Tu ne retrouveras jamais ton poulet !':'Wizard: You\'ll never find your chicken!'],['👨‍🌾',currentLang=='fr'?'Fermier Joe : Je te retrouverai !':'Farmer Joe: I will find you!']],5:[['👨‍🌾',currentLang=='fr'?'Le repaire est proche...':'The lair is near...'],['🐔',currentLang=='fr'?'Poulet : *cot cot* (au loin)':'Chicken: *cluck cluck* (distant)']],7:[['🧙',currentLang=='fr'?'Tu es plus fort que je pensais !':'You\'re stronger than I thought!'],['👨‍🌾',currentLang=='fr'?'Rends-moi mon poulet !':'Give me back my chicken!']],10:[['🔥',currentLang=='fr'?'LE REPAIRE DU SORCIER !':'THE WIZARD\'S LAIR!'],['🧙',currentLang=='fr'?'Ton poulet est à moi !':'Your chicken is mine!'],['🐔',currentLang=='fr'?'Sauve-moi Joe !':'Save me Joe!'],['👨‍🌾',currentLang=='fr'?'JE VAIS TE SAUVER !':'I WILL SAVE YOU!']],11:[['🎉',currentLang=='fr'?'NIVEAU BONUS !':'BONUS LEVEL!'],['👨‍🌾',currentLang=='fr'?'Tu as sauvé le poulet !':'You saved the chicken!'],['🐔',currentLang=='fr'?'Merci Joe ! *cot cot*':'Thank you Joe! *cluck cluck*']]};
 function initAudio(){if(!audioContext){try{audioContext=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}}
 function playTone(freq,duration,type,volume,delay){
 if(!audioContext)return;
@@ -691,11 +679,7 @@ let x=5+i*(lw/(5+L));
 let z=(i%3-1)*2;
 let type=['boar','robot','cf'][i%3];
 let e=createEnemy3D(x,0,z,type);
-enemies.push({mesh:e,x:x,y:0,z:z,hp:type=='boar'?20:type=='robot'?40:60,ac:true,type:type});
-}
-for(let i=0;i<Math.min(2,Math.floor(L/3));i++){
-let e=createEnemy3D(600+i*300,2,0,'crow');
-enemies.push({mesh:e,x:600+i*300,y:2,z:0,hp:20,ac:true,type:'crow'});
+enemies.push({mesh:e,x:x,y:0,z:z,hp:40,ac:true,type:type});
 }
 for(let i=0;i<12+L*2;i++){
 let x=3+i*(lw/(12+L*2));
@@ -727,11 +711,10 @@ if(L>=3){checkpointX=Math.floor(lw/2);hasCheckpoint=true;}
 if(!boss)createPipe3D(gx,0);
 if(L>=8&&!isBoss){for(let i=0;i<30;i++)createWeatherEffect(L>=10?'ember':'rain');}
 }
-const currentCuts=getCuts();
-if(currentCuts[L]&&!cutscenesShown[L]){
+if(cuts[L]&&!cutscenesShown[L]){
 cutscenesShown[L]=true;
 localStorage.setItem('cmcuts',JSON.stringify(cutscenesShown));
-cs=currentCuts[L];ci=0;S='cutscene';
+cs=cuts[L];ci=0;S='cutscene';
 document.getElementById('cs').style.display='flex';
 showCuts();
 }else{S='playing';}
@@ -906,15 +889,14 @@ boss.ac=false;coins+=100;
 createVictoryParticles(boss.x,boss.y,boss.z);
 playVictorySound();
 saveGame();S='lc';
-document.getElementById('ls').textContent='Coins: '+lC+' | Bonus: '+lB+'/3 | Time: '+Math.floor(lt/60)+'s';
-document.getElementById('lc').style.display='block';
 setTimeout(function(){
 document.getElementById('lc').style.display='none';
 if(L==10){if(tb>=30){L=11;mk(11);}else{gc(false);}}
 else if(L==11){gc(true);}
 else{L++;mk(L);}
-},3000);
+},2000);
 return;
+}
 }
 for(let i=projectiles.length-1;i>=0;i--){
 let p=projectiles[i];
