@@ -49,6 +49,12 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 .mapLevel.current{background:rgba(255,215,0,.3);border-color:#FFD700;animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
 .dpad{display:grid;grid-template-columns:42px 42px 42px;grid-template-rows:42px 42px 42px;gap:3px}
+#gs.twoPlayer #c{height:50%;min-height:200px}
+#gs.twoPlayer #b{flex-direction:column;min-height:120px;gap:3px}
+#gs.twoPlayer .dpad{grid-template-columns:35px 35px 35px;grid-template-rows:35px 35px 35px}
+#gs.twoPlayer .btn{width:35px;height:35px;font-size:12px}
+#gs.twoPlayer #p2controls{display:flex;flex-direction:row;gap:4px;justify-content:center}
+#gs.twoPlayer #a{width:45px;height:45px;font-size:18px}
 </style>
 </head>
 <body>
@@ -70,17 +76,8 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 </div>
 <p style="color:#FFD700;font-size:11px;margin-top:5px" id="charDesc">Farmer Joe - Balanced stats</p>
 </div>
-<div style="position:relative;z-index:10;margin-bottom:10px">
-<p style="color:#fff;font-size:14px;font-weight:bold;margin-bottom:5px" id="difficultyTitle">Difficulty:</p>
-<div style="display:flex;gap:8px;justify-content:center">
-<button class="lb" id="diffEasy" style="pointer-events:auto" onclick="selectDifficulty('easy')">Easy</button>
-<button class="lb ac" id="diffNormal" style="pointer-events:auto" onclick="selectDifficulty('normal')">Normal</button>
-<button class="lb" id="diffHard" style="pointer-events:auto" onclick="selectDifficulty('hard')">Hard</button>
-</div>
-</div>
 <button class="sb" id="sb" style="pointer-events:auto" onclick="startGameBtn()">▶️ Start Game</button>
 <button class="sb" id="twoPlayerBtn" style="pointer-events:auto;background:linear-gradient(145deg,#FF6600,#FF3300);color:#fff" onclick="startTwoPlayer()">👥 2 Player Mode</button>
-<button class="sb" id="mapBtn" style="pointer-events:auto;background:linear-gradient(145deg,#4CAF50,#2E7D32);color:#fff;font-size:16px;padding:10px 20px" onclick="showMapScreen()">🗺️ Level Map</button>
 <button class="ib" id="ib" style="pointer-events:auto" onclick="installApp()">📲 Install App</button>
 <button class="rb" id="rb" style="pointer-events:auto" onclick="restartGame()">🔄 Restart Game</button>
 <p class="vr">v12.0.0</p>
@@ -117,14 +114,8 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 <div id="pauseMenu">
 <h3 style="color:#FFD700;margin-bottom:10px">⏸️ Paused</h3>
 <button onclick="resumeGame()">▶️ Resume</button>
-<button onclick="openMapFromPause()">🗺️ Level Map</button>
 <button onclick="restartLevel()">🔄 Restart Level</button>
 <button onclick="quitToMenu()">🏠 Main Menu</button>
-</div>
-<div id="mapScreen">
-<h2>🗺️ Level Map</h2>
-<div id="mapLevels"></div>
-<button onclick="closeMapScreen()" style="padding:10px;margin-top:10px;background:#333;color:#fff;border:none;border-radius:10px;cursor:pointer;pointer-events:auto">Back</button>
 </div>
 </div>
 </div>
@@ -139,42 +130,31 @@ document.write('<script src="https://unpkg.com/three@0.128.0/build/three.min.js"
 let globalSkipFn=null,deferredPrompt=null,gameInstance=null,currentLang='en';
 let audioContext=null,musicInterval=null,currentMusic=null,currentBeat=0;
 let selectedCharacter='farmer';
-let selectedDifficulty='normal';
 let twoPlayerMode=false;
+const diffData={enemyHpMult:1,enemyDmgMult:1,bossHpMult:1};
 const CHARACTERS={
 farmer:{name:'Farmer Joe',desc:'Balanced stats',icon:'👨‍🌾',speed:0.25,jump:0.5,attack:20,color:0x4A90E2},
 chicken:{name:'Chicken',desc:'Fast but weak',icon:'🐔',speed:0.35,jump:0.55,attack:10,color:0xFFFFFF},
 dog:{name:'Dog',desc:'Strong but slow',icon:'🐕',speed:0.2,jump:0.45,attack:35,color:0x8B4513},
 cat:{name:'Cat',desc:'High jump',icon:'🐱',speed:0.28,jump:0.7,attack:15,color:0xFF6600}
 };
-const DIFFICULTIES={
-easy:{enemyHpMult:0.7,enemyDmgMult:0.7,bossHpMult:0.7},
-normal:{enemyHpMult:1,enemyDmgMult:1,bossHpMult:1},
-hard:{enemyHpMult:1.5,enemyDmgMult:1.5,bossHpMult:1.5}
-};
 function skipCutscene(){if(globalSkipFn){globalSkipFn();globalSkipFn=null;}}
 function installApp(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;document.getElementById('ib').style.display='none';}else{alert('To install: Open in Chrome → Menu → "Add to Home Screen"');}}
-function startGameBtn(){twoPlayerMode=false;document.getElementById('p2controls').style.display='none';document.getElementById('ss').style.display='none';document.getElementById('gs').style.display='block';initGame();}
-function startTwoPlayer(){twoPlayerMode=true;document.getElementById('ss').style.display='none';document.getElementById('gs').style.display='block';document.getElementById('p2controls').style.display='flex';initGame();}
+function startGameBtn(){twoPlayerMode=false;document.getElementById('p2controls').style.display='none';document.getElementById('gs').classList.remove('twoPlayer');document.getElementById('ss').style.display='none';document.getElementById('gs').style.display='block';initGame();}
+function startTwoPlayer(){twoPlayerMode=true;document.getElementById('ss').style.display='none';document.getElementById('gs').style.display='block';document.getElementById('gs').classList.add('twoPlayer');document.getElementById('p2controls').style.display='flex';initGame();}
 function restartGame(){if(confirm(currentLang=='en'?'Restart from beginning?':'Recommencer ?')){localStorage.removeItem('cmsave');localStorage.removeItem('cmcuts');location.reload();}}
-function setLang(l){currentLang=l;document.getElementById('st').textContent=TRANSLATIONS[l].st;document.getElementById('sb').textContent=TRANSLATIONS[l].sb;document.getElementById('rb').textContent=TRANSLATIONS[l].rb;document.getElementById('skb').textContent=TRANSLATIONS[l].sk;document.getElementById('charSelectTitle').textContent=TRANSLATIONS[l].charSelect;document.getElementById('difficultyTitle').textContent=TRANSLATIONS[l].difficulty;document.getElementById('le').classList.toggle('ac',l=='en');document.getElementById('lf').classList.toggle('ac',l=='fr');localStorage.setItem('cml',l);}
+function setLang(l){currentLang=l;document.getElementById('st').textContent=TRANSLATIONS[l].st;document.getElementById('sb').textContent=TRANSLATIONS[l].sb;document.getElementById('rb').textContent=TRANSLATIONS[l].rb;document.getElementById('skb').textContent=TRANSLATIONS[l].sk;document.getElementById('charSelectTitle').textContent=TRANSLATIONS[l].charSelect;document.getElementById('le').classList.toggle('ac',l=='en');document.getElementById('lf').classList.toggle('ac',l=='fr');localStorage.setItem('cml',l);}
 function t(key){return TRANSLATIONS[currentLang][key]||key;}
 function selectCharacter(c){selectedCharacter=c;document.getElementById('charFarmer').classList.toggle('ac',c=='farmer');document.getElementById('charChicken').classList.toggle('ac',c=='chicken');document.getElementById('charDog').classList.toggle('ac',c=='dog');document.getElementById('charCat').classList.toggle('ac',c=='cat');document.getElementById('charDesc').textContent=CHARACTERS[c].name+' - '+CHARACTERS[c].desc;localStorage.setItem('cmchar',c);}
-function selectDifficulty(d){selectedDifficulty=d;document.getElementById('diffEasy').classList.toggle('ac',d=='easy');document.getElementById('diffNormal').classList.toggle('ac',d=='normal');document.getElementById('diffHard').classList.toggle('ac',d=='hard');localStorage.setItem('cmdiff',d);}
 function togglePauseMenu(){const pm=document.getElementById('pauseMenu');if(pm.style.display=='block'){resumeGame();}else{pm.style.display='block';if(typeof stopMusic==='function')stopMusic();}}
 function resumeGame(){document.getElementById('pauseMenu').style.display='none';if(typeof startMusic==='function')startMusic(typeof L!=='undefined'&&(L==3||L==7||L==10||L==15||L==20||L==25||L==30)?'boss':'farm');}
-function openMapFromPause(){document.getElementById('pauseMenu').style.display='none';showMapScreen();}
 function quitToMenu(){document.getElementById('pauseMenu').style.display='none';document.getElementById('gs').style.display='none';document.getElementById('ss').style.display='flex';if(gameInstance){gameInstance.stop();gameInstance=null;}}
-function showMapScreen(){document.getElementById('mapScreen').style.display='flex';if(typeof buildMapLevels==='function')buildMapLevels();}
-function closeMapScreen(){document.getElementById('mapScreen').style.display='none';}
 function closeDialogue(){const d=document.getElementById('npcDialogue');if(d)d.remove();if(typeof S!=='undefined')S='playing';if(typeof npcs!=='undefined'){for(let n of npcs){n.userData.isTalking=false;}}if(typeof startMusic==='function'){startMusic(typeof L!=='undefined'&&(L==3||L==7||L==10||L==15||L==20||L==25||L==30)?'boss':'farm');}}
 function buyItem(type){if(type=='speed'&&coins>=50){coins-=50;P.s=CHARACTERS[selectedCharacter].speed+0.15;playVictorySound();alert(t('purchased'));}else if(type=='attack'&&coins>=50){coins-=50;P.au=true;playVictorySound();alert(t('purchased'));}else if(type=='shield'&&coins>=75){coins-=75;P.hasShield=true;playVictorySound();alert(t('purchased'));}else{alert(t('insufficient'));}closeDialogue();saveGame();}
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;document.getElementById('ib').style.display='block';});
 window.addEventListener('appinstalled',function(){deferredPrompt=null;document.getElementById('ib').style.display='none';});
 const savedChar=localStorage.getItem('cmchar');
 if(savedChar)selectCharacter(savedChar);
-const savedDiff=localStorage.getItem('cmdiff');
-if(savedDiff)selectDifficulty(savedDiff);
 const TRANSLATIONS={
 en:{
 st:'A Farm Adventure',sb:'▶️ Start Game',rb:'🔄 Restart Game',lv:'Level',sk:'Skip ⏭️',
@@ -1183,11 +1163,16 @@ if(boss.mesh.userData.staff){boss.mesh.userData.staff.rotation.z=Math.sin(tt*0.0
 if(boss.at>=boss.ac){
 boss.at=0;
 playBossSound();
+const spellMat=new THREE.MeshBasicMaterial({color:0xFF4400,transparent:true,opacity:0.9});
+const spellGeo=new THREE.SphereGeometry(0.3,8,8);
 const spellCount=boss.type=='bb'?8:boss.type=='sw'?6:4;
 for(let i=0;i<spellCount;i++){
 const angle=(i/spellCount)*Math.PI*2;
-const spell=createEnemy3D(boss.x,boss.y+1.5,boss.z,'spell');
-projectiles.push({x:boss.x,y:1.5,z:boss.z,vx:Math.cos(angle)*0.15,vy:Math.sin(i)*0.05,vz:Math.sin(angle)*0.15,life:120,mesh:spell});
+const spell=new THREE.Mesh(spellGeo,spellMat);
+spell.position.set(boss.x,boss.y+1.5,boss.z);
+scene.add(spell);
+gameObjects.push(spell);
+projectiles.push({x:boss.x,y:1.5,z:boss.z,vx:Math.cos(angle)*0.15,vy:Math.sin(i)*0.03,vz:Math.sin(angle)*0.15,life:120,mesh:spell});
 }
 }
 if(boss.hp<=0){
@@ -1310,10 +1295,10 @@ if(L%2==0){createWater(12,0,5,8);createBridge(9,0,5);}
 for(let i=0;i<lw;i+=10){createTree(i,-12,true);createTree(i+5,12,true);}
 }else if(theme=='forest'){
 if(L%3==0){createWater(18,0,6,10);createBridge(15,0,6);}
-for(let i=0;i<lw;i+=6){createTree(i,-14,true);createTree(i+3,14,true);}
+for(let i=0;i<lw;i+=15){createTree(i,-18,true);createTree(i+7,18,true);}
 }else if(theme=='mountain'){
 if(L%2==1){createWater(20,0,4,8);createBridge(18,0,4);}
-for(let i=0;i<lw;i+=12){createTree(i,-13,true);}
+for(let i=0;i<lw;i+=12){createTree(i,-20,true);createTree(i+6,20,true);}
 }else if(theme=='dungeon'){
 for(let i=0;i<lw;i+=8){createTorch(i,-6);createTorch(i+4,6);}
 }else if(theme=='castle'){
@@ -1800,115 +1785,6 @@ mesh.add(grassStrip);
 scene.add(mesh);
 gameObjects.push(mesh);
 return mesh;
-                         }
-function buildMapLevels(){
-const save=JSON.parse(localStorage.getItem('cmsave')||'null');
-const currentL=save?save.L:1;
-const container=document.getElementById('mapLevels');
-container.innerHTML='';
-const chapters=[{start:1,end:5,name:t('chapter1')},{start:6,end:10,name:t('chapter2')},{start:11,end:15,name:t('chapter3')},{start:16,end:20,name:t('chapter4')},{start:21,end:25,name:t('chapter5')},{start:26,end:30,name:t('bonusWorld')}];
-for(let chapter of chapters){
-const chTitle=document.createElement('div');
-chTitle.style.cssText='color:#FFD700;font-weight:bold;font-size:14px;margin:10px 0 5px;text-align:center';
-chTitle.textContent=chapter.name;
-container.appendChild(chTitle);
-for(let i=chapter.start;i<=chapter.end;i++){
-const div=document.createElement('div');
-div.className='mapLevel';
-if(i>currentL)div.classList.add('locked');
-if(i<currentL)div.classList.add('completed');
-if(i==currentL)div.classList.add('current');
-const isBoss=(i==3||i==7||i==10||i==15||i==20||i==25||i==30);
-const isBonus=i>25;
-div.textContent=(currentLang=='fr'?'Niveau ':'Level ')+i+(isBoss?' 👑':'')+(isBonus?' ★':'');
-if(i<=currentL){
-div.onclick=function(){
-document.getElementById('mapScreen').style.display='none';
-document.getElementById('ss').style.display='none';
-document.getElementById('gs').style.display='block';
-initGame(i);
-};
-}
-container.appendChild(div);
-}
-}
-const bossRushBtn=document.createElement('div');
-bossRushBtn.className='mapLevel';
-bossRushBtn.style.cssText+='background:rgba(255,0,0,.2);border-color:#f44;margin-top:15px';
-bossRushBtn.textContent=currentLang=='fr'?'👑 MODE BOSS RUSH':'👑 BOSS RUSH MODE';
-bossRushBtn.onclick=function(){
-document.getElementById('mapScreen').style.display='none';
-document.getElementById('ss').style.display='none';
-document.getElementById('gs').style.display='block';
-initBossRush();
-};
-container.appendChild(bossRushBtn);
-}
-function initBossRush(){
-if(gameInstance){gameInstance.stop();gameInstance=null;}
-initGame(3);
-window._bossRushMode=true;
-}
-function showAchievementsScreen(){
-const container=document.getElementById('mapLevels');
-container.innerHTML='';
-const title=document.createElement('div');
-title.style.cssText='color:#FFD700;font-weight:bold;font-size:16px;margin-bottom:10px;text-align:center';
-title.textContent='🏆 '+(currentLang=='fr'?'Succès':'Achievements');
-container.appendChild(title);
-for(let ach of ACHIEVEMENTS){
-const div=document.createElement('div');
-div.className='mapLevel';
-if(achievements[ach.id]){div.style.cssText+='background:rgba(0,255,0,.2);border-color:#0f0';}
-div.textContent=(achievements[ach.id]?'✅ ':'⬜ ')+t(ach.name);
-container.appendChild(div);
-}
-const backBtn=document.createElement('button');
-backBtn.textContent=currentLang=='fr'?'Retour':'Back';
-backBtn.style.cssText='padding:10px;margin-top:15px;background:#333;color:#fff;border:none;border-radius:10px;cursor:pointer;pointer-events:auto;width:100%';
-backBtn.onclick=function(){buildMapLevels();};
-container.appendChild(backBtn);
-}
-function showLoreScreen(){
-const container=document.getElementById('mapLevels');
-container.innerHTML='';
-const title=document.createElement('div');
-title.style.cssText='color:#FFD700;font-weight:bold;font-size:16px;margin-bottom:10px;text-align:center';
-title.textContent='📜 '+(currentLang=='fr'?'Objets Trouvés':'Lore Items');
-container.appendChild(title);
-for(let lore of STORY.loreItems){
-const div=document.createElement('div');
-div.className='mapLevel';
-const found=loreFound.some(l=>l.userData&&l.userData.loreId==lore.id);
-div.textContent=(found?'✅ ':'❓ ')+lore.name;
-container.appendChild(div);
-}
-const backBtn=document.createElement('button');
-backBtn.textContent=currentLang=='fr'?'Retour':'Back';
-backBtn.style.cssText='padding:10px;margin-top:15px;background:#333;color:#fff;border:none;border-radius:10px;cursor:pointer;pointer-events:auto;width:100%';
-backBtn.onclick=function(){buildMapLevels();};
-container.appendChild(backBtn);
-}
-function checkBossRush(){
-if(window._bossRushMode&&boss&&boss.ac&&boss.hp<=0){
-window._bossRushMode=false;
-alert(currentLang=='fr'?'BOSS RUSH TERMINÉ !':'BOSS RUSH COMPLETE!');
-gc(true);
-}
-}
-function updateMapScreenButtons(){
-const save=JSON.parse(localStorage.getItem('cmsave')||'null');
-const currentL=save?save.L:1;
-document.getElementById('mapBtn').style.display='block';
-}
-function toggleAchievementsMenu(){
-const mapScreen=document.getElementById('mapScreen');
-if(mapScreen.style.display=='flex'){
-mapScreen.style.display='none';
-}else{
-mapScreen.style.display='flex';
-showAchievementsScreen();
-}
 }
 function setupControls(){
 function bind(id,action){
@@ -1931,6 +1807,12 @@ bind('fw','forward');
 bind('bw','backward');
 bind('j','jump');
 bind('a','attack');
+if(twoPlayerMode){
+bind('p2l','left');
+bind('p2r','right');
+bind('p2j','jump');
+bind('p2a','attack');
+}
 document.addEventListener('keydown',function(e){
 if(e.key=='ArrowLeft'||e.key=='a')I.left=true;
 if(e.key=='ArrowRight'||e.key=='d')I.right=true;
@@ -1939,7 +1821,6 @@ if(e.key=='ArrowDown'||e.key=='s')I.backward=true;
 if(e.key==' '||e.key=='j')I.jump=true;
 if(e.key=='x'||e.key=='k')I.attack=true;
 if(e.key=='p'||e.key=='Escape')togglePauseMenu();
-if(e.key=='m')showMapScreen();
 });
 document.addEventListener('keyup',function(e){
 if(e.key=='ArrowLeft'||e.key=='a')I.left=false;
@@ -2009,7 +1890,7 @@ ctx.fillRect(95,22,5,15);
 }
 function loop(){
 if(!running)return;
-if(S=='playing'){upd();checkBossRush();}
+if(S=='playing'){upd();}
 renderer.render(scene,camera);
 document.getElementById('hp').style.width=(P.hp/P.mh*100)+'%';
 document.getElementById('cc').textContent=coins;
@@ -2020,7 +1901,6 @@ animId=requestAnimationFrame(loop);
 }
 gameInstance={stop:stop};
 setupControls();
-updateMapScreenButtons();
 mk(L);
 loop();
 }
