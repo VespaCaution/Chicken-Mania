@@ -158,20 +158,22 @@ function startGameBtn(){
 document.getElementById('p2controls').style.display=twoPlayerMode?'flex':'none';
 document.getElementById('ss').style.display='none';
 document.getElementById('gs').style.display='block';
-document.getElementById('propMode').style.display='none';
+if(document.getElementById('propMode'))document.getElementById('propMode').style.display='none';
 if(gameInstance){gameInstance.stop();gameInstance=null;}
 initGame();
 }
 function toggleTwoPlayerMode(){
 twoPlayerMode=!twoPlayerMode;
 const btn=document.getElementById('twoPlayerBtn');
+if(btn){
 if(twoPlayerMode){btn.textContent='👥 2 Player: ON';btn.style.background='linear-gradient(145deg,#00FF00,#00AA00)';}
 else{btn.textContent='👥 2 Player: OFF';btn.style.background='linear-gradient(145deg,#FF6600,#FF3300)';}
 }
+}
 function exitTwoPlayer(){
 twoPlayerMode=false;
-document.getElementById('twoPlayerBtn').textContent='👥 2 Player: OFF';
-document.getElementById('twoPlayerBtn').style.background='linear-gradient(145deg,#FF6600,#FF3300)';
+const btn=document.getElementById('twoPlayerBtn');
+if(btn){btn.textContent='👥 2 Player: OFF';btn.style.background='linear-gradient(145deg,#FF6600,#FF3300)';}
 document.getElementById('p2controls').style.display='none';
 window.I2=null;
 P2=null;
@@ -180,22 +182,44 @@ document.getElementById('gs').style.display='none';
 document.getElementById('ss').style.display='flex';
 }
 function restartGame(){if(confirm(currentLang=='en'?'Restart from beginning?':'Recommencer ?')){localStorage.removeItem('cmsave');localStorage.removeItem('cmcuts');location.reload();}}
-function setLang(l){currentLang=l;document.getElementById('st').textContent=TRANSLATIONS[l].st;document.getElementById('sb').textContent=TRANSLATIONS[l].sb;document.getElementById('rb').textContent=TRANSLATIONS[l].rb;document.getElementById('skb').textContent=TRANSLATIONS[l].sk;document.getElementById('charSelectTitle').textContent=TRANSLATIONS[l].charSelect;document.getElementById('le').classList.toggle('ac',l=='en');document.getElementById('lf').classList.toggle('ac',l=='fr');localStorage.setItem('cml',l);}
-function t(key){return TRANSLATIONS[currentLang][key]||key;}
+function setLang(l){
+currentLang=l;
+if(TRANSLATIONS&&TRANSLATIONS[l]){
+document.getElementById('st').textContent=TRANSLATIONS[l].st;
+document.getElementById('sb').textContent=TRANSLATIONS[l].sb;
+document.getElementById('rb').textContent=TRANSLATIONS[l].rb;
+document.getElementById('skb').textContent=TRANSLATIONS[l].sk;
+document.getElementById('charSelectTitle').textContent=TRANSLATIONS[l].charSelect;
+}
+document.getElementById('le').classList.toggle('ac',l=='en');
+document.getElementById('lf').classList.toggle('ac',l=='fr');
+localStorage.setItem('cml',l);
+}
+function t(key){return (TRANSLATIONS&&TRANSLATIONS[currentLang]&&TRANSLATIONS[currentLang][key])||key;}
 function selectCharacter(c){
 selectedCharacter=c;
-document.getElementById('charFarmer').classList.toggle('ac',c=='farmer');
-document.getElementById('charChicken').classList.toggle('ac',c=='chicken');
-document.getElementById('charDog').classList.toggle('ac',c=='dog');
-document.getElementById('charCat').classList.toggle('ac',c=='cat');
-document.getElementById('charChickenCat').classList.toggle('ac',c=='chickencat');
-document.getElementById('charDesc').textContent=CHARACTERS[c].name+' - '+CHARACTERS[c].desc;
+const charIds={farmer:'charFarmer',chicken:'charChicken',dog:'charDog',cat:'charCat',chickencat:'charChickenCat'};
+for(let key in charIds){
+const el=document.getElementById(charIds[key]);
+if(el)el.classList.toggle('ac',key==c);
+}
+if(document.getElementById('charDesc'))document.getElementById('charDesc').textContent=CHARACTERS[c].name+' - '+CHARACTERS[c].desc;
 localStorage.setItem('cmchar',c);
 }
-function togglePauseMenu(){const pm=document.getElementById('pauseMenu');if(pm.style.display=='block'){resumeGame();}else{pm.style.display='block';if(typeof stopMusic==='function')stopMusic();}}
-function resumeGame(){document.getElementById('pauseMenu').style.display='none';if(typeof startMusic==='function')startMusic(typeof L!=='undefined'&&(L==3||L==7||L==10||L==15||L==20||L==25||L==30)?'boss':'farm');}
+function togglePauseMenu(){
+const pm=document.getElementById('pauseMenu');
+if(!pm)return;
+if(pm.style.display=='block'){resumeGame();}
+else{pm.style.display='block';if(typeof stopMusic==='function')stopMusic();}
+}
+function resumeGame(){
+const pm=document.getElementById('pauseMenu');
+if(pm)pm.style.display='none';
+if(typeof startMusic==='function')startMusic(typeof L!=='undefined'&&(L==3||L==7||L==10||L==15||L==20||L==25||L==30)?'boss':'farm');
+}
 function quitToMenu(){
-document.getElementById('pauseMenu').style.display='none';
+const pm=document.getElementById('pauseMenu');
+if(pm)pm.style.display='none';
 document.getElementById('gs').style.display='none';
 document.getElementById('ss').style.display='flex';
 if(gameInstance){gameInstance.stop();gameInstance=null;}
@@ -204,13 +228,37 @@ renderer.setScissorTest(false);
 renderer.setViewport(0,0,renderer.domElement.width,renderer.domElement.height);
 }
 }
-function closeDialogue(){const d=document.getElementById('npcDialogue');if(d)d.remove();if(typeof S!=='undefined')S='playing';if(typeof npcs!=='undefined'){for(let n of npcs){n.userData.isTalking=false;}}if(typeof startMusic==='function'){startMusic(typeof L!=='undefined'&&(L==3||L==7||L==10||L==15||L==20||L==25||L==30)?'boss':'farm');}}
-function buyItem(type){if(type=='speed'&&coins>=50){coins-=50;P.s=CHARACTERS[selectedCharacter].speed+0.15;playVictorySound();alert(t('purchased'));}else if(type=='attack'&&coins>=50){coins-=50;P.au=true;playVictorySound();alert(t('purchased'));}else if(type=='shield'&&coins>=75){coins-=75;P.hasShield=true;playVictorySound();alert(t('purchased'));}else{alert(t('insufficient'));}closeDialogue();saveGame();}
+function closeDialogue(){
+const d=document.getElementById('npcDialogue');
+if(d)d.remove();
+if(typeof S!=='undefined')S='playing';
+if(typeof npcs!=='undefined'){for(let n of npcs){n.userData.isTalking=false;}}
+if(typeof startMusic==='function'){startMusic(typeof L!=='undefined'&&(L==3||L==7||L==10||L==15||L==20||L==25||L==30)?'boss':'farm');}
+}
+function buyItem(type){
+if(typeof coins==='undefined')return;
+if(type=='speed'&&coins>=50){coins-=50;if(typeof P!=='undefined')P.s=CHARACTERS[selectedCharacter].speed+0.15;playVictorySound();alert(t('purchased'));}
+else if(type=='attack'&&coins>=50){coins-=50;if(typeof P!=='undefined')P.au=true;playVictorySound();alert(t('purchased'));}
+else if(type=='shield'&&coins>=75){coins-=75;if(typeof P!=='undefined')P.hasShield=true;playVictorySound();alert(t('purchased'));}
+else{alert(t('insufficient'));}
+closeDialogue();
+if(typeof saveGame==='function')saveGame();
+}
 function enterPropMode(){
+propModeActive=true;
 document.getElementById('ss').style.display='none';
 document.getElementById('gs').style.display='none';
-document.getElementById('propMode').style.display='block';
-propModeActive=true;
+const pm=document.getElementById('propMode');
+if(pm)pm.style.display='block';
+initPropMode();
+}
+function exitPropMode(){
+propModeActive=false;
+const pm=document.getElementById('propMode');
+if(pm)pm.style.display='none';
+document.getElementById('ss').style.display='flex';
+}
+function initPropMode(){
 const canvas=document.getElementById('propCanvas');
 if(!canvas)return;
 canvas.width=500;
@@ -292,15 +340,10 @@ requestAnimationFrame(propLoopInternal);
 }
 propLoopInternal();
 }
-function exitPropMode(){
-propModeActive=false;
-document.getElementById('propMode').style.display='none';
-document.getElementById('ss').style.display='flex';
-}
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;document.getElementById('ib').style.display='block';});
 window.addEventListener('appinstalled',function(){deferredPrompt=null;document.getElementById('ib').style.display='none';});
 const savedChar=localStorage.getItem('cmchar');
-if(savedChar)selectCharacter(savedChar);
+if(savedChar&&CHARACTERS[savedChar])selectCharacter(savedChar);
 }const TRANSLATIONS={
 en:{
 st:'A Farm Adventure',sb:'▶️ Start Game',rb:'🔄 Restart Game',lv:'Level',sk:'Skip ⏭️',
