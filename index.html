@@ -89,7 +89,6 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 <div class="h"><span>🏆</span><span id="lv">Lv 1</span></div>
 </div>
 <div id="c"></div>
-<button id="menuBtn" onclick="togglePauseMenu()">⏸️</button>
 <div id="b">
 <div style="display:flex;flex-direction:row;gap:10px;width:100%;justify-content:center;align-items:center">
 <div style="display:flex;gap:4px;align-items:center">
@@ -108,27 +107,26 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 <div></div><div class="btn" id="p2bw" style="pointer-events:auto;touch-action:none">⬇️</div><div></div>
 </div>
 <div class="btn" id="p2a" style="pointer-events:auto;touch-action:none;width:40px;height:40px;font-size:16px">⚔️</div>
-<button onclick="exitTwoPlayer()" style="font-size:8px;background:#f44;color:#fff;border:none;border-radius:3px;cursor:pointer;pointer-events:auto;padding:1px 3px">✕</button>
 </div>
 </div>
 </div>
 <div id="cs"><div id="cp" style="font-size:70px">👨‍🌾</div><div id="ct" style="color:#FFD700;font-size:18px;text-align:center;margin:15px"></div><button onclick="skipCutscene()" style="background:#FFD700;border:none;padding:12px 30px;border-radius:20px;font-weight:bold;font-size:16px;cursor:pointer;pointer-events:auto;z-index:101" id="skb">Skip ⏭️</button></div>
 <div id="lc"><h2>🎉 Complete!</h2><p id="ls"></p></div>
-<div id="pauseMenu">
+<div id="pauseMenu" style="display:none">
 <h3 style="color:#FFD700;margin-bottom:10px">⏸️ Paused</h3>
 <button onclick="resumeGame()">▶️ Resume</button>
 <button onclick="restartLevel()">🔄 Restart Level</button>
 <button onclick="quitToMenu()">🏠 Main Menu</button>
 </div>
-<div id="propMode" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:70;background:#1a0a00">
+</div>
+</div>
+</div>
+<div id="propMode" style="display:none">
 <div style="background:#2a1508;padding:6px;display:flex;justify-content:space-between;align-items:center">
 <span style="color:#FFD700;font-weight:bold">🎭 Prop Battle</span>
 <button onclick="exitPropMode()" style="background:#f44;color:#fff;border:none;border-radius:5px;cursor:pointer;padding:3px 8px">✕</button>
 </div>
-<canvas id="propCanvas" style="width:100%;height:70%"></canvas>
-</div>
-</div>
-</div>
+<canvas id="propCanvas"></canvas>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script>
@@ -144,9 +142,8 @@ let twoPlayerMode=false;
 let P2=null;
 let propModeActive=false;
 let propObjects=[];
-let propP1={x:50,y:150,hp:100};
+let propP1={x:250,y:150,hp:100,emoji:'👨‍🌾'};
 let propP2=null;
-let propSelected=null;
 const diffData={enemyHpMult:1,enemyDmgMult:1,bossHpMult:1};
 const CHARACTERS={
 farmer:{name:'Farmer Joe',desc:'Balanced stats',icon:'👨‍🌾',speed:0.25,jump:0.5,attack:20,color:0x4A90E2},
@@ -185,7 +182,16 @@ document.getElementById('ss').style.display='flex';
 function restartGame(){if(confirm(currentLang=='en'?'Restart from beginning?':'Recommencer ?')){localStorage.removeItem('cmsave');localStorage.removeItem('cmcuts');location.reload();}}
 function setLang(l){currentLang=l;document.getElementById('st').textContent=TRANSLATIONS[l].st;document.getElementById('sb').textContent=TRANSLATIONS[l].sb;document.getElementById('rb').textContent=TRANSLATIONS[l].rb;document.getElementById('skb').textContent=TRANSLATIONS[l].sk;document.getElementById('charSelectTitle').textContent=TRANSLATIONS[l].charSelect;document.getElementById('le').classList.toggle('ac',l=='en');document.getElementById('lf').classList.toggle('ac',l=='fr');localStorage.setItem('cml',l);}
 function t(key){return TRANSLATIONS[currentLang][key]||key;}
-function selectCharacter(c){selectedCharacter=c;document.getElementById('charFarmer').classList.toggle('ac',c=='farmer');document.getElementById('charChicken').classList.toggle('ac',c=='chicken');document.getElementById('charDog').classList.toggle('ac',c=='dog');document.getElementById('charCat').classList.toggle('ac',c=='cat');document.getElementById('charChickenCat').classList.toggle('ac',c=='chickencat');document.getElementById('charDesc').textContent=CHARACTERS[c].name+' - '+CHARACTERS[c].desc;localStorage.setItem('cmchar',c);}
+function selectCharacter(c){
+selectedCharacter=c;
+document.getElementById('charFarmer').classList.toggle('ac',c=='farmer');
+document.getElementById('charChicken').classList.toggle('ac',c=='chicken');
+document.getElementById('charDog').classList.toggle('ac',c=='dog');
+document.getElementById('charCat').classList.toggle('ac',c=='cat');
+document.getElementById('charChickenCat').classList.toggle('ac',c=='chickencat');
+document.getElementById('charDesc').textContent=CHARACTERS[c].name+' - '+CHARACTERS[c].desc;
+localStorage.setItem('cmchar',c);
+}
 function togglePauseMenu(){const pm=document.getElementById('pauseMenu');if(pm.style.display=='block'){resumeGame();}else{pm.style.display='block';if(typeof stopMusic==='function')stopMusic();}}
 function resumeGame(){document.getElementById('pauseMenu').style.display='none';if(typeof startMusic==='function')startMusic(typeof L!=='undefined'&&(L==3||L==7||L==10||L==15||L==20||L==25||L==30)?'boss':'farm');}
 function quitToMenu(){
@@ -204,21 +210,13 @@ function enterPropMode(){
 document.getElementById('ss').style.display='none';
 document.getElementById('gs').style.display='none';
 document.getElementById('propMode').style.display='block';
-initPropMode();
-}
-function exitPropMode(){
-propModeActive=false;
-document.getElementById('propMode').style.display='none';
-document.getElementById('ss').style.display='flex';
-}
-function initPropMode(){
 propModeActive=true;
-propP1={x:250,y:150,hp:100,emoji:CHARACTERS[selectedCharacter].icon};
-if(twoPlayerMode){propP2={x:300,y:150,hp:100,emoji:'🐔'};}
 const canvas=document.getElementById('propCanvas');
-const ctx=canvas.getContext('2d');
+if(!canvas)return;
 canvas.width=500;
 canvas.height=350;
+propP1={x:250,y:150,hp:100,emoji:CHARACTERS[selectedCharacter].icon};
+if(twoPlayerMode){propP2={x:300,y:150,hp:100,emoji:'🐔'};}
 const propTypes=['tree','tree','rock','rock','fence','fence','flower','flower','hay','hay','pond','house'];
 propObjects=[];
 for(let i=0;i<15;i++){
@@ -226,13 +224,55 @@ const type=propTypes[Math.floor(Math.random()*propTypes.length)];
 const emojis={tree:'🌳',rock:'🪨',fence:'🚧',flower:'🌸',hay:'🌾',pond:'💧',house:'🏠'};
 propObjects.push({type:type,x:Math.random()*400+30,y:Math.random()*200+50,emoji:emojis[type]});
 }
-drawPropMode();
-propLoop();
+window.propI1={left:false,right:false,up:false,down:false,attack:false};
+if(twoPlayerMode){window.propI2={left:false,right:false,up:false,down:false,attack:false};}
+function bindPropBtn(id,action,target){
+const el=document.getElementById(id);
+if(!el)return;
+el.addEventListener('touchstart',function(e){e.preventDefault();target[action]=true;},{passive:false});
+el.addEventListener('touchend',function(e){e.preventDefault();target[action]=false;},{passive:false});
+el.addEventListener('mousedown',function(){target[action]=true;});
+el.addEventListener('mouseup',function(){target[action]=false;});
 }
-function drawPropMode(){
-const canvas=document.getElementById('propCanvas');
-if(!canvas)return;
-const ctx=canvas.getContext('2d');
+bindPropBtn('l','left',window.propI1);
+bindPropBtn('r','right',window.propI1);
+bindPropBtn('fw','up',window.propI1);
+bindPropBtn('bw','down',window.propI1);
+bindPropBtn('a','attack',window.propI1);
+if(window.propI2){
+bindPropBtn('p2l','left',window.propI2);
+bindPropBtn('p2r','right',window.propI2);
+bindPropBtn('p2fw','up',window.propI2);
+bindPropBtn('p2bw','down',window.propI2);
+bindPropBtn('p2a','attack',window.propI2);
+}
+function propLoopInternal(){
+if(!propModeActive)return;
+if(window.propI1){
+if(window.propI1.left)propP1.x-=3;
+if(window.propI1.right)propP1.x+=3;
+if(window.propI1.up)propP1.y-=3;
+if(window.propI1.down)propP1.y+=3;
+if(window.propI1.attack&&propP2&&Math.abs(propP1.x-propP2.x)<35&&Math.abs(propP1.y-propP2.y)<35){propP2.hp-=5;window.propI1.attack=false;}
+}
+if(window.propI2&&propP2){
+if(window.propI2.left)propP2.x-=3;
+if(window.propI2.right)propP2.x+=3;
+if(window.propI2.up)propP2.y-=3;
+if(window.propI2.down)propP2.y+=3;
+if(window.propI2.attack&&Math.abs(propP1.x-propP2.x)<35&&Math.abs(propP1.y-propP2.y)<35){propP1.hp-=5;window.propI2.attack=false;}
+}
+propP1.x=Math.max(10,Math.min(480,propP1.x));
+propP1.y=Math.max(30,Math.min(290,propP1.y));
+if(propP2){
+propP2.x=Math.max(10,Math.min(480,propP2.x));
+propP2.y=Math.max(30,Math.min(290,propP2.y));
+if(propP1.hp<=0){propP1.hp=100;propP1.x=Math.random()*400+30;propP1.y=Math.random()*200+50;}
+if(propP2.hp<=0){propP2.hp=100;propP2.x=Math.random()*400+30;propP2.y=Math.random()*200+50;}
+}
+const c=document.getElementById('propCanvas');
+if(!c)return;
+const ctx=c.getContext('2d');
 ctx.fillStyle='#90EE90';
 ctx.fillRect(0,0,500,350);
 ctx.fillStyle='#8B4513';
@@ -248,41 +288,20 @@ ctx.fillStyle='#fff';
 ctx.font='12px Arial';
 ctx.fillText('P1 HP: '+propP1.hp,10,20);
 if(propP2){ctx.fillText('P2 HP: '+propP2.hp,400,20);}
+requestAnimationFrame(propLoopInternal);
 }
-function propLoop(){
-if(!propModeActive)return;
-if(window.propI1){
-if(window.propI1.left)propP1.x-=3;
-if(window.propI1.right)propP1.x+=3;
-if(window.propI1.up)propP1.y-=3;
-if(window.propI1.down)propP1.y+=3;
+propLoopInternal();
 }
-if(window.propI2&&propP2){
-if(window.propI2.left)propP2.x-=3;
-if(window.propI2.right)propP2.x+=3;
-if(window.propI2.up)propP2.y-=3;
-if(window.propI2.down)propP2.y+=3;
-}
-propP1.x=Math.max(10,Math.min(480,propP1.x));
-propP1.y=Math.max(30,Math.min(290,propP1.y));
-if(propP2){
-propP2.x=Math.max(10,Math.min(480,propP2.x));
-propP2.y=Math.max(30,Math.min(290,propP2.y));
-if(Math.abs(propP1.x-propP2.x)<30&&Math.abs(propP1.y-propP2.y)<30){
-if(window.propI1&&window.propI1.attack){propP2.hp-=5;}
-if(window.propI2&&window.propI2.attack){propP1.hp-=5;}
-}
-if(propP1.hp<=0){propP1.hp=100;propP1.x=Math.random()*400+30;propP1.y=Math.random()*200+50;}
-if(propP2.hp<=0){propP2.hp=100;propP2.x=Math.random()*400+30;propP2.y=Math.random()*200+50;}
-}
-drawPropMode();
-requestAnimationFrame(propLoop);
+function exitPropMode(){
+propModeActive=false;
+document.getElementById('propMode').style.display='none';
+document.getElementById('ss').style.display='flex';
 }
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;document.getElementById('ib').style.display='block';});
 window.addEventListener('appinstalled',function(){deferredPrompt=null;document.getElementById('ib').style.display='none';});
 const savedChar=localStorage.getItem('cmchar');
 if(savedChar)selectCharacter(savedChar);
-const TRANSLATIONS={
+}const TRANSLATIONS={
 en:{
 st:'A Farm Adventure',sb:'▶️ Start Game',rb:'🔄 Restart Game',lv:'Level',sk:'Skip ⏭️',
 cm:'🎉 CONGRATULATIONS! 🎉',tc:'Total Coins',bn:'Bonus Coins',dt:'Deaths',tm:'Time',
@@ -1744,6 +1763,38 @@ if(boss&&boss.ac){
 let dx=P.x-boss.x,dz=P.z-boss.z;
 if(Math.sqrt(dx*dx+dz*dz)<3.5){
 boss.hp-=P.attackDmg*0.8;
+createHitParticle(boss.x,boss.y+1.5,boss.z,0xFFD700);
+}
+}
+}
+if(twoPlayerMode&&P2&&P2.ad>0){
+for(let e of enemies){
+if(e.ac&&!e.stationary){
+let dx=P2.x-e.x,dz=P2.z-e.z;
+if(Math.sqrt(dx*dx+dz*dz)<2.2){
+if(e.type=='boar')e.hp-=P2.attackDmg;
+else if(e.type=='crow')e.hp-=P2.attackDmg*0.8;
+else if(e.type=='robot')e.hp-=P2.attackDmg*0.5;
+else if(e.type=='cf')e.hp-=P2.attackDmg*0.4;
+else if(e.type=='wolf')e.hp-=P2.attackDmg*0.5;
+else if(e.type=='golem')e.hp-=P2.attackDmg*0.3;
+else if(e.type=='snake')e.hp-=P2.attackDmg*0.7;
+else if(e.type=='bat')e.hp-=P2.attackDmg*0.8;
+else e.hp-=P2.attackDmg;
+createHitParticle(e.x,e.y+0.5,e.z,0xFFD700);
+playHitSound();
+if(e.hp<=0){
+e.ac=false;coins+=10;
+createDeathParticles(e.x,e.y+0.5,e.z,e.type=='boar'?0x8B4513:e.type=='robot'?0x808080:e.type=='cf'?0x556B2F:e.type=='wolf'?0x555555:e.type=='golem'?0x888888:e.type=='snake'?0x228B22:0x333333);
+scene.remove(e.mesh);
+}
+}
+}
+}
+if(boss&&boss.ac){
+let dx=P2.x-boss.x,dz=P2.z-boss.z;
+if(Math.sqrt(dx*dx+dz*dz)<3.5){
+boss.hp-=P2.attackDmg*0.8;
 createHitParticle(boss.x,boss.y+1.5,boss.z,0xFFD700);
 }
 }
