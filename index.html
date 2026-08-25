@@ -69,11 +69,13 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 <button class="lb" id="charChicken" style="pointer-events:auto;font-size:30px;padding:10px" onclick="selectCharacter('chicken')">🐔</button>
 <button class="lb" id="charDog" style="pointer-events:auto;font-size:30px;padding:10px" onclick="selectCharacter('dog')">🐕</button>
 <button class="lb" id="charCat" style="pointer-events:auto;font-size:30px;padding:10px" onclick="selectCharacter('cat')">🐱</button>
+<button class="lb" id="charChickenCat" style="pointer-events:auto;font-size:30px;padding:10px" onclick="selectCharacter('chickencat')">🐔🐱</button>
 </div>
 <p style="color:#FFD700;font-size:11px;margin-top:5px" id="charDesc">Farmer Joe - Balanced stats</p>
 </div>
 <button class="sb" id="sb" style="pointer-events:auto" onclick="startGameBtn()">▶️ Start Game</button>
 <button class="sb" id="twoPlayerBtn" style="pointer-events:auto;background:linear-gradient(145deg,#FF6600,#FF3300);color:#fff" onclick="toggleTwoPlayerMode()">👥 2 Player: OFF</button>
+<button class="sb" id="propModeBtn" style="pointer-events:auto;background:linear-gradient(145deg,#9370DB,#6A0DAD);color:#fff" onclick="enterPropMode()">🎭 Prop Battle</button>
 <button class="ib" id="ib" style="pointer-events:auto" onclick="installApp()">📲 Install App</button>
 <button class="rb" id="rb" style="pointer-events:auto" onclick="restartGame()">🔄 Restart Game</button>
 <p class="vr">v12.0.0</p>
@@ -100,13 +102,13 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 </div>
 <div id="p2controls" style="display:none;flex-direction:row;gap:4px;align-items:center">
 <div style="color:#FFD700;font-size:9px;font-weight:bold">P2</div>
-<div class="dpad" style="grid-template-columns:25px 25px 25px;grid-template-rows:25px 25px 25px;gap:1px">
-<div></div><div class="btn" id="p2fw" style="pointer-events:auto;touch-action:none;width:25px;height:25px;font-size:10px">⬆️</div><div></div>
-<div class="btn" id="p2l" style="pointer-events:auto;touch-action:none;width:25px;height:25px;font-size:10px">⬅️</div><div class="btn" id="p2j" style="pointer-events:auto;touch-action:none;width:25px;height:25px;font-size:10px">🦘</div><div class="btn" id="p2r" style="pointer-events:auto;touch-action:none;width:25px;height:25px;font-size:10px">➡️</div>
-<div></div><div class="btn" id="p2bw" style="pointer-events:auto;touch-action:none;width:25px;height:25px;font-size:10px">⬇️</div><div></div>
+<div class="dpad">
+<div></div><div class="btn" id="p2fw" style="pointer-events:auto;touch-action:none">⬆️</div><div></div>
+<div class="btn" id="p2l" style="pointer-events:auto;touch-action:none">⬅️</div><div class="btn" id="p2j" style="pointer-events:auto;touch-action:none">🦘</div><div class="btn" id="p2r" style="pointer-events:auto;touch-action:none">➡️</div>
+<div></div><div class="btn" id="p2bw" style="pointer-events:auto;touch-action:none">⬇️</div><div></div>
 </div>
-<div class="btn" id="p2a" style="pointer-events:auto;touch-action:none;width:30px;height:30px;font-size:12px">⚔️</div>
-<button onclick="exitTwoPlayer()" style="font-size:7px;background:#f44;color:#fff;border:none;border-radius:3px;cursor:pointer;pointer-events:auto;padding:1px 3px">✕</button>
+<div class="btn" id="p2a" style="pointer-events:auto;touch-action:none;width:40px;height:40px;font-size:16px">⚔️</div>
+<button onclick="exitTwoPlayer()" style="font-size:8px;background:#f44;color:#fff;border:none;border-radius:3px;cursor:pointer;pointer-events:auto;padding:1px 3px">✕</button>
 </div>
 </div>
 </div>
@@ -117,6 +119,13 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 <button onclick="resumeGame()">▶️ Resume</button>
 <button onclick="restartLevel()">🔄 Restart Level</button>
 <button onclick="quitToMenu()">🏠 Main Menu</button>
+</div>
+<div id="propMode" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:70;background:#1a0a00">
+<div style="background:#2a1508;padding:6px;display:flex;justify-content:space-between;align-items:center">
+<span style="color:#FFD700;font-weight:bold">🎭 Prop Battle</span>
+<button onclick="exitPropMode()" style="background:#f44;color:#fff;border:none;border-radius:5px;cursor:pointer;padding:3px 8px">✕</button>
+</div>
+<canvas id="propCanvas" style="width:100%;height:70%"></canvas>
 </div>
 </div>
 </div>
@@ -133,12 +142,18 @@ let audioContext=null,musicInterval=null,currentMusic=null,currentBeat=0;
 let selectedCharacter='farmer';
 let twoPlayerMode=false;
 let P2=null;
+let propModeActive=false;
+let propObjects=[];
+let propP1={x:50,y:150,hp:100};
+let propP2=null;
+let propSelected=null;
 const diffData={enemyHpMult:1,enemyDmgMult:1,bossHpMult:1};
 const CHARACTERS={
 farmer:{name:'Farmer Joe',desc:'Balanced stats',icon:'👨‍🌾',speed:0.25,jump:0.5,attack:20,color:0x4A90E2},
 chicken:{name:'Chicken',desc:'Fast but weak',icon:'🐔',speed:0.35,jump:0.55,attack:10,color:0xFFFFFF},
 dog:{name:'Dog',desc:'Strong but slow',icon:'🐕',speed:0.2,jump:0.45,attack:35,color:0x8B4513},
-cat:{name:'Cat',desc:'High jump',icon:'🐱',speed:0.28,jump:0.7,attack:15,color:0xFF6600}
+cat:{name:'Cat',desc:'High jump',icon:'🐱',speed:0.28,jump:0.7,attack:15,color:0xFF6600},
+chickencat:{name:'Chicken-Cat',desc:'Meow-cluck!',icon:'🐔🐱',speed:0.3,jump:0.6,attack:18,color:0xFFD700}
 };
 function skipCutscene(){if(globalSkipFn){globalSkipFn();globalSkipFn=null;}}
 function installApp(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;document.getElementById('ib').style.display='none';}else{alert('To install: Open in Chrome → Menu → "Add to Home Screen"');}}
@@ -146,19 +161,15 @@ function startGameBtn(){
 document.getElementById('p2controls').style.display=twoPlayerMode?'flex':'none';
 document.getElementById('ss').style.display='none';
 document.getElementById('gs').style.display='block';
+document.getElementById('propMode').style.display='none';
 if(gameInstance){gameInstance.stop();gameInstance=null;}
 initGame();
 }
 function toggleTwoPlayerMode(){
 twoPlayerMode=!twoPlayerMode;
 const btn=document.getElementById('twoPlayerBtn');
-if(twoPlayerMode){
-btn.textContent='👥 2 Player: ON';
-btn.style.background='linear-gradient(145deg,#00FF00,#00AA00)';
-}else{
-btn.textContent='👥 2 Player: OFF';
-btn.style.background='linear-gradient(145deg,#FF6600,#FF3300)';
-}
+if(twoPlayerMode){btn.textContent='👥 2 Player: ON';btn.style.background='linear-gradient(145deg,#00FF00,#00AA00)';}
+else{btn.textContent='👥 2 Player: OFF';btn.style.background='linear-gradient(145deg,#FF6600,#FF3300)';}
 }
 function exitTwoPlayer(){
 twoPlayerMode=false;
@@ -174,12 +185,99 @@ document.getElementById('ss').style.display='flex';
 function restartGame(){if(confirm(currentLang=='en'?'Restart from beginning?':'Recommencer ?')){localStorage.removeItem('cmsave');localStorage.removeItem('cmcuts');location.reload();}}
 function setLang(l){currentLang=l;document.getElementById('st').textContent=TRANSLATIONS[l].st;document.getElementById('sb').textContent=TRANSLATIONS[l].sb;document.getElementById('rb').textContent=TRANSLATIONS[l].rb;document.getElementById('skb').textContent=TRANSLATIONS[l].sk;document.getElementById('charSelectTitle').textContent=TRANSLATIONS[l].charSelect;document.getElementById('le').classList.toggle('ac',l=='en');document.getElementById('lf').classList.toggle('ac',l=='fr');localStorage.setItem('cml',l);}
 function t(key){return TRANSLATIONS[currentLang][key]||key;}
-function selectCharacter(c){selectedCharacter=c;document.getElementById('charFarmer').classList.toggle('ac',c=='farmer');document.getElementById('charChicken').classList.toggle('ac',c=='chicken');document.getElementById('charDog').classList.toggle('ac',c=='dog');document.getElementById('charCat').classList.toggle('ac',c=='cat');document.getElementById('charDesc').textContent=CHARACTERS[c].name+' - '+CHARACTERS[c].desc;localStorage.setItem('cmchar',c);}
+function selectCharacter(c){selectedCharacter=c;document.getElementById('charFarmer').classList.toggle('ac',c=='farmer');document.getElementById('charChicken').classList.toggle('ac',c=='chicken');document.getElementById('charDog').classList.toggle('ac',c=='dog');document.getElementById('charCat').classList.toggle('ac',c=='cat');document.getElementById('charChickenCat').classList.toggle('ac',c=='chickencat');document.getElementById('charDesc').textContent=CHARACTERS[c].name+' - '+CHARACTERS[c].desc;localStorage.setItem('cmchar',c);}
 function togglePauseMenu(){const pm=document.getElementById('pauseMenu');if(pm.style.display=='block'){resumeGame();}else{pm.style.display='block';if(typeof stopMusic==='function')stopMusic();}}
 function resumeGame(){document.getElementById('pauseMenu').style.display='none';if(typeof startMusic==='function')startMusic(typeof L!=='undefined'&&(L==3||L==7||L==10||L==15||L==20||L==25||L==30)?'boss':'farm');}
-function quitToMenu(){document.getElementById('pauseMenu').style.display='none';document.getElementById('gs').style.display='none';document.getElementById('ss').style.display='flex';if(gameInstance){gameInstance.stop();gameInstance=null;}}
+function quitToMenu(){
+document.getElementById('pauseMenu').style.display='none';
+document.getElementById('gs').style.display='none';
+document.getElementById('ss').style.display='flex';
+if(gameInstance){gameInstance.stop();gameInstance=null;}
+if(typeof renderer!=='undefined'&&renderer){
+renderer.setScissorTest(false);
+renderer.setViewport(0,0,renderer.domElement.width,renderer.domElement.height);
+}
+}
 function closeDialogue(){const d=document.getElementById('npcDialogue');if(d)d.remove();if(typeof S!=='undefined')S='playing';if(typeof npcs!=='undefined'){for(let n of npcs){n.userData.isTalking=false;}}if(typeof startMusic==='function'){startMusic(typeof L!=='undefined'&&(L==3||L==7||L==10||L==15||L==20||L==25||L==30)?'boss':'farm');}}
 function buyItem(type){if(type=='speed'&&coins>=50){coins-=50;P.s=CHARACTERS[selectedCharacter].speed+0.15;playVictorySound();alert(t('purchased'));}else if(type=='attack'&&coins>=50){coins-=50;P.au=true;playVictorySound();alert(t('purchased'));}else if(type=='shield'&&coins>=75){coins-=75;P.hasShield=true;playVictorySound();alert(t('purchased'));}else{alert(t('insufficient'));}closeDialogue();saveGame();}
+function enterPropMode(){
+document.getElementById('ss').style.display='none';
+document.getElementById('gs').style.display='none';
+document.getElementById('propMode').style.display='block';
+initPropMode();
+}
+function exitPropMode(){
+propModeActive=false;
+document.getElementById('propMode').style.display='none';
+document.getElementById('ss').style.display='flex';
+}
+function initPropMode(){
+propModeActive=true;
+propP1={x:250,y:150,hp:100,emoji:CHARACTERS[selectedCharacter].icon};
+if(twoPlayerMode){propP2={x:300,y:150,hp:100,emoji:'🐔'};}
+const canvas=document.getElementById('propCanvas');
+const ctx=canvas.getContext('2d');
+canvas.width=500;
+canvas.height=350;
+const propTypes=['tree','tree','rock','rock','fence','fence','flower','flower','hay','hay','pond','house'];
+propObjects=[];
+for(let i=0;i<15;i++){
+const type=propTypes[Math.floor(Math.random()*propTypes.length)];
+const emojis={tree:'🌳',rock:'🪨',fence:'🚧',flower:'🌸',hay:'🌾',pond:'💧',house:'🏠'};
+propObjects.push({type:type,x:Math.random()*400+30,y:Math.random()*200+50,emoji:emojis[type]});
+}
+drawPropMode();
+propLoop();
+}
+function drawPropMode(){
+const canvas=document.getElementById('propCanvas');
+if(!canvas)return;
+const ctx=canvas.getContext('2d');
+ctx.fillStyle='#90EE90';
+ctx.fillRect(0,0,500,350);
+ctx.fillStyle='#8B4513';
+ctx.fillRect(0,310,500,40);
+for(let obj of propObjects){
+ctx.font='35px Arial';
+ctx.fillText(obj.emoji,obj.x,obj.y);
+}
+ctx.font='40px Arial';
+ctx.fillText(propP1.emoji,propP1.x,propP1.y);
+if(propP2){ctx.fillText(propP2.emoji,propP2.x,propP2.y);}
+ctx.fillStyle='#fff';
+ctx.font='12px Arial';
+ctx.fillText('P1 HP: '+propP1.hp,10,20);
+if(propP2){ctx.fillText('P2 HP: '+propP2.hp,400,20);}
+}
+function propLoop(){
+if(!propModeActive)return;
+if(window.propI1){
+if(window.propI1.left)propP1.x-=3;
+if(window.propI1.right)propP1.x+=3;
+if(window.propI1.up)propP1.y-=3;
+if(window.propI1.down)propP1.y+=3;
+}
+if(window.propI2&&propP2){
+if(window.propI2.left)propP2.x-=3;
+if(window.propI2.right)propP2.x+=3;
+if(window.propI2.up)propP2.y-=3;
+if(window.propI2.down)propP2.y+=3;
+}
+propP1.x=Math.max(10,Math.min(480,propP1.x));
+propP1.y=Math.max(30,Math.min(290,propP1.y));
+if(propP2){
+propP2.x=Math.max(10,Math.min(480,propP2.x));
+propP2.y=Math.max(30,Math.min(290,propP2.y));
+if(Math.abs(propP1.x-propP2.x)<30&&Math.abs(propP1.y-propP2.y)<30){
+if(window.propI1&&window.propI1.attack){propP2.hp-=5;}
+if(window.propI2&&window.propI2.attack){propP1.hp-=5;}
+}
+if(propP1.hp<=0){propP1.hp=100;propP1.x=Math.random()*400+30;propP1.y=Math.random()*200+50;}
+if(propP2.hp<=0){propP2.hp=100;propP2.x=Math.random()*400+30;propP2.y=Math.random()*200+50;}
+}
+drawPropMode();
+requestAnimationFrame(propLoop);
+}
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;document.getElementById('ib').style.display='block';});
 window.addEventListener('appinstalled',function(){deferredPrompt=null;document.getElementById('ib').style.display='none';});
 const savedChar=localStorage.getItem('cmchar');
@@ -1356,13 +1454,13 @@ createGround3D(i,-2,2,4);
 }
 if(theme=='farm'){
 if(L%2==0){createWater(12,0,5,8);createBridge(9,0,5);}
-for(let i=0;i<lw;i+=10){createTree(i,-12,true);createTree(i+5,12,true);}
+for(let i=0;i<lw;i+=20){createTree(i,-25,true);}
 }else if(theme=='forest'){
 if(L%3==0){createWater(18,0,6,10);createBridge(15,0,6);}
-for(let i=0;i<lw;i+=15){createTree(i,-18,true);createTree(i+7,18,true);}
+for(let i=0;i<lw;i+=20){createTree(i,-25,true);createTree(i+10,25,true);}
 }else if(theme=='mountain'){
 if(L%2==1){createWater(20,0,4,8);createBridge(18,0,4);}
-for(let i=0;i<lw;i+=12){createTree(i,-20,true);createTree(i+6,20,true);}
+for(let i=0;i<lw;i+=18){createTree(i,-28,true);createTree(i+9,28,true);}
 }else if(theme=='dungeon'){
 for(let i=0;i<lw;i+=8){createTorch(i,-6);createTorch(i+4,6);}
 }else if(theme=='castle'){
@@ -1927,6 +2025,38 @@ bind2('p2bw','backward');
 bind2('p2j','jump');
 bind2('p2a','attack');
 }
+if(propModeActive){
+window.propI1={left:false,right:false,up:false,down:false,attack:false};
+function bindProp1(id,action){
+const el=document.getElementById(id);
+if(!el)return;
+el.addEventListener('touchstart',function(e){e.preventDefault();window.propI1[action]=true;},{passive:false});
+el.addEventListener('touchend',function(e){e.preventDefault();window.propI1[action]=false;},{passive:false});
+el.addEventListener('mousedown',function(){window.propI1[action]=true;});
+el.addEventListener('mouseup',function(){window.propI1[action]=false;});
+}
+bindProp1('l','left');
+bindProp1('r','right');
+bindProp1('fw','up');
+bindProp1('bw','down');
+bindProp1('a','attack');
+if(twoPlayerMode){
+window.propI2={left:false,right:false,up:false,down:false,attack:false};
+function bindProp2(id,action){
+const el=document.getElementById(id);
+if(!el)return;
+el.addEventListener('touchstart',function(e){e.preventDefault();window.propI2[action]=true;},{passive:false});
+el.addEventListener('touchend',function(e){e.preventDefault();window.propI2[action]=false;},{passive:false});
+el.addEventListener('mousedown',function(){window.propI2[action]=true;});
+el.addEventListener('mouseup',function(){window.propI2[action]=false;});
+}
+bindProp2('p2l','left');
+bindProp2('p2r','right');
+bindProp2('p2fw','up');
+bindProp2('p2bw','down');
+bindProp2('p2a','attack');
+}
+}
 document.addEventListener('keydown',function(e){
 if(e.key=='ArrowLeft'||e.key=='a')I.left=true;
 if(e.key=='ArrowRight'||e.key=='d')I.right=true;
@@ -1944,7 +2074,7 @@ if(e.key=='ArrowDown'||e.key=='s')I.backward=false;
 if(e.key==' '||e.key=='j')I.jump=false;
 if(e.key=='x'||e.key=='k')I.attack=false;
 });
-}
+               }
 function drawMiniMap(){
 let mm=document.getElementById('miniMap');
 if(!mm){
