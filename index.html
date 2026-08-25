@@ -89,26 +89,24 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 <div id="c"></div>
 <button id="menuBtn" onclick="togglePauseMenu()">⏸️</button>
 <div id="b">
-<div style="display:flex;flex-direction:column;gap:5px;width:100%">
-<div style="display:flex;justify-content:center;gap:8px;align-items:center;width:100%">
+<div style="display:flex;flex-direction:row;gap:10px;width:100%;justify-content:center;align-items:center">
+<div style="display:flex;gap:4px;align-items:center">
 <div class="dpad">
 <div></div><div class="btn" id="fw" style="pointer-events:auto;touch-action:none">⬆️</div><div></div>
 <div class="btn" id="l" style="pointer-events:auto;touch-action:none">⬅️</div><div class="btn" id="j" style="pointer-events:auto;touch-action:none">🦘</div><div class="btn" id="r" style="pointer-events:auto;touch-action:none">➡️</div>
 <div></div><div class="btn" id="bw" style="pointer-events:auto;touch-action:none">⬇️</div><div></div>
 </div>
-<div class="g"><div class="btn" id="a" style="pointer-events:auto;touch-action:none;width:45px;height:45px;font-size:18px">⚔️</div></div>
+<div class="btn" id="a" style="pointer-events:auto;touch-action:none;width:40px;height:40px;font-size:16px">⚔️</div>
 </div>
-<div id="p2controls" style="display:none;flex-direction:column;gap:3px;align-items:center;width:100%">
-<div style="color:#FFD700;font-size:9px;font-weight:bold;text-align:center">P2</div>
-<div style="display:flex;justify-content:center;gap:8px;align-items:center;width:100%">
-<div class="dpad" style="transform:rotate(180deg)">
-<div></div><div class="btn" id="p2fw" style="pointer-events:auto;touch-action:none;width:28px;height:28px;font-size:10px">⬆️</div><div></div>
-<div class="btn" id="p2l" style="pointer-events:auto;touch-action:none;width:28px;height:28px;font-size:10px">⬅️</div><div class="btn" id="p2j" style="pointer-events:auto;touch-action:none;width:28px;height:28px;font-size:10px">🦘</div><div class="btn" id="p2r" style="pointer-events:auto;touch-action:none;width:28px;height:28px;font-size:10px">➡️</div>
-<div></div><div class="btn" id="p2bw" style="pointer-events:auto;touch-action:none;width:28px;height:28px;font-size:10px">⬇️</div><div></div>
+<div id="p2controls" style="display:none;flex-direction:row;gap:4px;align-items:center">
+<div style="color:#FFD700;font-size:9px;font-weight:bold">P2</div>
+<div class="dpad" style="grid-template-columns:25px 25px 25px;grid-template-rows:25px 25px 25px;gap:1px">
+<div></div><div class="btn" id="p2fw" style="pointer-events:auto;touch-action:none;width:25px;height:25px;font-size:10px">⬆️</div><div></div>
+<div class="btn" id="p2l" style="pointer-events:auto;touch-action:none;width:25px;height:25px;font-size:10px">⬅️</div><div class="btn" id="p2j" style="pointer-events:auto;touch-action:none;width:25px;height:25px;font-size:10px">🦘</div><div class="btn" id="p2r" style="pointer-events:auto;touch-action:none;width:25px;height:25px;font-size:10px">➡️</div>
+<div></div><div class="btn" id="p2bw" style="pointer-events:auto;touch-action:none;width:25px;height:25px;font-size:10px">⬇️</div><div></div>
 </div>
-<div class="g"><div class="btn" id="p2a" style="pointer-events:auto;touch-action:none;width:35px;height:35px;font-size:14px">⚔️</div></div>
-</div>
-<button onclick="exitTwoPlayer()" style="font-size:8px;background:#f44;color:#fff;border:none;border-radius:5px;cursor:pointer;pointer-events:auto;padding:2px 5px">Exit 2P</button>
+<div class="btn" id="p2a" style="pointer-events:auto;touch-action:none;width:30px;height:30px;font-size:12px">⚔️</div>
+<button onclick="exitTwoPlayer()" style="font-size:7px;background:#f44;color:#fff;border:none;border-radius:3px;cursor:pointer;pointer-events:auto;padding:1px 3px">✕</button>
 </div>
 </div>
 </div>
@@ -144,9 +142,18 @@ cat:{name:'Cat',desc:'High jump',icon:'🐱',speed:0.28,jump:0.7,attack:15,color
 };
 function skipCutscene(){if(globalSkipFn){globalSkipFn();globalSkipFn=null;}}
 function installApp(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;document.getElementById('ib').style.display='none';}else{alert('To install: Open in Chrome → Menu → "Add to Home Screen"');}}
-function startGameBtn(){if(twoPlayerMode){startTwoPlayerGame();}else{startSinglePlayerGame();}}
+function startGameBtn(){
+twoPlayerMode=false;P2=null;window.I2=null;
+if(typeof camera2!=='undefined')camera2=null;
+document.getElementById('gs').classList.remove('twoPlayer');
+document.getElementById('p2controls').style.display='none';
+document.getElementById('ss').style.display='none';
+document.getElementById('gs').style.display='block';
+if(gameInstance){gameInstance.stop();gameInstance=null;}
+initGame();
+}
 function toggleTwoPlayerMode(){twoPlayerMode=!twoPlayerMode;const btn=document.getElementById('twoPlayerBtn');if(twoPlayerMode){btn.textContent='👥 2 Player: ON';btn.style.background='linear-gradient(145deg,#00FF00,#00AA00)';}else{btn.textContent='👥 2 Player: OFF';btn.style.background='linear-gradient(145deg,#FF6600,#FF3300)';}}
-function startSinglePlayerGame(){document.getElementById('gs').classList.remove('twoPlayer');document.getElementById('p2controls').style.display='none';document.getElementById('ss').style.display='none';document.getElementById('gs').style.display='block';initGame();}
+function startSinglePlayerGame(){twoPlayerMode=false;document.getElementById('gs').classList.remove('twoPlayer');document.getElementById('p2controls').style.display='none';document.getElementById('ss').style.display='none';document.getElementById('gs').style.display='block';initGame();}
 function startTwoPlayerGame(){P2=null;document.getElementById('gs').classList.add('twoPlayer');document.getElementById('p2controls').style.display='flex';document.getElementById('ss').style.display='none';document.getElementById('gs').style.display='block';initGame();}
 function exitTwoPlayer(){twoPlayerMode=false;document.getElementById('twoPlayerBtn').textContent='👥 2 Player: OFF';document.getElementById('twoPlayerBtn').style.background='linear-gradient(145deg,#FF6600,#FF3300)';document.getElementById('gs').classList.remove('twoPlayer');document.getElementById('p2controls').style.display='none';if(typeof player2Group!=='undefined'&&player2Group){scene.remove(player2Group);player2Group=null;}window.I2=null;if(gameInstance){gameInstance.stop();gameInstance=null;}document.getElementById('gs').style.display='none';document.getElementById('ss').style.display='flex';}
 function restartGame(){if(confirm(currentLang=='en'?'Restart from beginning?':'Recommencer ?')){localStorage.removeItem('cmsave');localStorage.removeItem('cmcuts');location.reload();}}
@@ -325,6 +332,16 @@ scene.fog=new THREE.Fog(0x87CEEB,30,100);
 const camera=new THREE.PerspectiveCamera(50,W/H,0.1,200);
 camera.position.set(0,10,18);
 camera.lookAt(0,0,0);
+camera.aspect=W/H;
+camera.updateProjectionMatrix();
+let camera2=null;
+if(twoPlayerMode){
+camera2=new THREE.PerspectiveCamera(50,W/H,0.1,200);
+camera2.position.set(0,10,18);
+camera2.lookAt(0,0,0);
+camera2.aspect=W/H;
+camera2.updateProjectionMatrix();
+}
 let renderer;
 try{renderer=new THREE.WebGLRenderer({antialias:true});}
 catch(e){alert('Renderer failed: '+e.message);return;}
@@ -332,6 +349,8 @@ renderer.setSize(W,H);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
 renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.setScissorTest(false);
+renderer.setViewport(0,0,W,H);
 container.appendChild(renderer.domElement);
 const ambient=new THREE.AmbientLight(0xffffff,0.6);scene.add(ambient);
 const sunLight=new THREE.DirectionalLight(0xffffff,0.9);
@@ -1099,11 +1118,14 @@ if(e.stationary)return;
 let dx=P.x-e.x,dz=P.z-e.z;
 let dist=Math.sqrt(dx*dx+dz*dz);
 if(e.type=='boar'){
-e.x+=e.vx;
-if(e.x<3||e.x>lw-3)e.vx*=-1;
-if(dist<4&&dist>0.5){e.vx=Math.sign(dx)*2;}
-else if(dist>=4){e.vx=Math.sign(e.vx)*1.5;}
-e.z+=Math.sign(dz)*0.02;
+e.animPhase=(e.animPhase||0)+0.02;
+e.x+=Math.sin(e.animPhase)*1.5;
+if(e.x<3)e.x=3;
+if(e.x>lw-3)e.x=lw-3;
+if(dist<4&&dist>0.5){
+e.x+=Math.sign(dx)*0.04;
+}
+e.z+=Math.sign(dz)*0.01;
 }
 else if(e.type=='crow'){
 if(dist<6){e.x+=dx/dist*0.08;e.z+=dz/dist*0.08;e.y+=Math.sign(P.y+1-e.y)*0.05;}
@@ -1359,7 +1381,7 @@ e=createEnemy3DExtra(x,type=='bat'?2:0,z,type);
 }else{
 e=createEnemy3D(x,type=='crow'?2:0,z,type);
 }
-enemies.push({mesh:e,x:x,y:type=='crow'?2:type=='bat'?2:0,z:z,hp:hp,ac:true,type:type,vx:type=='boar'?1.5:0,at:0,acd:60,animPhase:Math.random()*Math.PI*2,stationary:false});
+enemies.push({mesh:e,x:x,y:type=='crow'?2:type=='bat'?2:0,z:z,hp:hp,ac:true,type:type,vx:type=='boar'?0.8:0,at:0,acd:60,animPhase:Math.random()*Math.PI*2,stationary:false});
 }
 for(let i=0;i<10+L*2;i++){
 let x=3+i*(lw/(10+L*2));
@@ -1972,7 +1994,21 @@ ctx.fillRect(95,22,5,15);
 function loop(){
 if(!running)return;
 if(S=='playing'){upd();}
+if(twoPlayerMode&&camera2&&P2){
+renderer.setScissorTest(true);
+renderer.setViewport(0,0,W,H/2);
+renderer.setScissor(0,0,W,H/2);
 renderer.render(scene,camera);
+renderer.setViewport(0,H/2,W,H/2);
+renderer.setScissor(0,H/2,W,H/2);
+renderer.render(scene,camera2);
+renderer.setScissorTest(false);
+renderer.setViewport(0,0,W,H);
+}else{
+renderer.setScissorTest(false);
+renderer.setViewport(0,0,W,H);
+renderer.render(scene,camera);
+}
 document.getElementById('hp').style.width=(P.hp/P.mh*100)+'%';
 document.getElementById('cc').textContent=coins;
 document.getElementById('bc').textContent=lB+'/3';
