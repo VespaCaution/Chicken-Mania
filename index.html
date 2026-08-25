@@ -143,19 +143,34 @@ cat:{name:'Cat',desc:'High jump',icon:'🐱',speed:0.28,jump:0.7,attack:15,color
 function skipCutscene(){if(globalSkipFn){globalSkipFn();globalSkipFn=null;}}
 function installApp(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;document.getElementById('ib').style.display='none';}else{alert('To install: Open in Chrome → Menu → "Add to Home Screen"');}}
 function startGameBtn(){
-twoPlayerMode=false;P2=null;window.I2=null;
-if(typeof camera2!=='undefined')camera2=null;
-document.getElementById('gs').classList.remove('twoPlayer');
-document.getElementById('p2controls').style.display='none';
+document.getElementById('p2controls').style.display=twoPlayerMode?'flex':'none';
 document.getElementById('ss').style.display='none';
 document.getElementById('gs').style.display='block';
 if(gameInstance){gameInstance.stop();gameInstance=null;}
 initGame();
 }
-function toggleTwoPlayerMode(){twoPlayerMode=!twoPlayerMode;const btn=document.getElementById('twoPlayerBtn');if(twoPlayerMode){btn.textContent='👥 2 Player: ON';btn.style.background='linear-gradient(145deg,#00FF00,#00AA00)';}else{btn.textContent='👥 2 Player: OFF';btn.style.background='linear-gradient(145deg,#FF6600,#FF3300)';}}
-function startSinglePlayerGame(){twoPlayerMode=false;document.getElementById('gs').classList.remove('twoPlayer');document.getElementById('p2controls').style.display='none';document.getElementById('ss').style.display='none';document.getElementById('gs').style.display='block';initGame();}
-function startTwoPlayerGame(){P2=null;document.getElementById('gs').classList.add('twoPlayer');document.getElementById('p2controls').style.display='flex';document.getElementById('ss').style.display='none';document.getElementById('gs').style.display='block';initGame();}
-function exitTwoPlayer(){twoPlayerMode=false;document.getElementById('twoPlayerBtn').textContent='👥 2 Player: OFF';document.getElementById('twoPlayerBtn').style.background='linear-gradient(145deg,#FF6600,#FF3300)';document.getElementById('gs').classList.remove('twoPlayer');document.getElementById('p2controls').style.display='none';if(typeof player2Group!=='undefined'&&player2Group){scene.remove(player2Group);player2Group=null;}window.I2=null;if(gameInstance){gameInstance.stop();gameInstance=null;}document.getElementById('gs').style.display='none';document.getElementById('ss').style.display='flex';}
+function toggleTwoPlayerMode(){
+twoPlayerMode=!twoPlayerMode;
+const btn=document.getElementById('twoPlayerBtn');
+if(twoPlayerMode){
+btn.textContent='👥 2 Player: ON';
+btn.style.background='linear-gradient(145deg,#00FF00,#00AA00)';
+}else{
+btn.textContent='👥 2 Player: OFF';
+btn.style.background='linear-gradient(145deg,#FF6600,#FF3300)';
+}
+}
+function exitTwoPlayer(){
+twoPlayerMode=false;
+document.getElementById('twoPlayerBtn').textContent='👥 2 Player: OFF';
+document.getElementById('twoPlayerBtn').style.background='linear-gradient(145deg,#FF6600,#FF3300)';
+document.getElementById('p2controls').style.display='none';
+window.I2=null;
+P2=null;
+if(gameInstance){gameInstance.stop();gameInstance=null;}
+document.getElementById('gs').style.display='none';
+document.getElementById('ss').style.display='flex';
+}
 function restartGame(){if(confirm(currentLang=='en'?'Restart from beginning?':'Recommencer ?')){localStorage.removeItem('cmsave');localStorage.removeItem('cmcuts');location.reload();}}
 function setLang(l){currentLang=l;document.getElementById('st').textContent=TRANSLATIONS[l].st;document.getElementById('sb').textContent=TRANSLATIONS[l].sb;document.getElementById('rb').textContent=TRANSLATIONS[l].rb;document.getElementById('skb').textContent=TRANSLATIONS[l].sk;document.getElementById('charSelectTitle').textContent=TRANSLATIONS[l].charSelect;document.getElementById('le').classList.toggle('ac',l=='en');document.getElementById('lf').classList.toggle('ac',l=='fr');localStorage.setItem('cml',l);}
 function t(key){return TRANSLATIONS[currentLang][key]||key;}
@@ -334,14 +349,6 @@ camera.position.set(0,10,18);
 camera.lookAt(0,0,0);
 camera.aspect=W/H;
 camera.updateProjectionMatrix();
-let camera2=null;
-if(twoPlayerMode){
-camera2=new THREE.PerspectiveCamera(50,W/H,0.1,200);
-camera2.position.set(0,10,18);
-camera2.lookAt(0,0,0);
-camera2.aspect=W/H;
-camera2.updateProjectionMatrix();
-}
 let renderer;
 try{renderer=new THREE.WebGLRenderer({antialias:true});}
 catch(e){alert('Renderer failed: '+e.message);return;}
@@ -795,13 +802,17 @@ playerGroup.position.x=P.x;
 playerGroup.position.z=P.z;
 }
 function updateCamera(){
-if(screenShake>0){
-screenShake-=0.5;
-camera.position.set(P.x+(Math.random()-0.5)*screenShake*0.1,P.y+8+(Math.random()-0.5)*screenShake*0.1,P.z+12+(Math.random()-0.5)*screenShake*0.1);
+if(twoPlayerMode&&P2){
+const midX=(P.x+P2.x)/2;
+const midZ=(P.z+P2.z)/2;
+const dist=Math.sqrt((P.x-P2.x)**2+(P.z-P2.z)**2);
+const zoom=Math.max(12,Math.min(25,12+dist*1.5));
+camera.position.set(midX,10,midZ+zoom);
+camera.lookAt(midX,0,midZ);
 }else{
 camera.position.set(P.x,P.y+8,P.z+12);
-}
 camera.lookAt(P.x,P.y,P.z);
+}
 }
 function triggerScreenShake(amount){
 screenShake=Math.max(screenShake,amount);
@@ -1994,28 +2005,14 @@ ctx.fillRect(95,22,5,15);
 function loop(){
 if(!running)return;
 if(S=='playing'){upd();}
-if(twoPlayerMode&&camera2&&P2){
-renderer.setScissorTest(true);
-renderer.setViewport(0,0,W,H/2);
-renderer.setScissor(0,0,W,H/2);
 renderer.render(scene,camera);
-renderer.setViewport(0,H/2,W,H/2);
-renderer.setScissor(0,H/2,W,H/2);
-renderer.render(scene,camera2);
-renderer.setScissorTest(false);
-renderer.setViewport(0,0,W,H);
-}else{
-renderer.setScissorTest(false);
-renderer.setViewport(0,0,W,H);
-renderer.render(scene,camera);
-}
 document.getElementById('hp').style.width=(P.hp/P.mh*100)+'%';
 document.getElementById('cc').textContent=coins;
 document.getElementById('bc').textContent=lB+'/3';
 document.getElementById('lv').textContent=t('lv')+' '+L;
 drawMiniMap();
 animId=requestAnimationFrame(loop);
-}
+    }
 gameInstance={stop:stop};
 setupControls();
 mk(L);
