@@ -131,6 +131,7 @@ let globalSkipFn=null,deferredPrompt=null,gameInstance=null,currentLang='en';
 let audioContext=null,musicInterval=null,currentMusic=null,currentBeat=0;
 let selectedCharacter='farmer';
 let twoPlayerMode=false;
+let P2=null;
 const diffData={enemyHpMult:1,enemyDmgMult:1,bossHpMult:1};
 const CHARACTERS={
 farmer:{name:'Farmer Joe',desc:'Balanced stats',icon:'👨‍🌾',speed:0.25,jump:0.5,attack:20,color:0x4A90E2},
@@ -140,7 +141,7 @@ cat:{name:'Cat',desc:'High jump',icon:'🐱',speed:0.28,jump:0.7,attack:15,color
 };
 function skipCutscene(){if(globalSkipFn){globalSkipFn();globalSkipFn=null;}}
 function installApp(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;document.getElementById('ib').style.display='none';}else{alert('To install: Open in Chrome → Menu → "Add to Home Screen"');}}
-function startGameBtn(){twoPlayerMode=false;document.getElementById('p2controls').style.display='none';document.getElementById('gs').classList.remove('twoPlayer');document.getElementById('ss').style.display='none';document.getElementById('gs').style.display='block';initGame();}
+function startGameBtn(){twoPlayerMode=false;P2=null;document.getElementById('gs').classList.remove('twoPlayer');document.getElementById('p2controls').style.display='none';document.getElementById('ss').style.display='none';document.getElementById('gs').style.display='block';initGame();}
 function startTwoPlayer(){twoPlayerMode=true;document.getElementById('ss').style.display='none';document.getElementById('gs').style.display='block';document.getElementById('gs').classList.add('twoPlayer');document.getElementById('p2controls').style.display='flex';initGame();}
 function restartGame(){if(confirm(currentLang=='en'?'Restart from beginning?':'Recommencer ?')){localStorage.removeItem('cmsave');localStorage.removeItem('cmcuts');location.reload();}}
 function setLang(l){currentLang=l;document.getElementById('st').textContent=TRANSLATIONS[l].st;document.getElementById('sb').textContent=TRANSLATIONS[l].sb;document.getElementById('rb').textContent=TRANSLATIONS[l].rb;document.getElementById('skb').textContent=TRANSLATIONS[l].sk;document.getElementById('charSelectTitle').textContent=TRANSLATIONS[l].charSelect;document.getElementById('le').classList.toggle('ac',l=='en');document.getElementById('lf').classList.toggle('ac',l=='fr');localStorage.setItem('cml',l);}
@@ -303,9 +304,11 @@ let checkpointX=0,hasCheckpoint=false;
 let screenShake=0;
 let achievements=JSON.parse(localStorage.getItem('cmachieve')||'{}');
 const charData=CHARACTERS[selectedCharacter];
-const diffData=DIFFICULTIES[selectedDifficulty];
 const I={left:false,right:false,forward:false,backward:false,jump:false,attack:false,pause:false};
 const P={x:0,y:1,z:0,vx:0,vy:0,vz:0,s:charData.speed,j:charData.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,dj:selectedCharacter=='chicken',dja:true,au:selectedCharacter=='dog',su:false,attackCombo:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:charData.attack,character:selectedCharacter,hitboxW:0.8,hitboxH:1.8,hitboxD:0.6};
+if(twoPlayerMode){
+P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:CHARACTERS.chicken.speed,j:CHARACTERS.chicken.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:CHARACTERS.chicken.attack,character:'chicken',hitboxW:0.6,hitboxH:1.2,hitboxD:0.5};
+}
 let platforms=[],enemies=[],coinList=[],bonusList=[],healthList=[],projectiles=[],particles=[],boss=null,lw=0,gx=0,weatherEffects=[],decorations=[],npcs=[],powerUps=[],bridges=[],waterAreas=[],gameObjects=[],loreFound=[];
 const save=JSON.parse(localStorage.getItem('cmsave')||'null');
 if(save&&!startLevel){L=save.L||1;coins=save.coins||0;tc=save.tc||0;bc=save.bc||0;tb=save.tb||0;deaths=save.deaths||0;tt=save.tt||0;}
@@ -634,11 +637,6 @@ leftLeg.position.set(-0.15,0.15,0);playerGroup.add(leftLeg);
 playerParts.leftLeg=leftLeg;
 const rightLeg=leftLeg.clone();rightLeg.position.x=0.15;playerGroup.add(rightLeg);
 playerParts.rightLeg=rightLeg;
-const tailMat=new THREE.MeshStandardMaterial({color:0xDDDDDD});
-const tail1=new THREE.Mesh(new THREE.ConeGeometry(0.1,0.3,6),tailMat);
-tail1.position.set(0,0.7,-0.4);tail1.rotation.x=Math.PI;playerGroup.add(tail1);
-const tail2=new THREE.Mesh(new THREE.ConeGeometry(0.08,0.25,6),tailMat);
-tail2.position.set(0.1,0.8,-0.35);tail2.rotation.x=Math.PI;playerGroup.add(tail2);
 }else if(selectedCharacter=='dog'){
 const body=new THREE.Mesh(new THREE.BoxGeometry(0.9,0.7,0.6),bodyMat);
 body.position.y=0.5;body.castShadow=true;playerGroup.add(body);
@@ -693,6 +691,28 @@ tail.position.set(0,0.7,-0.5);tail.rotation.x=Math.PI/3;playerGroup.add(tail);
 playerParts.tail=tail;
 }
 scene.add(playerGroup);
+let player2Group=null;
+if(twoPlayerMode&&P2){
+player2Group=new THREE.Group();
+const p2body=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
+p2body.position.y=0.5;player2Group.add(p2body);
+const p2head=new THREE.Mesh(new THREE.SphereGeometry(0.25,10,10),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
+p2head.position.y=0.9;player2Group.add(p2head);
+const p2beak=new THREE.Mesh(new THREE.ConeGeometry(0.08,0.15,6),new THREE.MeshStandardMaterial({color:0xFFA500}));
+p2beak.position.set(0,0.9,0.2);p2beak.rotation.x=Math.PI/2;player2Group.add(p2beak);
+const p2comb=new THREE.Mesh(new THREE.SphereGeometry(0.07,6,6),new THREE.MeshStandardMaterial({color:0xFF0000}));
+p2comb.position.y=1.1;player2Group.add(p2comb);
+const p2eyeMat=new THREE.MeshStandardMaterial({color:0x000000});
+const p2eye1=new THREE.Mesh(new THREE.SphereGeometry(0.04,6,6),p2eyeMat);
+p2eye1.position.set(-0.08,0.95,0.2);player2Group.add(p2eye1);
+const p2eye2=p2eye1.clone();p2eye2.position.x=0.08;player2Group.add(p2eye2);
+const p2wingMat=new THREE.MeshStandardMaterial({color:0xEEEEEE});
+const p2wing1=new THREE.Mesh(new THREE.SphereGeometry(0.15,6,6),p2wingMat);
+p2wing1.position.set(-0.3,0.5,0);player2Group.add(p2wing1);
+const p2wing2=p2wing1.clone();p2wing2.position.x=0.3;player2Group.add(p2wing2);
+player2Group.position.set(P2.x,P2.y,P2.z);
+scene.add(player2Group);
+}
 function updatePlayerAnimation(){
 if(P.isWalking&&P.g){
 P.walkCycle+=0.2;
@@ -1252,6 +1272,8 @@ clearObjects();
 mk(L);
 }
 function mk(L){
+if(typeof createEnemy3DExtra!=='function'){console.error('Enemy functions not loaded');return;}
+if(typeof diffData==='undefined'){console.error('diffData not loaded');return;}
 clearObjects();
 enemies=[];coinList=[];bonusList=[];healthList=[];projectiles=[];particles=[];
 boss=null;lt=0;lC=0;lB=0;
@@ -1399,6 +1421,35 @@ function upd(){
 if(!running||S!='playing')return;
 lt++;tt++;
 updatePlayerMovement();
+if(twoPlayerMode&&P2&&window.I2){
+const I2=window.I2;
+let mX=0,mZ=0;
+if(I2.left)mX-=1;
+if(I2.right)mX+=1;
+if(I2.forward)mZ-=1;
+if(I2.backward)mZ+=1;
+if(mX!=0||mZ!=0){let len=Math.sqrt(mX*mX+mZ*mZ);mX/=len;mZ/=len;P2.rotY=Math.atan2(mX,mZ);P2.isWalking=true;}else{P2.isWalking=false;}
+P2.vx=mX*P2.s;P2.vz=mZ*P2.s;
+if(I2.jump){if(P2.g){P2.vy=P2.j;P2.g=false;I2.jump=false;playJumpSound();}}
+if(I2.attack&&P2.ac<=0){P2.ac=20;P2.ad=8;playAttackSound();}
+if(P2.ac>0)P2.ac--;if(P2.ad>0)P2.ad--;
+P2.vy-=0.02;if(P2.vy<-0.5)P2.vy=-0.5;
+P2.x+=P2.vx;P2.z+=P2.vz;P2.y+=P2.vy;
+if(P2.y<=0.5){P2.y=0.5;P2.vy=0;P2.g=true;}else{P2.g=false;}
+for(let p of platforms){if(Math.abs(P2.x-p.x)<p.w/2&&Math.abs(P2.z-p.z)<p.d/2&&Math.abs(P2.y-p.y)<1&&P2.vy<=0){P2.y=p.y+0.5;P2.vy=0;P2.g=true;}}
+if(P2.x<0)P2.x=0;if(P2.x>lw)P2.x=lw;
+if(P2.z<-8)P2.z=-8;if(P2.z>8)P2.z=8;
+if(P2.y<-5){P2.hp=0;}
+if(P2.hp<=0){P2.hp=100;P2.x=P.x;P2.y=P.y;P2.z=P.z+1;}
+if(player2Group){player2Group.position.set(P2.x,P2.y,P2.z);player2Group.rotation.y=P2.rotY;}
+if(P2.isWalking&&P2.g){player2Group.position.y=P2.y+Math.sin(tt*0.2)*0.05;}
+for(let c of coinList){
+if(!c.c){let dx=P2.x-c.x,dy=P2.y-c.y,dz=P2.z-c.z;if(Math.sqrt(dx*dx+dy*dy+dz*dz)<1.5){c.c=true;coins+=5;tc+=5;lC+=5;createHitParticle(c.x,c.y,c.z,0xFFD700);playCoinSound();scene.remove(c.mesh);}}
+}
+for(let e of enemies){
+if(e.ac&&!e.stationary){let dx=P2.x-e.x,dz=P2.z-e.z;if(Math.sqrt(dx*dx+dz*dz)<1.5&&P2.i<=0){P2.hp-=10;P2.i=30;if(P2.hp<=0){P2.hp=100;P2.x=P.x;P2.y=P.y;P2.z=P.z+1;}}}
+}
+}
 updateEnemyAI_All();
 if(boss&&boss.ac)updateBossAI();
 updateProjectiles();
@@ -1808,10 +1859,21 @@ bind('bw','backward');
 bind('j','jump');
 bind('a','attack');
 if(twoPlayerMode){
-bind('p2l','left');
-bind('p2r','right');
-bind('p2j','jump');
-bind('p2a','attack');
+window.I2={left:false,right:false,forward:false,backward:false,jump:false,attack:false};
+function bind2(id,action){
+const el=document.getElementById(id);
+if(!el)return;
+el.addEventListener('touchstart',function(e){e.preventDefault();e.stopPropagation();window.I2[action]=true;},{passive:false});
+el.addEventListener('touchend',function(e){e.preventDefault();e.stopPropagation();window.I2[action]=false;},{passive:false});
+el.addEventListener('touchcancel',function(){window.I2[action]=false;});
+el.addEventListener('mousedown',function(){window.I2[action]=true;});
+el.addEventListener('mouseup',function(){window.I2[action]=false;});
+el.addEventListener('mouseleave',function(){window.I2[action]=false;});
+}
+bind2('p2l','left');
+bind2('p2r','right');
+bind2('p2j','jump');
+bind2('p2a','attack');
 }
 document.addEventListener('keydown',function(e){
 if(e.key=='ArrowLeft'||e.key=='a')I.left=true;
