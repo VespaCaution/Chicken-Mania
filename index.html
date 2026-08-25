@@ -41,20 +41,16 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 #pauseMenu{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.95);color:#fff;padding:25px;border-radius:20px;text-align:center;display:none;z-index:85;border:3px solid #FFD700;min-width:220px}
 #pauseMenu button{display:block;width:100%;padding:10px;margin:5px 0;background:#FFD700;border:none;border-radius:15px;cursor:pointer;font-weight:bold;font-size:14px;pointer-events:auto}
 #pauseMenu button:hover{background:#FFC000}
-#mapScreen{position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(135deg,#2a1508,#1a0a00);display:none;flex-direction:column;z-index:80;overflow-y:auto;padding:15px}
-#mapScreen h2{color:#FFD700;text-align:center;margin-bottom:10px;font-size:20px}
-.mapLevel{display:flex;align-items:center;justify-content:center;padding:8px;margin:4px 0;background:rgba(255,215,0,.1);border:2px solid #FFD700;border-radius:15px;cursor:pointer;pointer-events:auto;color:#fff;font-weight:bold;font-size:13px}
-.mapLevel.locked{opacity:.4;pointer-events:none}
-.mapLevel.completed{background:rgba(0,255,0,.2);border-color:#0f0}
-.mapLevel.current{background:rgba(255,215,0,.3);border-color:#FFD700;animation:pulse 1s infinite}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
 .dpad{display:grid;grid-template-columns:42px 42px 42px;grid-template-rows:42px 42px 42px;gap:3px}
-#gs.twoPlayer #c{height:50%;min-height:200px}
-#gs.twoPlayer #b{flex-direction:column;min-height:120px;gap:3px}
-#gs.twoPlayer .dpad{grid-template-columns:35px 35px 35px;grid-template-rows:35px 35px 35px}
-#gs.twoPlayer .btn{width:35px;height:35px;font-size:12px}
-#gs.twoPlayer #p2controls{display:flex;flex-direction:row;gap:4px;justify-content:center}
-#gs.twoPlayer #a{width:45px;height:45px;font-size:18px}
+#gs.twoPlayer #c{height:40%;min-height:150px}
+#gs.twoPlayer #b{flex-direction:column;min-height:90px;gap:2px;padding:4px}
+#gs.twoPlayer .dpad{grid-template-columns:28px 28px 28px;grid-template-rows:28px 28px 28px;gap:2px}
+#gs.twoPlayer .btn{width:28px;height:28px;font-size:10px;border-width:1px}
+#gs.twoPlayer #a{width:40px;height:40px;font-size:16px}
+#gs.twoPlayer #p2controls{display:flex;flex-direction:column;gap:2px}
+#gs.twoPlayer #p2controls .btn{width:25px;height:25px;font-size:9px}
+#gs.twoPlayer #t{min-height:25px;padding:4px}
+#gs.twoPlayer .h{font-size:10px;padding:3px 5px}
 </style>
 </head>
 <body>
@@ -77,7 +73,7 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 <p style="color:#FFD700;font-size:11px;margin-top:5px" id="charDesc">Farmer Joe - Balanced stats</p>
 </div>
 <button class="sb" id="sb" style="pointer-events:auto" onclick="startGameBtn()">▶️ Start Game</button>
-<button class="sb" id="twoPlayerBtn" style="pointer-events:auto;background:linear-gradient(145deg,#FF6600,#FF3300);color:#fff" onclick="startTwoPlayer()">👥 2 Player Mode</button>
+<button class="sb" id="twoPlayerBtn" style="pointer-events:auto;background:linear-gradient(145deg,#FF6600,#FF3300);color:#fff" onclick="toggleTwoPlayerMode()">👥 2 Player: OFF</button>
 <button class="ib" id="ib" style="pointer-events:auto" onclick="installApp()">📲 Install App</button>
 <button class="rb" id="rb" style="pointer-events:auto" onclick="restartGame()">🔄 Restart Game</button>
 <p class="vr">v12.0.0</p>
@@ -93,19 +89,26 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 <div id="c"></div>
 <button id="menuBtn" onclick="togglePauseMenu()">⏸️</button>
 <div id="b">
+<div style="display:flex;flex-direction:column;gap:5px;width:100%">
+<div style="display:flex;justify-content:center;gap:8px;align-items:center;width:100%">
 <div class="dpad">
 <div></div><div class="btn" id="fw" style="pointer-events:auto;touch-action:none">⬆️</div><div></div>
 <div class="btn" id="l" style="pointer-events:auto;touch-action:none">⬅️</div><div class="btn" id="j" style="pointer-events:auto;touch-action:none">🦘</div><div class="btn" id="r" style="pointer-events:auto;touch-action:none">➡️</div>
 <div></div><div class="btn" id="bw" style="pointer-events:auto;touch-action:none">⬇️</div><div></div>
 </div>
-<div class="g"><div class="btn" id="a" style="pointer-events:auto;touch-action:none;width:55px;height:55px;font-size:22px">⚔️</div></div>
-<div id="p2controls" style="display:none;flex-direction:column;gap:5px">
-<div style="color:#FFD700;font-size:10px;text-align:center;font-weight:bold">P2</div>
-<div style="display:flex;gap:4px">
-<div class="btn" id="p2l" style="pointer-events:auto;touch-action:none;width:35px;height:35px;font-size:12px">⬅️</div>
-<div class="btn" id="p2r" style="pointer-events:auto;touch-action:none;width:35px;height:35px;font-size:12px">➡️</div>
-<div class="btn" id="p2j" style="pointer-events:auto;touch-action:none;width:35px;height:35px;font-size:12px">⬆️</div>
-<div class="btn" id="p2a" style="pointer-events:auto;touch-action:none;width:35px;height:35px;font-size:12px">⚔️</div>
+<div class="g"><div class="btn" id="a" style="pointer-events:auto;touch-action:none;width:45px;height:45px;font-size:18px">⚔️</div></div>
+</div>
+<div id="p2controls" style="display:none;flex-direction:column;gap:3px;align-items:center;width:100%">
+<div style="color:#FFD700;font-size:9px;font-weight:bold;text-align:center">P2</div>
+<div style="display:flex;justify-content:center;gap:8px;align-items:center;width:100%">
+<div class="dpad" style="transform:rotate(180deg)">
+<div></div><div class="btn" id="p2fw" style="pointer-events:auto;touch-action:none;width:28px;height:28px;font-size:10px">⬆️</div><div></div>
+<div class="btn" id="p2l" style="pointer-events:auto;touch-action:none;width:28px;height:28px;font-size:10px">⬅️</div><div class="btn" id="p2j" style="pointer-events:auto;touch-action:none;width:28px;height:28px;font-size:10px">🦘</div><div class="btn" id="p2r" style="pointer-events:auto;touch-action:none;width:28px;height:28px;font-size:10px">➡️</div>
+<div></div><div class="btn" id="p2bw" style="pointer-events:auto;touch-action:none;width:28px;height:28px;font-size:10px">⬇️</div><div></div>
+</div>
+<div class="g"><div class="btn" id="p2a" style="pointer-events:auto;touch-action:none;width:35px;height:35px;font-size:14px">⚔️</div></div>
+</div>
+<button onclick="exitTwoPlayer()" style="font-size:8px;background:#f44;color:#fff;border:none;border-radius:5px;cursor:pointer;pointer-events:auto;padding:2px 5px">Exit 2P</button>
 </div>
 </div>
 </div>
@@ -141,8 +144,11 @@ cat:{name:'Cat',desc:'High jump',icon:'🐱',speed:0.28,jump:0.7,attack:15,color
 };
 function skipCutscene(){if(globalSkipFn){globalSkipFn();globalSkipFn=null;}}
 function installApp(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;document.getElementById('ib').style.display='none';}else{alert('To install: Open in Chrome → Menu → "Add to Home Screen"');}}
-function startGameBtn(){twoPlayerMode=false;P2=null;document.getElementById('gs').classList.remove('twoPlayer');document.getElementById('p2controls').style.display='none';document.getElementById('ss').style.display='none';document.getElementById('gs').style.display='block';initGame();}
-function startTwoPlayer(){twoPlayerMode=true;document.getElementById('ss').style.display='none';document.getElementById('gs').style.display='block';document.getElementById('gs').classList.add('twoPlayer');document.getElementById('p2controls').style.display='flex';initGame();}
+function startGameBtn(){if(twoPlayerMode){startTwoPlayerGame();}else{startSinglePlayerGame();}}
+function toggleTwoPlayerMode(){twoPlayerMode=!twoPlayerMode;const btn=document.getElementById('twoPlayerBtn');if(twoPlayerMode){btn.textContent='👥 2 Player: ON';btn.style.background='linear-gradient(145deg,#00FF00,#00AA00)';}else{btn.textContent='👥 2 Player: OFF';btn.style.background='linear-gradient(145deg,#FF6600,#FF3300)';}}
+function startSinglePlayerGame(){document.getElementById('gs').classList.remove('twoPlayer');document.getElementById('p2controls').style.display='none';document.getElementById('ss').style.display='none';document.getElementById('gs').style.display='block';initGame();}
+function startTwoPlayerGame(){P2=null;document.getElementById('gs').classList.add('twoPlayer');document.getElementById('p2controls').style.display='flex';document.getElementById('ss').style.display='none';document.getElementById('gs').style.display='block';initGame();}
+function exitTwoPlayer(){twoPlayerMode=false;document.getElementById('twoPlayerBtn').textContent='👥 2 Player: OFF';document.getElementById('twoPlayerBtn').style.background='linear-gradient(145deg,#FF6600,#FF3300)';document.getElementById('gs').classList.remove('twoPlayer');document.getElementById('p2controls').style.display='none';if(typeof player2Group!=='undefined'&&player2Group){scene.remove(player2Group);player2Group=null;}window.I2=null;if(gameInstance){gameInstance.stop();gameInstance=null;}document.getElementById('gs').style.display='none';document.getElementById('ss').style.display='flex';}
 function restartGame(){if(confirm(currentLang=='en'?'Restart from beginning?':'Recommencer ?')){localStorage.removeItem('cmsave');localStorage.removeItem('cmcuts');location.reload();}}
 function setLang(l){currentLang=l;document.getElementById('st').textContent=TRANSLATIONS[l].st;document.getElementById('sb').textContent=TRANSLATIONS[l].sb;document.getElementById('rb').textContent=TRANSLATIONS[l].rb;document.getElementById('skb').textContent=TRANSLATIONS[l].sk;document.getElementById('charSelectTitle').textContent=TRANSLATIONS[l].charSelect;document.getElementById('le').classList.toggle('ac',l=='en');document.getElementById('lf').classList.toggle('ac',l=='fr');localStorage.setItem('cml',l);}
 function t(key){return TRANSLATIONS[currentLang][key]||key;}
@@ -1093,10 +1099,13 @@ if(e.stationary)return;
 let dx=P.x-e.x,dz=P.z-e.z;
 let dist=Math.sqrt(dx*dx+dz*dz);
 if(e.type=='boar'){
-e.x+=e.vx;if(e.x<2||e.x>lw-2)e.vx*=-1;
-if(dist<5){e.vx=Math.sign(dx)*5;}else{e.vx=Math.sign(e.vx)*3;}
-e.z+=Math.sign(dz)*0.03;
-}else if(e.type=='crow'){
+e.x+=e.vx;
+if(e.x<3||e.x>lw-3)e.vx*=-1;
+if(dist<4&&dist>0.5){e.vx=Math.sign(dx)*2;}
+else if(dist>=4){e.vx=Math.sign(e.vx)*1.5;}
+e.z+=Math.sign(dz)*0.02;
+}
+else if(e.type=='crow'){
 if(dist<6){e.x+=dx/dist*0.08;e.z+=dz/dist*0.08;e.y+=Math.sign(P.y+1-e.y)*0.05;}
 else{e.x+=Math.sin(tt*0.02+e.animPhase)*0.05;e.z+=Math.cos(tt*0.02+e.animPhase)*0.05;}
 if(e.mesh.userData.wings){
@@ -1342,7 +1351,7 @@ let type=enemyTypes[i%enemyTypes.length];
 if(L<3)type=enemyTypes[i%2];
 else if(L<6)type=enemyTypes[i%4];
 else if(L<10)type=enemyTypes[i%6];
-let hp=type=='boar'?20:type=='crow'?15:type=='robot'?40:type=='cf'?60:type=='wolf'?50:type=='golem'?80:type=='snake'?35:25;
+let hp=type=='boar'?40:type=='crow'?30:type=='robot'?80:type=='cf'?120:type=='wolf'?100:type=='golem'?160:type=='snake'?70:50;
 hp*=diffData.enemyHpMult;
 let e;
 if(type=='wolf'||type=='golem'||type=='snake'||type=='bat'){
@@ -1350,7 +1359,7 @@ e=createEnemy3DExtra(x,type=='bat'?2:0,z,type);
 }else{
 e=createEnemy3D(x,type=='crow'?2:0,z,type);
 }
-enemies.push({mesh:e,x:x,y:type=='crow'?2:type=='bat'?2:0,z:z,hp:hp,ac:true,type:type,vx:type=='boar'?3:0,at:0,acd:60});
+enemies.push({mesh:e,x:x,y:type=='crow'?2:type=='bat'?2:0,z:z,hp:hp,ac:true,type:type,vx:type=='boar'?1.5:0,at:0,acd:60,animPhase:Math.random()*Math.PI*2,stationary:false});
 }
 for(let i=0;i<10+L*2;i++){
 let x=3+i*(lw/(10+L*2));
@@ -1581,7 +1590,15 @@ for(let e of enemies){
 if(e.ac&&!e.stationary){
 let dx=P.x-e.x,dz=P.z-e.z;
 if(Math.sqrt(dx*dx+dz*dz)<2.2){
-e.hp-=P.attackDmg;
+if(e.type=='boar')e.hp-=P.attackDmg;
+else if(e.type=='crow')e.hp-=P.attackDmg*0.8;
+else if(e.type=='robot')e.hp-=P.attackDmg*0.5;
+else if(e.type=='cf')e.hp-=P.attackDmg*0.4;
+else if(e.type=='wolf')e.hp-=P.attackDmg*0.5;
+else if(e.type=='golem')e.hp-=P.attackDmg*0.3;
+else if(e.type=='snake')e.hp-=P.attackDmg*0.7;
+else if(e.type=='bat')e.hp-=P.attackDmg*0.8;
+else e.hp-=P.attackDmg;
 createHitParticle(e.x,e.y+0.5,e.z,0xFFD700);
 playHitSound();
 if(e.hp<=0){
@@ -1872,6 +1889,8 @@ el.addEventListener('mouseleave',function(){window.I2[action]=false;});
 }
 bind2('p2l','left');
 bind2('p2r','right');
+bind2('p2fw','forward');
+bind2('p2bw','backward');
 bind2('p2j','jump');
 bind2('p2a','attack');
 }
