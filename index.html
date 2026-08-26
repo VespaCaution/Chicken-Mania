@@ -249,17 +249,15 @@ propModeActive=true;
 document.getElementById('ss').style.display='none';
 document.getElementById('gs').style.display='block';
 document.getElementById('propMode').style.display='block';
-document.getElementById('c').style.display='none';
 if(gameInstance){gameInstance.stop();gameInstance=null;}
 initPropMode();
 }
 function exitPropMode(){
 propModeActive=false;
 document.getElementById('propMode').style.display='none';
-document.getElementById('c').style.display='block';
 document.getElementById('gs').style.display='none';
 document.getElementById('ss').style.display='flex';
-}
+  }
 function initPropMode(){
 const container=document.getElementById('propMode');
 if(!container)return;
