@@ -259,40 +259,72 @@ if(pm)pm.style.display='none';
 document.getElementById('ss').style.display='flex';
 }
 function initPropMode(){
-const canvas=document.getElementById('propCanvas');
-if(!canvas)return;
-canvas.width=500;
-canvas.height=350;
-propP1={x:250,y:150,hp:100,emoji:CHARACTERS[selectedCharacter].icon};
-if(twoPlayerMode){propP2={x:300,y:150,hp:100,emoji:'🐔'};}
-const propTypes=['tree','tree','rock','rock','fence','fence','flower','flower','hay','hay','pond','house'];
-propObjects=[];
-for(let i=0;i<15;i++){
-const type=propTypes[Math.floor(Math.random()*propTypes.length)];
-const emojis={tree:'🌳',rock:'🪨',fence:'🚧',flower:'🌸',hay:'🌾',pond:'💧',house:'🏠'};
-propObjects.push({type:type,x:Math.random()*400+30,y:Math.random()*200+50,emoji:emojis[type]});
+propModeActive=true;
+if(gameInstance){gameInstance.stop();gameInstance=null;}
+const container=document.getElementById('propMode');
+container.innerHTML='';
+const W=container.clientWidth||500;
+const H=container.clientHeight||400;
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87CEEB);
+const camera=new THREE.PerspectiveCamera(50,W/H,0.1,100);
+camera.position.set(0,8,15);
+camera.lookAt(0,0,0);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(W,H);
+container.appendChild(renderer.domElement);
+scene.add(new THREE.AmbientLight(0xffffff,0.8));
+const sun=new THREE.DirectionalLight(0xffffff,1);
+sun.position.set(10,20,10);
+sun.castShadow=true;
+scene.add(sun);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(30,30),new THREE.MeshStandardMaterial({color:0x8B4513}));
+ground.rotation.x=-Math.PI/2;
+ground.receiveShadow=true;
+scene.add(ground);
+const grassMat=new THREE.MeshStandardMaterial({color:0x228B22});
+for(let i=0;i<20;i++){
+const g=new THREE.Mesh(new THREE.CircleGeometry(1+Math.random()*2,8),grassMat);
+g.rotation.x=-Math.PI/2;
+g.position.set(Math.random()*20-10,0.01,Math.random()*20-10);
+scene.add(g);
 }
-window.propI1={left:false,right:false,up:false,down:false,attack:false};
-if(twoPlayerMode){window.propI2={left:false,right:false,up:false,down:false,attack:false};}
-function bindPropBtn(id,action,target){
-const el=document.getElementById(id);
-if(!el)return;
-el.addEventListener('touchstart',function(e){e.preventDefault();target[action]=true;},{passive:false});
-el.addEventListener('touchend',function(e){e.preventDefault();target[action]=false;},{passive:false});
-el.addEventListener('mousedown',function(){target[action]=true;});
-el.addEventListener('mouseup',function(){target[action]=false;});
+for(let i=0;i<5;i++){
+const tree=createTree(Math.random()*15-7.5,Math.random()*15-7.5,false);
 }
-bindPropBtn('l','left',window.propI1);
-bindPropBtn('r','right',window.propI1);
-bindPropBtn('fw','up',window.propI1);
-bindPropBtn('bw','down',window.propI1);
-bindPropBtn('a','attack',window.propI1);
-if(window.propI2){
-bindPropBtn('p2l','left',window.propI2);
-bindPropBtn('p2r','right',window.propI2);
-bindPropBtn('p2fw','up',window.propI2);
-bindPropBtn('p2bw','down',window.propI2);
-bindPropBtn('p2a','attack',window.propI2);
+for(let i=0;i<3;i++){
+createPlatform3D(Math.random()*10-5,2+Math.random()*3,Math.random()*10-5);
+}
+createPipe3D(Math.random()*10-5,Math.random()*10-5);
+const playerMesh=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.5),new THREE.MeshStandardMaterial({color:CHARACTERS[selectedCharacter].color}));
+playerMesh.position.set(0,0.6,0);
+scene.add(playerMesh);
+let p2Mesh=null;
+if(twoPlayerMode){
+p2Mesh=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
+p2Mesh.position.set(1,0.4,0);
+scene.add(p2Mesh);
+}
+function propRenderLoop(){
+if(!propModeActive)return;
+if(window.propI1){
+if(window.propI1.left)playerMesh.position.x-=0.1;
+if(window.propI1.right)playerMesh.position.x+=0.1;
+if(window.propI1.up)playerMesh.position.z-=0.1;
+if(window.propI1.down)playerMesh.position.z+=0.1;
+}
+if(window.propI2&&p2Mesh){
+if(window.propI2.left)p2Mesh.position.x-=0.1;
+if(window.propI2.right)p2Mesh.position.x+=0.1;
+if(window.propI2.up)p2Mesh.position.z-=0.1;
+if(window.propI2.down)p2Mesh.position.z+=0.1;
+}
+camera.position.set(playerMesh.position.x,8,playerMesh.position.z+12);
+camera.lookAt(playerMesh.position.x,0,playerMesh.position.z);
+renderer.render(scene,camera);
+requestAnimationFrame(propRenderLoop);
+}
+propRenderLoop();
 }
 function propLoopInternal(){
 if(!propModeActive)return;
@@ -881,6 +913,37 @@ playerParts.rightLeg=rightLeg;
 const tail=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.01,0.6,6),bodyMat);
 tail.position.set(0,0.7,-0.5);tail.rotation.x=Math.PI/3;playerGroup.add(tail);
 playerParts.tail=tail;
+}
+if(selectedCharacter=='chickencat'){
+const ckBody=new THREE.Mesh(new THREE.SphereGeometry(0.45,16,16),new THREE.MeshStandardMaterial({color:0xFFD700}));
+ckBody.position.y=0.5;ckBody.castShadow=true;playerGroup.add(ckBody);
+const ckHead=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,12),new THREE.MeshStandardMaterial({color:0xFF6600}));
+ckHead.position.y=1;playerGroup.add(ckHead);
+playerParts.head=ckHead;
+const ckEar1=new THREE.Mesh(new THREE.ConeGeometry(0.12,0.25,6),new THREE.MeshStandardMaterial({color:0xFF6600}));
+ckEar1.position.set(-0.15,1.25,0);playerGroup.add(ckEar1);
+const ckEar2=ckEar1.clone();ckEar2.position.x=0.15;playerGroup.add(ckEar2);
+const ckEyeMat=new THREE.MeshStandardMaterial({color:0x00FF00,emissive:0x00FF00,emissiveIntensity:0.3});
+const ckEye1=new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8),ckEyeMat);
+ckEye1.position.set(-0.1,1.05,0.25);playerGroup.add(ckEye1);
+const ckEye2=ckEye1.clone();ckEye2.position.x=0.1;playerGroup.add(ckEye2);
+const ckBeak=new THREE.Mesh(new THREE.ConeGeometry(0.08,0.15,6),new THREE.MeshStandardMaterial({color:0xFFA500}));
+ckBeak.position.set(0,1,0.28);ckBeak.rotation.x=Math.PI/2;playerGroup.add(ckBeak);
+const ckWingMat=new THREE.MeshStandardMaterial({color:0xFFD700});
+const ckWing1=new THREE.Mesh(new THREE.SphereGeometry(0.18,6,6),ckWingMat);
+ckWing1.position.set(-0.35,0.5,0);playerGroup.add(ckWing1);
+playerParts.leftArm=ckWing1;
+const ckWing2=ckWing1.clone();ckWing2.position.x=0.35;playerGroup.add(ckWing2);
+playerParts.rightArm=ckWing2;
+const ckLegMat=new THREE.MeshStandardMaterial({color:0xFFA500});
+const ckLeg1=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,0.3,6),ckLegMat);
+ckLeg1.position.set(-0.15,0.15,0);playerGroup.add(ckLeg1);
+playerParts.leftLeg=ckLeg1;
+const ckLeg2=ckLeg1.clone();ckLeg2.position.x=0.15;playerGroup.add(ckLeg2);
+playerParts.rightLeg=ckLeg2;
+const ckTail=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.01,0.5,6),ckWingMat);
+ckTail.position.set(0,0.6,-0.4);ckTail.rotation.x=Math.PI/3;playerGroup.add(ckTail);
+playerParts.tail=ckTail;
 }
 scene.add(playerGroup);
 let player2Group=null;
@@ -1742,6 +1805,8 @@ showNPCDialogue(n);
 }
 }
 }
+}
+}
 function checkCollectibles(){
 for(let c of coinList){
 if(!c.c){
@@ -1775,6 +1840,41 @@ h.c=true;P.hp=Math.min(P.hp+25,P.mh);
 createHitParticle(h.x,h.y,h.z,0xFF0000);
 playCoinSound();
 scene.remove(h.mesh);
+}
+}
+}
+if(twoPlayerMode&&P2){
+for(let c of coinList){
+if(!c.c){
+let dx=P2.x-c.x,dy=P2.y-c.y,dz=P2.z-c.z;
+if(Math.sqrt(dx*dx+dy*dy+dz*dz)<1.8){
+c.c=true;coins+=5;tc+=5;lC+=5;
+createHitParticle(c.x,c.y,c.z,0xFFD700);
+playCoinSound();
+scene.remove(c.mesh);
+}
+}
+}
+for(let c of bonusList){
+if(!c.c){
+let dx=P2.x-c.x,dy=P2.y-c.y,dz=P2.z-c.z;
+if(Math.sqrt(dx*dx+dy*dy+dz*dz)<2){
+c.c=true;bc++;tb++;coins+=20;lB++;
+createVictoryParticles(c.x,c.y,c.z);
+playCoinSound();
+scene.remove(c.mesh);
+}
+}
+}
+for(let h of healthList){
+if(!h.c){
+let dx=P2.x-h.x,dz=P2.z-h.z;
+if(Math.sqrt(dx*dx+dz*dz)<2){
+h.c=true;P2.hp=Math.min(P2.hp+25,P2.mh);
+createHitParticle(h.x,h.y,h.z,0xFF0000);
+playCoinSound();
+scene.remove(h.mesh);
+}
 }
 }
 }
@@ -1839,6 +1939,29 @@ let dx=P2.x-boss.x,dz=P2.z-boss.z;
 if(Math.sqrt(dx*dx+dz*dz)<3.5){
 boss.hp-=P2.attackDmg*0.8;
 createHitParticle(boss.x,boss.y+1.5,boss.z,0xFFD700);
+}
+}
+}
+for(let e of enemies){
+if(e.ac&&!e.stationary){
+let dx=P.x-e.x,dz=P.z-e.z;
+if(Math.sqrt(dx*dx+dz*dz)<1.5&&P.i<=0){
+P.hp-=15;P.i=30;playHitSound();
+createHitParticle(P.x,P.y+1,P.z,0xFF0000);
+if(P.hp<=0){deaths++;restartLevel();return;}
+}
+}
+}
+if(twoPlayerMode&&P2){
+for(let e of enemies){
+if(e.ac&&!e.stationary){
+let dx2=P2.x-e.x,dz2=P2.z-e.z;
+if(Math.sqrt(dx2*dx2+dz2*dz2)<1.5&&P2.i<=0){
+P2.hp-=15;P2.i=30;
+createHitParticle(P2.x,P2.y+1,P2.z,0xFF0000);
+playHitSound();
+if(P2.hp<=0){P2.hp=100;P2.x=P.x;P2.y=P.y;P2.z=P.z+1;}
+}
 }
 }
 }
