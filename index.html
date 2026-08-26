@@ -259,18 +259,69 @@ if(pm)pm.style.display='none';
 document.getElementById('ss').style.display='flex';
 }
 function initPropMode(){
-const canvas=document.getElementById('propCanvas');
-if(!canvas)return;
-canvas.width=500;
-canvas.height=350;
-propP1={x:250,y:150,hp:100,emoji:CHARACTERS[selectedCharacter].icon};
-if(twoPlayerMode){propP2={x:300,y:150,hp:100,emoji:'🐔'};}
-const propTypes=['tree','tree','rock','rock','fence','fence','flower','flower','hay','hay','pond','house'];
-propObjects=[];
-for(let i=0;i<15;i++){
-const type=propTypes[Math.floor(Math.random()*propTypes.length)];
-const emojis={tree:'🌳',rock:'🪨',fence:'🚧',flower:'🌸',hay:'🌾',pond:'💧',house:'🏠'};
-propObjects.push({type:type,x:Math.random()*400+30,y:Math.random()*200+50,emoji:emojis[type]});
+propModeActive=true;
+if(gameInstance){gameInstance.stop();gameInstance=null;}
+const container=document.getElementById('propMode');
+if(!container)return;
+container.innerHTML='';
+container.style.cssText='position:absolute;top:35px;left:0;right:0;bottom:0;z-index:70';
+const W=container.clientWidth||500;
+const H=container.clientHeight||350;
+const pScene=new THREE.Scene();
+pScene.background=new THREE.Color(0x87CEEB);
+pScene.fog=new THREE.Fog(0x87CEEB,20,50);
+const pCamera=new THREE.PerspectiveCamera(50,W/H,0.1,100);
+pCamera.position.set(0,8,15);
+pCamera.lookAt(0,0,0);
+const pRenderer=new THREE.WebGLRenderer({antialias:true});
+pRenderer.setSize(W,H);
+pRenderer.shadowMap.enabled=true;
+container.appendChild(pRenderer.domElement);
+pScene.add(new THREE.AmbientLight(0xffffff,0.7));
+const pSun=new THREE.DirectionalLight(0xffffff,0.9);
+pSun.position.set(10,20,10);
+pSun.castShadow=true;
+pScene.add(pSun);
+const pGround=new THREE.Mesh(new THREE.PlaneGeometry(30,30),new THREE.MeshStandardMaterial({color:0x8B4513}));
+pGround.rotation.x=-Math.PI/2;
+pGround.receiveShadow=true;
+pScene.add(pGround);
+const pGrassMat=new THREE.MeshStandardMaterial({color:0x228B22});
+for(let i=0;i<25;i++){
+const g=new THREE.Mesh(new THREE.CircleGeometry(1+Math.random()*2,8),pGrassMat);
+g.rotation.x=-Math.PI/2;
+g.position.set(Math.random()*20-10,0.01,Math.random()*20-10);
+pScene.add(g);
+}
+for(let i=0;i<6;i++){
+const tree=new THREE.Group();
+const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.4,2.5,8),new THREE.MeshStandardMaterial({color:0x654321}));
+trunk.position.y=1.25;tree.add(trunk);
+const leaf=new THREE.Mesh(new THREE.SphereGeometry(1.5,8,8),new THREE.MeshStandardMaterial({color:0x228B22}));
+leaf.position.y=3;leaf.castShadow=true;tree.add(leaf);
+tree.position.set(Math.random()*18-9,0,Math.random()*18-9);
+pScene.add(tree);
+}
+for(let i=0;i<4;i++){
+const plat=new THREE.Mesh(new THREE.BoxGeometry(2,0.4,1.5),new THREE.MeshStandardMaterial({color:0xD2691E}));
+plat.position.set(Math.random()*14-7,1.5+Math.random()*2,Math.random()*14-7);
+plat.castShadow=true;pScene.add(plat);
+}
+const pipe=new THREE.Mesh(new THREE.CylinderGeometry(1,1,3,16),new THREE.MeshStandardMaterial({color:0x00CC00}));
+pipe.position.set(10,1.5,8);
+pipe.castShadow=true;pScene.add(pipe);
+const pipeRim=new THREE.Mesh(new THREE.CylinderGeometry(1.2,1.2,0.4,16),new THREE.MeshStandardMaterial({color:0x00CC00}));
+pipeRim.position.set(10,3,8);pScene.add(pipeRim);
+const p1Mesh=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.5),new THREE.MeshStandardMaterial({color:CHARACTERS[selectedCharacter].color}));
+p1Mesh.position.set(0,0.6,0);
+p1Mesh.castShadow=true;pScene.add(p1Mesh);
+const p1Head=new THREE.Mesh(new THREE.SphereGeometry(0.3,10,10),new THREE.MeshStandardMaterial({color:0xFFD2B3}));
+p1Head.position.y=1.2;p1Mesh.add(p1Head);
+let p2Mesh=null;
+if(twoPlayerMode&&P2){
+p2Mesh=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
+p2Mesh.position.set(1,0.4,0);
+p2Mesh.castShadow=true;pScene.add(p2Mesh);
 }
 window.propI1={left:false,right:false,up:false,down:false,attack:false};
 if(twoPlayerMode){window.propI2={left:false,right:false,up:false,down:false,attack:false};}
@@ -279,66 +330,43 @@ const el=document.getElementById(id);
 if(!el)return;
 el.addEventListener('touchstart',function(e){e.preventDefault();target[action]=true;},{passive:false});
 el.addEventListener('touchend',function(e){e.preventDefault();target[action]=false;},{passive:false});
-el.addEventListener('mousedown',function(){target[action]=true;});
-el.addEventListener('mouseup',function(){target[action]=false;});
 }
 bindPropBtn('l','left',window.propI1);
 bindPropBtn('r','right',window.propI1);
 bindPropBtn('fw','up',window.propI1);
 bindPropBtn('bw','down',window.propI1);
-bindPropBtn('a','attack',window.propI1);
 if(window.propI2){
 bindPropBtn('p2l','left',window.propI2);
 bindPropBtn('p2r','right',window.propI2);
 bindPropBtn('p2fw','up',window.propI2);
 bindPropBtn('p2bw','down',window.propI2);
-bindPropBtn('p2a','attack',window.propI2);
 }
-function propLoopInternal(){
+function propRenderLoop(){
 if(!propModeActive)return;
 if(window.propI1){
-if(window.propI1.left)propP1.x-=3;
-if(window.propI1.right)propP1.x+=3;
-if(window.propI1.up)propP1.y-=3;
-if(window.propI1.down)propP1.y+=3;
-if(window.propI1.attack&&propP2&&Math.abs(propP1.x-propP2.x)<35&&Math.abs(propP1.y-propP2.y)<35){propP2.hp-=5;window.propI1.attack=false;}
+if(window.propI1.left)p1Mesh.position.x-=0.1;
+if(window.propI1.right)p1Mesh.position.x+=0.1;
+if(window.propI1.up)p1Mesh.position.z-=0.1;
+if(window.propI1.down)p1Mesh.position.z+=0.1;
 }
-if(window.propI2&&propP2){
-if(window.propI2.left)propP2.x-=3;
-if(window.propI2.right)propP2.x+=3;
-if(window.propI2.up)propP2.y-=3;
-if(window.propI2.down)propP2.y+=3;
-if(window.propI2.attack&&Math.abs(propP1.x-propP2.x)<35&&Math.abs(propP1.y-propP2.y)<35){propP1.hp-=5;window.propI2.attack=false;}
+if(window.propI2&&p2Mesh){
+if(window.propI2.left)p2Mesh.position.x-=0.1;
+if(window.propI2.right)p2Mesh.position.x+=0.1;
+if(window.propI2.up)p2Mesh.position.z-=0.1;
+if(window.propI2.down)p2Mesh.position.z+=0.1;
 }
-propP1.x=Math.max(10,Math.min(480,propP1.x));
-propP1.y=Math.max(30,Math.min(290,propP1.y));
-if(propP2){
-propP2.x=Math.max(10,Math.min(480,propP2.x));
-propP2.y=Math.max(30,Math.min(290,propP2.y));
-if(propP1.hp<=0){propP1.hp=100;propP1.x=Math.random()*400+30;propP1.y=Math.random()*200+50;}
-if(propP2.hp<=0){propP2.hp=100;propP2.x=Math.random()*400+30;propP2.y=Math.random()*200+50;}
+p1Mesh.position.x=Math.max(-12,Math.min(12,p1Mesh.position.x));
+p1Mesh.position.z=Math.max(-12,Math.min(12,p1Mesh.position.z));
+if(p2Mesh){
+p2Mesh.position.x=Math.max(-12,Math.min(12,p2Mesh.position.x));
+p2Mesh.position.z=Math.max(-12,Math.min(12,p2Mesh.position.z));
 }
-const c=document.getElementById('propCanvas');
-if(!c)return;
-const ctx=c.getContext('2d');
-ctx.fillStyle='#90EE90';
-ctx.fillRect(0,0,500,350);
-ctx.fillStyle='#8B4513';
-ctx.fillRect(0,310,500,40);
-for(let obj of propObjects){
-ctx.font='35px Arial';
-ctx.fillText(obj.emoji,obj.x,obj.y);
+pCamera.position.set(p1Mesh.position.x,8,p1Mesh.position.z+12);
+pCamera.lookAt(p1Mesh.position.x,0,p1Mesh.position.z);
+pRenderer.render(pScene,pCamera);
+requestAnimationFrame(propRenderLoop);
 }
-ctx.font='40px Arial';
-ctx.fillText(propP1.emoji,propP1.x,propP1.y);
-if(propP2){ctx.fillText(propP2.emoji,propP2.x,propP2.y);}
-ctx.fillStyle='#fff';
-ctx.font='12px Arial';
-ctx.fillText('P1 HP: '+propP1.hp,10,20);
-if(propP2){ctx.fillText('P2 HP: '+propP2.hp,400,20);}
-requestAnimationFrame(propLoopInternal);
-}
-propLoopInternal();
+propRenderLoop();
 }
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;document.getElementById('ib').style.display='block';});
 window.addEventListener('appinstalled',function(){deferredPrompt=null;document.getElementById('ib').style.display='none';});
