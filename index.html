@@ -51,9 +51,10 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 #gs.twoPlayer #p2controls .btn{width:25px;height:25px;font-size:9px}
 #gs.twoPlayer #t{min-height:25px;padding:4px}
 #gs.twoPlayer .h{font-size:10px;padding:3px 5px}
-#propMode{position:absolute;top:35px;left:0;right:0;bottom:85px;z-index:70;background:#87CEEB;display:none;pointer-events:auto}
+#propMode{position:fixed;top:35px;left:50%;transform:translateX(-50%);width:100%;max-width:500px;height:calc(100vh - 120px);z-index:50;background:#87CEEB;display:none;pointer-events:auto;overflow:hidden}
 #t{position:relative;z-index:100}
 #b{position:relative;z-index:100}
+#propCanvas{width:100%;height:calc(100% - 30px);display:block}
 </style>
 </head>
 <body>
@@ -273,6 +274,8 @@ let W=container.clientWidth||500;
 let H=container.clientHeight-30||300;
 if(W<10)W=500;
 if(H<10)H=300;
+canvas.width=W;
+canvas.height=H;
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x87CEEB);
 const camera=new THREE.PerspectiveCamera(50,W/H,0.1,100);
@@ -309,21 +312,25 @@ scene.add(tree);
 for(let i=0;i<5;i++){
 const plat=new THREE.Mesh(new THREE.BoxGeometry(2,0.4,1.5),new THREE.MeshStandardMaterial({color:0xD2691E}));
 plat.position.set(Math.random()*20-10,1.5+Math.random()*3,Math.random()*20-10);
+plat.castShadow=true;
 scene.add(plat);
 }
 for(let i=0;i<3;i++){
 const pipe=new THREE.Mesh(new THREE.CylinderGeometry(1,1,3,16),new THREE.MeshStandardMaterial({color:0x00CC00}));
 pipe.position.set(Math.random()*12-6,1.5,Math.random()*12-6);
+pipe.castShadow=true;
 scene.add(pipe);
 }
 const charColor=CHARACTERS[selectedCharacter].color;
 const p1Mesh=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.5),new THREE.MeshStandardMaterial({color:charColor}));
 p1Mesh.position.set(0,0.6,0);
+p1Mesh.castShadow=true;
 scene.add(p1Mesh);
 let p2Mesh=null;
 if(twoPlayerMode){
 p2Mesh=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
 p2Mesh.position.set(1,0.4,0);
+p2Mesh.castShadow=true;
 scene.add(p2Mesh);
 }
 window.propI1={left:false,right:false,up:false,down:false,attack:false};
@@ -361,6 +368,29 @@ if(window.propI2.left)p2Mesh.position.x-=0.1;
 if(window.propI2.right)p2Mesh.position.x+=0.1;
 if(window.propI2.up)p2Mesh.position.z-=0.1;
 if(window.propI2.down)p2Mesh.position.z+=0.1;
+}
+p1Mesh.position.x=Math.max(-18,Math.min(18,p1Mesh.position.x));
+p1Mesh.position.z=Math.max(-18,Math.min(18,p1Mesh.position.z));
+if(p2Mesh){
+p2Mesh.position.x=Math.max(-18,Math.min(18,p2Mesh.position.x));
+p2Mesh.position.z=Math.max(-18,Math.min(18,p2Mesh.position.z));
+let pdx=p1Mesh.position.x-p2Mesh.position.x;
+let pdz=p1Mesh.position.z-p2Mesh.position.z;
+let pdist=Math.sqrt(pdx*pdx+pdz*pdz);
+if(pdist<1.5){
+if(window.propI1.attack){
+if(typeof propP2HP==='undefined')propP2HP=100;
+propP2HP-=5;
+window.propI1.attack=false;
+if(propP2HP<=0){propP2HP=100;p2Mesh.position.set(Math.random()*20-10,0.4,Math.random()*20-10);}
+}
+if(window.propI2.attack){
+if(typeof propP1HP==='undefined')propP1HP=100;
+propP1HP-=5;
+window.propI2.attack=false;
+if(propP1HP<=0){propP1HP=100;p1Mesh.position.set(Math.random()*20-10,0.6,Math.random()*20-10);}
+}
+}
 }
 camera.position.set(p1Mesh.position.x,8,p1Mesh.position.z+12);
 camera.lookAt(p1Mesh.position.x,0,p1Mesh.position.z);
