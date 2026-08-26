@@ -140,10 +140,6 @@ let audioContext=null,musicInterval=null,currentMusic=null,currentBeat=0;
 let selectedCharacter='farmer';
 let twoPlayerMode=false;
 let P2=null;
-let propModeActive=false;
-let propObjects=[];
-let propP1={x:250,y:150,hp:100,emoji:'👨‍🌾'};
-let propP2=null;
 const diffData={enemyHpMult:1,enemyDmgMult:1,bossHpMult:1};
 const CHARACTERS={
 farmer:{name:'Farmer Joe',desc:'Balanced stats',icon:'👨‍🌾',speed:0.25,jump:0.5,attack:20,color:0x4A90E2},
@@ -158,28 +154,13 @@ function startGameBtn(){
 document.getElementById('p2controls').style.display=twoPlayerMode?'flex':'none';
 document.getElementById('ss').style.display='none';
 document.getElementById('gs').style.display='block';
-if(document.getElementById('propMode'))document.getElementById('propMode').style.display='none';
 if(gameInstance){gameInstance.stop();gameInstance=null;}
 initGame();
 }
 function toggleTwoPlayerMode(){
 twoPlayerMode=!twoPlayerMode;
 const btn=document.getElementById('twoPlayerBtn');
-if(btn){
-if(twoPlayerMode){btn.textContent='👥 2 Player: ON';btn.style.background='linear-gradient(145deg,#00FF00,#00AA00)';}
-else{btn.textContent='👥 2 Player: OFF';btn.style.background='linear-gradient(145deg,#FF6600,#FF3300)';}
-}
-}
-function exitTwoPlayer(){
-twoPlayerMode=false;
-const btn=document.getElementById('twoPlayerBtn');
-if(btn){btn.textContent='👥 2 Player: OFF';btn.style.background='linear-gradient(145deg,#FF6600,#FF3300)';}
-document.getElementById('p2controls').style.display='none';
-window.I2=null;
-P2=null;
-if(gameInstance){gameInstance.stop();gameInstance=null;}
-document.getElementById('gs').style.display='none';
-document.getElementById('ss').style.display='flex';
+if(btn){btn.textContent=twoPlayerMode?'👥 2 Player: ON':'👥 2 Player: OFF';}
 }
 function restartGame(){if(confirm(currentLang=='en'?'Restart from beginning?':'Recommencer ?')){localStorage.removeItem('cmsave');localStorage.removeItem('cmcuts');location.reload();}}
 function setLang(l){
@@ -189,7 +170,6 @@ document.getElementById('st').textContent=TRANSLATIONS[l].st;
 document.getElementById('sb').textContent=TRANSLATIONS[l].sb;
 document.getElementById('rb').textContent=TRANSLATIONS[l].rb;
 document.getElementById('skb').textContent=TRANSLATIONS[l].sk;
-if(document.getElementById('charSelectTitle'))document.getElementById('charSelectTitle').textContent=TRANSLATIONS[l].charSelect;
 }
 document.getElementById('le').classList.toggle('ac',l=='en');
 document.getElementById('lf').classList.toggle('ac',l=='fr');
@@ -210,12 +190,11 @@ function togglePauseMenu(){
 const pm=document.getElementById('pauseMenu');
 if(!pm)return;
 if(pm.style.display=='block'){resumeGame();}
-else{pm.style.display='block';if(typeof stopMusic==='function')stopMusic();}
+else{pm.style.display='block';}
 }
 function resumeGame(){
 const pm=document.getElementById('pauseMenu');
 if(pm)pm.style.display='none';
-if(typeof startMusic==='function')startMusic(typeof L!=='undefined'&&(L==3||L==7||L==10||L==15||L==20||L==25||L==30)?'boss':'farm');
 }
 function quitToMenu(){
 const pm=document.getElementById('pauseMenu');
@@ -223,154 +202,24 @@ if(pm)pm.style.display='none';
 document.getElementById('gs').style.display='none';
 document.getElementById('ss').style.display='flex';
 if(gameInstance){gameInstance.stop();gameInstance=null;}
-if(typeof renderer!=='undefined'&&renderer){
-renderer.setScissorTest(false);
-renderer.setViewport(0,0,renderer.domElement.width,renderer.domElement.height);
 }
+function exitTwoPlayer(){
+twoPlayerMode=false;
+const btn=document.getElementById('twoPlayerBtn');
+if(btn)btn.textContent='👥 2 Player: OFF';
+document.getElementById('p2controls').style.display='none';
 }
 function closeDialogue(){
 const d=document.getElementById('npcDialogue');
 if(d)d.remove();
-if(typeof S!=='undefined')S='playing';
-if(typeof npcs!=='undefined'){for(let n of npcs){n.userData.isTalking=false;}}
-if(typeof startMusic==='function'){startMusic(typeof L!=='undefined'&&(L==3||L==7||L==10||L==15||L==20||L==25||L==30)?'boss':'farm');}
 }
 function buyItem(type){
 if(typeof coins==='undefined')return;
-if(type=='speed'&&coins>=50){coins-=50;if(typeof P!=='undefined')P.s=CHARACTERS[selectedCharacter].speed+0.15;if(typeof playVictorySound==='function')playVictorySound();alert(t('purchased'));}
-else if(type=='attack'&&coins>=50){coins-=50;if(typeof P!=='undefined')P.au=true;if(typeof playVictorySound==='function')playVictorySound();alert(t('purchased'));}
-else if(type=='shield'&&coins>=75){coins-=75;if(typeof P!=='undefined')P.hasShield=true;if(typeof playVictorySound==='function')playVictorySound();alert(t('purchased'));}
+if(type=='speed'&&coins>=50){coins-=50;alert(t('purchased'));}
+else if(type=='attack'&&coins>=50){coins-=50;alert(t('purchased'));}
+else if(type=='shield'&&coins>=75){coins-=75;alert(t('purchased'));}
 else{alert(t('insufficient'));}
 closeDialogue();
-if(typeof saveGame==='function')saveGame();
-}
-function enterPropMode(){
-propModeActive=true;
-document.getElementById('ss').style.display='none';
-document.getElementById('gs').style.display='none';
-const pm=document.getElementById('propMode');
-if(pm)pm.style.display='block';
-initPropMode();
-}
-function exitPropMode(){
-propModeActive=false;
-const pm=document.getElementById('propMode');
-if(pm)pm.style.display='none';
-document.getElementById('ss').style.display='flex';
-}
-function initPropMode(){
-propModeActive=true;
-if(gameInstance){gameInstance.stop();gameInstance=null;}
-const container=document.getElementById('propMode');
-container.innerHTML='';
-const W=container.clientWidth||500;
-const H=container.clientHeight||400;
-const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x87CEEB);
-const camera=new THREE.PerspectiveCamera(50,W/H,0.1,100);
-camera.position.set(0,8,15);
-camera.lookAt(0,0,0);
-const renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(W,H);
-container.appendChild(renderer.domElement);
-scene.add(new THREE.AmbientLight(0xffffff,0.8));
-const sun=new THREE.DirectionalLight(0xffffff,1);
-sun.position.set(10,20,10);
-sun.castShadow=true;
-scene.add(sun);
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(30,30),new THREE.MeshStandardMaterial({color:0x8B4513}));
-ground.rotation.x=-Math.PI/2;
-ground.receiveShadow=true;
-scene.add(ground);
-const grassMat=new THREE.MeshStandardMaterial({color:0x228B22});
-for(let i=0;i<20;i++){
-const g=new THREE.Mesh(new THREE.CircleGeometry(1+Math.random()*2,8),grassMat);
-g.rotation.x=-Math.PI/2;
-g.position.set(Math.random()*20-10,0.01,Math.random()*20-10);
-scene.add(g);
-}
-for(let i=0;i<5;i++){
-const tree=createTree(Math.random()*15-7.5,Math.random()*15-7.5,false);
-}
-for(let i=0;i<3;i++){
-createPlatform3D(Math.random()*10-5,2+Math.random()*3,Math.random()*10-5);
-}
-createPipe3D(Math.random()*10-5,Math.random()*10-5);
-const playerMesh=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.5),new THREE.MeshStandardMaterial({color:CHARACTERS[selectedCharacter].color}));
-playerMesh.position.set(0,0.6,0);
-scene.add(playerMesh);
-let p2Mesh=null;
-if(twoPlayerMode){
-p2Mesh=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
-p2Mesh.position.set(1,0.4,0);
-scene.add(p2Mesh);
-}
-function propRenderLoop(){
-if(!propModeActive)return;
-if(window.propI1){
-if(window.propI1.left)playerMesh.position.x-=0.1;
-if(window.propI1.right)playerMesh.position.x+=0.1;
-if(window.propI1.up)playerMesh.position.z-=0.1;
-if(window.propI1.down)playerMesh.position.z+=0.1;
-}
-if(window.propI2&&p2Mesh){
-if(window.propI2.left)p2Mesh.position.x-=0.1;
-if(window.propI2.right)p2Mesh.position.x+=0.1;
-if(window.propI2.up)p2Mesh.position.z-=0.1;
-if(window.propI2.down)p2Mesh.position.z+=0.1;
-}
-camera.position.set(playerMesh.position.x,8,playerMesh.position.z+12);
-camera.lookAt(playerMesh.position.x,0,playerMesh.position.z);
-renderer.render(scene,camera);
-requestAnimationFrame(propRenderLoop);
-}
-propRenderLoop();
-}
-function propLoopInternal(){
-if(!propModeActive)return;
-if(window.propI1){
-if(window.propI1.left)propP1.x-=3;
-if(window.propI1.right)propP1.x+=3;
-if(window.propI1.up)propP1.y-=3;
-if(window.propI1.down)propP1.y+=3;
-if(window.propI1.attack&&propP2&&Math.abs(propP1.x-propP2.x)<35&&Math.abs(propP1.y-propP2.y)<35){propP2.hp-=5;window.propI1.attack=false;}
-}
-if(window.propI2&&propP2){
-if(window.propI2.left)propP2.x-=3;
-if(window.propI2.right)propP2.x+=3;
-if(window.propI2.up)propP2.y-=3;
-if(window.propI2.down)propP2.y+=3;
-if(window.propI2.attack&&Math.abs(propP1.x-propP2.x)<35&&Math.abs(propP1.y-propP2.y)<35){propP1.hp-=5;window.propI2.attack=false;}
-}
-propP1.x=Math.max(10,Math.min(480,propP1.x));
-propP1.y=Math.max(30,Math.min(290,propP1.y));
-if(propP2){
-propP2.x=Math.max(10,Math.min(480,propP2.x));
-propP2.y=Math.max(30,Math.min(290,propP2.y));
-if(propP1.hp<=0){propP1.hp=100;propP1.x=Math.random()*400+30;propP1.y=Math.random()*200+50;}
-if(propP2.hp<=0){propP2.hp=100;propP2.x=Math.random()*400+30;propP2.y=Math.random()*200+50;}
-}
-const c=document.getElementById('propCanvas');
-if(!c)return;
-const ctx=c.getContext('2d');
-ctx.fillStyle='#90EE90';
-ctx.fillRect(0,0,500,350);
-ctx.fillStyle='#8B4513';
-ctx.fillRect(0,310,500,40);
-for(let obj of propObjects){
-ctx.font='35px Arial';
-ctx.fillText(obj.emoji,obj.x,obj.y);
-}
-ctx.font='40px Arial';
-ctx.fillText(propP1.emoji,propP1.x,propP1.y);
-if(propP2){ctx.fillText(propP2.emoji,propP2.x,propP2.y);}
-ctx.fillStyle='#fff';
-ctx.font='12px Arial';
-ctx.fillText('P1 HP: '+propP1.hp,10,20);
-if(propP2){ctx.fillText('P2 HP: '+propP2.hp,400,20);}
-requestAnimationFrame(propLoopInternal);
-}
-propLoopInternal();
 }
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;document.getElementById('ib').style.display='block';});
 window.addEventListener('appinstalled',function(){deferredPrompt=null;document.getElementById('ib').style.display='none';});
