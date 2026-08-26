@@ -273,7 +273,6 @@ function initPropMode(){
 const container=document.getElementById('propMode');
 if(!container){console.error('No propMode div');return;}
 container.innerHTML='';
-container.style.cssText='position:absolute;top:35px;left:0;right:0;height:calc(100% - 120px);z-index:70;background:#87CEEB;pointer-events:auto;display:block';
 let W=container.clientWidth;
 let H=container.clientHeight;
 if(!W||W<10)W=500;
