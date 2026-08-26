@@ -1362,6 +1362,15 @@ triggerScreenShake(3);
 playHitSound();
 createHitParticle(P.x,P.y+1,P.z,0xFF0000);
 if(P.hp<=0){deaths++;playDeathSound();restartLevel();return;}
+if(twoPlayerMode&&P2){
+let dx2=P2.x-e.x,dz2=P2.z-e.z;
+let dist2=Math.sqrt(dx2*dx2+dz2*dz2);
+if(dist2<1.5&&P2.i<=0){
+P2.hp-=15;P2.i=30;
+createHitParticle(P2.x,P2.y+1,P2.z,0xFF0000);
+if(P2.hp<=0){P2.hp=100;P2.x=P.x;P2.y=P.y;P2.z=P.z+1;}
+}
+}
 }
 }
 function updateBossAI(){
