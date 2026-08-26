@@ -251,7 +251,9 @@ document.getElementById('ss').style.display='none';
 document.getElementById('gs').style.display='block';
 document.getElementById('propMode').style.display='block';
 if(gameInstance){gameInstance.stop();gameInstance=null;}
+setTimeout(function(){
 initPropMode();
+},100);
 }
 function exitPropMode(){
 propModeActive=false;
@@ -264,8 +266,10 @@ const container=document.getElementById('propMode');
 if(!container)return;
 container.innerHTML='';
 container.style.cssText='position:absolute;top:35px;left:0;right:0;height:calc(100% - 120px);z-index:70;background:#87CEEB;pointer-events:auto';
-const W=container.clientWidth||500;
-const H=container.clientHeight||350;
+let W=container.clientWidth||500;
+let H=container.clientHeight||350;
+if(W===0)W=500;
+if(H===0)H=350;
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x87CEEB);
 scene.fog=new THREE.Fog(0x87CEEB,30,100);
