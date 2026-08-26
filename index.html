@@ -881,6 +881,32 @@ playerParts.rightLeg=rightLeg;
 const tail=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.01,0.6,6),bodyMat);
 tail.position.set(0,0.7,-0.5);tail.rotation.x=Math.PI/3;playerGroup.add(tail);
 playerParts.tail=tail;
+if(selectedCharacter=='chickencat'){
+const ckBody=new THREE.Mesh(new THREE.SphereGeometry(0.45,16,16),new THREE.MeshStandardMaterial({color:0xFFD700}));
+ckBody.position.y=0.5;ckBody.castShadow=true;playerGroup.add(ckBody);
+const ckHead=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,12),new THREE.MeshStandardMaterial({color:0xFF6600}));
+ckHead.position.y=1;playerGroup.add(ckHead);
+playerParts.head=ckHead;
+const ckEar1=new THREE.Mesh(new THREE.ConeGeometry(0.12,0.25,6),new THREE.MeshStandardMaterial({color:0xFF6600}));
+ckEar1.position.set(-0.15,1.25,0);playerGroup.add(ckEar1);
+const ckEar2=ckEar1.clone();ckEar2.position.x=0.15;playerGroup.add(ckEar2);
+const ckEyeMat=new THREE.MeshStandardMaterial({color:0x00FF00,emissive:0x00FF00,emissiveIntensity:0.3});
+const ckEye1=new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8),ckEyeMat);
+ckEye1.position.set(-0.1,1.05,0.25);playerGroup.add(ckEye1);
+const ckEye2=ckEye1.clone();ckEye2.position.x=0.1;playerGroup.add(ckEye2);
+const ckBeak=new THREE.Mesh(new THREE.ConeGeometry(0.08,0.15,6),new THREE.MeshStandardMaterial({color:0xFFA500}));
+ckBeak.position.set(0,1,0.28);ckBeak.rotation.x=Math.PI/2;playerGroup.add(ckBeak);
+const ckWing1=new THREE.Mesh(new THREE.SphereGeometry(0.18,6,6),new THREE.MeshStandardMaterial({color:0xFFD700}));
+ckWing1.position.set(-0.35,0.5,0);playerGroup.add(ckWing1);
+playerParts.leftArm=ckWing1;
+const ckWing2=ckWing1.clone();ckWing2.position.x=0.35;playerGroup.add(ckWing2);
+playerParts.rightArm=ckWing2;
+const ckLeg1=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,0.3,6),new THREE.MeshStandardMaterial({color:0xFFA500}));
+ckLeg1.position.set(-0.15,0.15,0);playerGroup.add(ckLeg1);
+playerParts.leftLeg=ckLeg1;
+const ckLeg2=ckLeg1.clone();ckLeg2.position.x=0.15;playerGroup.add(ckLeg2);
+playerParts.rightLeg=ckLeg2;
+}
 }
 scene.add(playerGroup);
 let player2Group=null;
