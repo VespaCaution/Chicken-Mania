@@ -52,6 +52,8 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 #gs.twoPlayer #t{min-height:25px;padding:4px}
 #gs.twoPlayer .h{font-size:10px;padding:3px 5px}
 #propMode{position:absolute;top:35px;left:0;right:0;bottom:85px;z-index:70;background:#87CEEB;display:none;pointer-events:auto}
+#t{position:relative;z-index:100}
+#b{position:relative;z-index:100}
 </style>
 </head>
 <body>
@@ -83,10 +85,11 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 </div>
 <div id="gs">
 <div id="w">
-<div id="t">HUD</div>
-<div id="c">Canvas</div>
-<div id="b">Controls</div>
-<div id="propMode">Prop Mode Canvas</div>
+<div id="t">HUD - VISIBLE</div>
+<div id="c">Canvas - can hide or leave</div>
+<div id="b">Controls - VISIBLE</div>
+<div id="propMode">Prop canvas - OVERLAY between c and b</div>
+</div>
 </div>
 <div id="t">
 <div class="h"><span>❤️</span><div style="width:60px;height:10px;background:#333;border-radius:5px;overflow:hidden;border:1px solid #fff"><div id="hp" style="width:100%;height:100%;background:linear-gradient(90deg,#f44,#f66);transition:width .3s"></div></div></div>
@@ -254,18 +257,11 @@ function enterPropMode(){
 propModeActive=true;
 document.getElementById('ss').style.display='none';
 document.getElementById('gs').style.display='block';
-if(twoPlayerMode){
-document.getElementById('p2controls').style.display='flex';
-}
 document.getElementById('propMode').style.display='block';
+document.getElementById('p2controls').style.display=twoPlayerMode?'flex':'none';
 if(gameInstance){gameInstance.stop();gameInstance=null;}
 setTimeout(function(){
-try{
-initPropMode();
-}catch(e){
-console.error('Prop mode error:',e.message);
-alert('Prop mode error: '+e.message);
-}
+try{initPropMode();}catch(e){alert('Prop mode error: '+e.message);}
 },200);
 }
 function exitPropMode(){
@@ -273,7 +269,7 @@ propModeActive=false;
 document.getElementById('propMode').style.display='none';
 document.getElementById('gs').style.display='none';
 document.getElementById('ss').style.display='flex';
-}
+    }
 function initPropMode(){
 const container=document.getElementById('propMode');
 if(!container){console.error('No propMode div');return;}
