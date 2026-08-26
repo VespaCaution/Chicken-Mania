@@ -51,6 +51,7 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 #gs.twoPlayer #p2controls .btn{width:25px;height:25px;font-size:9px}
 #gs.twoPlayer #t{min-height:25px;padding:4px}
 #gs.twoPlayer .h{font-size:10px;padding:3px 5px}
+#propMode{position:absolute;top:35px;left:0;right:0;height:calc(100% - 120px);z-index:70;background:#87CEEB;display:none;pointer-events:auto}
 </style>
 </head>
 <body>
@@ -257,12 +258,12 @@ propModeActive=false;
 document.getElementById('propMode').style.display='none';
 document.getElementById('gs').style.display='none';
 document.getElementById('ss').style.display='flex';
-  }
+}
 function initPropMode(){
 const container=document.getElementById('propMode');
 if(!container)return;
 container.innerHTML='';
-container.style.cssText='position:absolute;top:35px;left:0;right:0;bottom:0;z-index:70;background:#87CEEB';
+container.style.cssText='position:absolute;top:35px;left:0;right:0;height:calc(100% - 120px);z-index:70;background:#87CEEB;pointer-events:auto';
 const W=container.clientWidth||500;
 const H=container.clientHeight||350;
 const scene=new THREE.Scene();
