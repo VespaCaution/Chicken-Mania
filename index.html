@@ -909,7 +909,7 @@ playerParts.rightLeg=rightLeg;
 const tail=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.01,0.6,6),bodyMat);
 tail.position.set(0,0.7,-0.5);tail.rotation.x=Math.PI/3;playerGroup.add(tail);
 playerParts.tail=tail;
-if(selectedCharacter=='chickencat'){
+}else if(selectedCharacter=='chickencat'){
 const ckBody=new THREE.Mesh(new THREE.SphereGeometry(0.45,16,16),new THREE.MeshStandardMaterial({color:0xFFD700}));
 ckBody.position.y=0.5;ckBody.castShadow=true;playerGroup.add(ckBody);
 const ckHead=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,12),new THREE.MeshStandardMaterial({color:0xFF6600}));
@@ -1416,14 +1416,16 @@ triggerScreenShake(3);
 playHitSound();
 createHitParticle(P.x,P.y+1,P.z,0xFF0000);
 if(P.hp<=0){deaths++;playDeathSound();restartLevel();return;}
+}
 if(twoPlayerMode&&P2){
 let dx2=P2.x-e.x,dz2=P2.z-e.z;
 let dist2=Math.sqrt(dx2*dx2+dz2*dz2);
 if(dist2<1.5&&P2.i<=0){
-P2.hp-=15;P2.i=30;
+P2.hp-=15;
+P2.i=30;
 createHitParticle(P2.x,P2.y+1,P2.z,0xFF0000);
+playHitSound();
 if(P2.hp<=0){P2.hp=100;P2.x=P.x;P2.y=P.y;P2.z=P.z+1;}
-}
 }
 }
 }
