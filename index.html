@@ -1481,6 +1481,7 @@ enemies=[];coinList=[];bonusList=[];healthList=[];projectiles=[];particles=[];
 boss=null;lt=0;lC=0;lB=0;
 checkpointX=0;hasCheckpoint=false;
 P.x=0;P.y=1;P.z=0;P.vx=0;P.vy=0;P.vz=0;P.hp=100;P.i=0;P.rotY=0;
+if(twoPlayerMode&&P2){P2.x=0;P2.y=1;P2.z=2;P2.hp=100;P2.i=0;}
 P.hasShield=false;P.au=selectedCharacter=='dog';P.su=L>=15;
 I.left=false;I.right=false;I.forward=false;I.backward=false;I.jump=false;I.attack=false;
 document.getElementById('cs').style.display='none';
