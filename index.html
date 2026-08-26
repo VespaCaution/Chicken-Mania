@@ -784,8 +784,10 @@ scene.background=new THREE.Color(0.8-0.5*t,0.7-0.5*t,0.9-0.7*t);
     }
 const playerGroup=new THREE.Group();
 const playerParts={};
+const charColor=charData.color;
+const bodyMat=new THREE.MeshStandardMaterial({color:charColor,roughness:0.5});
 if(selectedCharacter=='farmer'){
-const body=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.5),new THREE.MeshStandardMaterial({color:0x4A90E2,roughness:0.5}));
+const body=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.5),bodyMat);
 body.position.y=0.9;body.castShadow=true;playerGroup.add(body);
 const overall=new THREE.Mesh(new THREE.BoxGeometry(0.7,0.5,0.45),new THREE.MeshStandardMaterial({color:0x4169E1}));
 overall.position.y=0.7;playerGroup.add(overall);
@@ -844,11 +846,10 @@ tine.position.set(i,1.9,0);tine.rotation.z=Math.PI/2;pitchfork.add(tine);
 pitchfork.position.set(0.6,0.2,0.3);pitchfork.visible=false;
 playerGroup.add(pitchfork);
 playerParts.pitchfork=pitchfork;
-}
-if(selectedCharacter=='chicken'){
-const body=new THREE.Mesh(new THREE.SphereGeometry(0.5,16,16),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
+}else if(selectedCharacter=='chicken'){
+const body=new THREE.Mesh(new THREE.SphereGeometry(0.5,16,16),bodyMat);
 body.position.y=0.6;body.castShadow=true;playerGroup.add(body);
-const head=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,12),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
+const head=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,12),bodyMat);
 head.position.y=1.1;playerGroup.add(head);
 playerParts.head=head;
 const beak=new THREE.Mesh(new THREE.ConeGeometry(0.1,0.2,6),new THREE.MeshStandardMaterial({color:0xFFA500}));
@@ -871,15 +872,10 @@ leftLeg.position.set(-0.15,0.15,0);playerGroup.add(leftLeg);
 playerParts.leftLeg=leftLeg;
 const rightLeg=leftLeg.clone();rightLeg.position.x=0.15;playerGroup.add(rightLeg);
 playerParts.rightLeg=rightLeg;
-const tail1=new THREE.Mesh(new THREE.ConeGeometry(0.1,0.3,6),new THREE.MeshStandardMaterial({color:0xDDDDDD}));
-tail1.position.set(0,0.7,-0.4);tail1.rotation.x=Math.PI;playerGroup.add(tail1);
-const tail2=new THREE.Mesh(new THREE.ConeGeometry(0.08,0.25,6),new THREE.MeshStandardMaterial({color:0xDDDDDD}));
-tail2.position.set(0.1,0.8,-0.35);tail2.rotation.x=Math.PI;playerGroup.add(tail2);
-}
-if(selectedCharacter=='dog'){
-const body=new THREE.Mesh(new THREE.BoxGeometry(0.9,0.7,0.6),new THREE.MeshStandardMaterial({color:0x8B4513}));
+}else if(selectedCharacter=='dog'){
+const body=new THREE.Mesh(new THREE.BoxGeometry(0.9,0.7,0.6),bodyMat);
 body.position.y=0.5;body.castShadow=true;playerGroup.add(body);
-const head=new THREE.Mesh(new THREE.SphereGeometry(0.35,12,12),new THREE.MeshStandardMaterial({color:0x8B4513}));
+const head=new THREE.Mesh(new THREE.SphereGeometry(0.35,12,12),bodyMat);
 head.position.set(0.4,0.9,0);playerGroup.add(head);
 playerParts.head=head;
 const snout=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.15,0.15),new THREE.MeshStandardMaterial({color:0x4A2A0A}));
@@ -900,35 +896,34 @@ leftLeg.position.set(-0.3,0.2,0.15);playerGroup.add(leftLeg);
 playerParts.leftLeg=leftLeg;
 const rightLeg=leftLeg.clone();rightLeg.position.z=-0.15;playerGroup.add(rightLeg);
 playerParts.rightLeg=rightLeg;
-const tail=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.02,0.5,6),new THREE.MeshStandardMaterial({color:0x8B4513}));
+const tail=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.02,0.5,6),bodyMat);
 tail.position.set(-0.5,0.6,0);tail.rotation.z=Math.PI/2;playerGroup.add(tail);
 playerParts.tail=tail;
-}
-if(selectedCharacter=='cat'){
-const body=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.6,0.8),new THREE.MeshStandardMaterial({color:0xFF6600}));
+}else if(selectedCharacter=='cat'){
+const body=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.6,0.8),bodyMat);
 body.position.y=0.4;body.castShadow=true;playerGroup.add(body);
-const head=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,12),new THREE.MeshStandardMaterial({color:0xFF6600}));
+const head=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,12),bodyMat);
 head.position.y=0.8;playerGroup.add(head);
 playerParts.head=head;
-const ear1=new THREE.Mesh(new THREE.ConeGeometry(0.12,0.25,6),new THREE.MeshStandardMaterial({color:0xFF6600}));
-ear1.position.set(-0.15,1,0);playerGroup.add(ear1);
-const ear2=ear1.clone();ear2.position.x=0.15;playerGroup.add(ear2);
+const earMat=new THREE.MeshStandardMaterial({color:charColor});
+const leftEar=new THREE.Mesh(new THREE.ConeGeometry(0.12,0.25,6),earMat);
+leftEar.position.set(-0.15,1,0);playerGroup.add(leftEar);
+const rightEar=leftEar.clone();rightEar.position.x=0.15;playerGroup.add(rightEar);
 const eyeMat=new THREE.MeshStandardMaterial({color:0x00FF00,emissive:0x00FF00,emissiveIntensity:0.3});
 const leftEye=new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8),eyeMat);
 leftEye.position.set(-0.1,0.85,0.25);playerGroup.add(leftEye);
 const rightEye=leftEye.clone();rightEye.position.x=0.1;playerGroup.add(rightEye);
 const nose=new THREE.Mesh(new THREE.SphereGeometry(0.04,6,6),new THREE.MeshStandardMaterial({color:0xFF69B4}));
 nose.position.set(0,0.75,0.3);playerGroup.add(nose);
-const legMat=new THREE.MeshStandardMaterial({color:0xFF6600});
+const legMat=new THREE.MeshStandardMaterial({color:charColor});
 const leftLeg=new THREE.Mesh(new THREE.BoxGeometry(0.15,0.4,0.15),legMat);
 leftLeg.position.set(-0.2,0.2,0.2);playerGroup.add(leftLeg);
 playerParts.leftLeg=leftLeg;
 const rightLeg=leftLeg.clone();rightLeg.position.z=-0.2;playerGroup.add(rightLeg);
 playerParts.rightLeg=rightLeg;
-const tail=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.01,0.6,6),new THREE.MeshStandardMaterial({color:0xFF6600}));
+const tail=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.01,0.6,6),bodyMat);
 tail.position.set(0,0.7,-0.5);tail.rotation.x=Math.PI/3;playerGroup.add(tail);
 playerParts.tail=tail;
-}
 if(selectedCharacter=='chickencat'){
 const ckBody=new THREE.Mesh(new THREE.SphereGeometry(0.45,16,16),new THREE.MeshStandardMaterial({color:0xFFD700}));
 ckBody.position.y=0.5;ckBody.castShadow=true;playerGroup.add(ckBody);
@@ -955,7 +950,30 @@ playerParts.leftLeg=ckLeg1;
 const ckLeg2=ckLeg1.clone();ckLeg2.position.x=0.15;playerGroup.add(ckLeg2);
 playerParts.rightLeg=ckLeg2;
 }
+}
 scene.add(playerGroup);
+let player2Group=null;
+if(twoPlayerMode&&P2){
+player2Group=new THREE.Group();
+const p2body=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
+p2body.position.y=0.5;player2Group.add(p2body);
+const p2head=new THREE.Mesh(new THREE.SphereGeometry(0.25,10,10),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
+p2head.position.y=0.9;player2Group.add(p2head);
+const p2beak=new THREE.Mesh(new THREE.ConeGeometry(0.08,0.15,6),new THREE.MeshStandardMaterial({color:0xFFA500}));
+p2beak.position.set(0,0.9,0.2);p2beak.rotation.x=Math.PI/2;player2Group.add(p2beak);
+const p2comb=new THREE.Mesh(new THREE.SphereGeometry(0.07,6,6),new THREE.MeshStandardMaterial({color:0xFF0000}));
+p2comb.position.y=1.1;player2Group.add(p2comb);
+const p2eyeMat=new THREE.MeshStandardMaterial({color:0x000000});
+const p2eye1=new THREE.Mesh(new THREE.SphereGeometry(0.04,6,6),p2eyeMat);
+p2eye1.position.set(-0.08,0.95,0.2);player2Group.add(p2eye1);
+const p2eye2=p2eye1.clone();p2eye2.position.x=0.08;player2Group.add(p2eye2);
+const p2wingMat=new THREE.MeshStandardMaterial({color:0xEEEEEE});
+const p2wing1=new THREE.Mesh(new THREE.SphereGeometry(0.15,6,6),p2wingMat);
+p2wing1.position.set(-0.3,0.5,0);player2Group.add(p2wing1);
+const p2wing2=p2wing1.clone();p2wing2.position.x=0.3;player2Group.add(p2wing2);
+player2Group.position.set(P2.x,P2.y,P2.z);
+scene.add(player2Group);
+}
 function updatePlayerAnimation(){
 if(P.isWalking&&P.g){
 P.walkCycle+=0.2;
@@ -1413,6 +1431,15 @@ triggerScreenShake(3);
 playHitSound();
 createHitParticle(P.x,P.y+1,P.z,0xFF0000);
 if(P.hp<=0){deaths++;playDeathSound();restartLevel();return;}
+if(twoPlayerMode&&P2){
+let dx2=P2.x-e.x,dz2=P2.z-e.z;
+let dist2=Math.sqrt(dx2*dx2+dz2*dz2);
+if(dist2<1.5&&P2.i<=0){
+P2.hp-=15;P2.i=30;
+createHitParticle(P2.x,P2.y+1,P2.z,0xFF0000);
+if(P2.hp<=0){P2.hp=100;P2.x=P.x;P2.y=P.y;P2.z=P.z+1;}
+}
+}
 }
 }
 function updateBossAI(){
