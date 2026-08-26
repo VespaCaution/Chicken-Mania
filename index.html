@@ -158,14 +158,17 @@ function startGameBtn(){
 document.getElementById('p2controls').style.display=twoPlayerMode?'flex':'none';
 document.getElementById('ss').style.display='none';
 document.getElementById('gs').style.display='block';
-document.getElementById('propMode').style.display='none';
+if(document.getElementById('propMode'))document.getElementById('propMode').style.display='none';
 if(gameInstance){gameInstance.stop();gameInstance=null;}
 initGame();
 }
 function toggleTwoPlayerMode(){
 twoPlayerMode=!twoPlayerMode;
 const btn=document.getElementById('twoPlayerBtn');
-if(btn){btn.textContent=twoPlayerMode?'👥 2 Player: ON':'👥 2 Player: OFF';btn.style.background=twoPlayerMode?'linear-gradient(145deg,#00FF00,#00AA00)':'linear-gradient(145deg,#FF6600,#FF3300)';}
+if(btn){
+if(twoPlayerMode){btn.textContent='👥 2 Player: ON';btn.style.background='linear-gradient(145deg,#00FF00,#00AA00)';}
+else{btn.textContent='👥 2 Player: OFF';btn.style.background='linear-gradient(145deg,#FF6600,#FF3300)';}
+}
 }
 function exitTwoPlayer(){
 twoPlayerMode=false;
@@ -174,6 +177,9 @@ if(btn){btn.textContent='👥 2 Player: OFF';btn.style.background='linear-gradie
 document.getElementById('p2controls').style.display='none';
 window.I2=null;
 P2=null;
+if(gameInstance){gameInstance.stop();gameInstance=null;}
+document.getElementById('gs').style.display='none';
+document.getElementById('ss').style.display='flex';
 }
 function restartGame(){if(confirm(currentLang=='en'?'Restart from beginning?':'Recommencer ?')){localStorage.removeItem('cmsave');localStorage.removeItem('cmcuts');location.reload();}}
 function setLang(l){
@@ -217,22 +223,23 @@ if(pm)pm.style.display='none';
 document.getElementById('gs').style.display='none';
 document.getElementById('ss').style.display='flex';
 if(gameInstance){gameInstance.stop();gameInstance=null;}
+if(typeof renderer!=='undefined'&&renderer){
+renderer.setScissorTest(false);
+renderer.setViewport(0,0,renderer.domElement.width,renderer.domElement.height);
 }
-function restartLevel(){
-if(typeof restartLevelGame==='function')restartLevelGame();
-else if(gameInstance){gameInstance.stop();gameInstance=null;initGame();}
 }
 function closeDialogue(){
 const d=document.getElementById('npcDialogue');
 if(d)d.remove();
 if(typeof S!=='undefined')S='playing';
 if(typeof npcs!=='undefined'){for(let n of npcs){n.userData.isTalking=false;}}
+if(typeof startMusic==='function'){startMusic(typeof L!=='undefined'&&(L==3||L==7||L==10||L==15||L==20||L==25||L==30)?'boss':'farm');}
 }
 function buyItem(type){
 if(typeof coins==='undefined')return;
-if(type=='speed'&&coins>=50){coins-=50;if(typeof P!=='undefined')P.s=CHARACTERS[selectedCharacter].speed+0.15;alert(t('purchased'));}
-else if(type=='attack'&&coins>=50){coins-=50;if(typeof P!=='undefined')P.au=true;alert(t('purchased'));}
-else if(type=='shield'&&coins>=75){coins-=75;if(typeof P!=='undefined')P.hasShield=true;alert(t('purchased'));}
+if(type=='speed'&&coins>=50){coins-=50;if(typeof P!=='undefined')P.s=CHARACTERS[selectedCharacter].speed+0.15;if(typeof playVictorySound==='function')playVictorySound();alert(t('purchased'));}
+else if(type=='attack'&&coins>=50){coins-=50;if(typeof P!=='undefined')P.au=true;if(typeof playVictorySound==='function')playVictorySound();alert(t('purchased'));}
+else if(type=='shield'&&coins>=75){coins-=75;if(typeof P!=='undefined')P.hasShield=true;if(typeof playVictorySound==='function')playVictorySound();alert(t('purchased'));}
 else{alert(t('insufficient'));}
 closeDialogue();
 if(typeof saveGame==='function')saveGame();
@@ -241,7 +248,17 @@ function enterPropMode(){
 propModeActive=true;
 document.getElementById('ss').style.display='none';
 document.getElementById('gs').style.display='none';
-document.getElementById('propMode').style.display='block';
+const pm=document.getElementById('propMode');
+if(pm)pm.style.display='block';
+initPropMode();
+}
+function exitPropMode(){
+propModeActive=false;
+const pm=document.getElementById('propMode');
+if(pm)pm.style.display='none';
+document.getElementById('ss').style.display='flex';
+}
+function initPropMode(){
 const canvas=document.getElementById('propCanvas');
 if(!canvas)return;
 canvas.width=500;
@@ -322,11 +339,6 @@ if(propP2){ctx.fillText('P2 HP: '+propP2.hp,400,20);}
 requestAnimationFrame(propLoopInternal);
 }
 propLoopInternal();
-}
-function exitPropMode(){
-propModeActive=false;
-document.getElementById('propMode').style.display='none';
-document.getElementById('ss').style.display='flex';
 }
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;document.getElementById('ib').style.display='block';});
 window.addEventListener('appinstalled',function(){deferredPrompt=null;document.getElementById('ib').style.display='none';});
@@ -869,37 +881,6 @@ playerParts.rightLeg=rightLeg;
 const tail=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.01,0.6,6),bodyMat);
 tail.position.set(0,0.7,-0.5);tail.rotation.x=Math.PI/3;playerGroup.add(tail);
 playerParts.tail=tail;
-}
-if(selectedCharacter=='chickencat'){
-const ckBody=new THREE.Mesh(new THREE.SphereGeometry(0.45,16,16),new THREE.MeshStandardMaterial({color:0xFFD700}));
-ckBody.position.y=0.5;ckBody.castShadow=true;playerGroup.add(ckBody);
-const ckHead=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,12),new THREE.MeshStandardMaterial({color:0xFF6600}));
-ckHead.position.y=1;playerGroup.add(ckHead);
-playerParts.head=ckHead;
-const ckEar1=new THREE.Mesh(new THREE.ConeGeometry(0.12,0.25,6),new THREE.MeshStandardMaterial({color:0xFF6600}));
-ckEar1.position.set(-0.15,1.25,0);playerGroup.add(ckEar1);
-const ckEar2=ckEar1.clone();ckEar2.position.x=0.15;playerGroup.add(ckEar2);
-const ckEyeMat=new THREE.MeshStandardMaterial({color:0x00FF00,emissive:0x00FF00,emissiveIntensity:0.3});
-const ckEye1=new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8),ckEyeMat);
-ckEye1.position.set(-0.1,1.05,0.25);playerGroup.add(ckEye1);
-const ckEye2=ckEye1.clone();ckEye2.position.x=0.1;playerGroup.add(ckEye2);
-const ckBeak=new THREE.Mesh(new THREE.ConeGeometry(0.08,0.15,6),new THREE.MeshStandardMaterial({color:0xFFA500}));
-ckBeak.position.set(0,1,0.28);ckBeak.rotation.x=Math.PI/2;playerGroup.add(ckBeak);
-const ckWingMat=new THREE.MeshStandardMaterial({color:0xFFD700});
-const ckWing1=new THREE.Mesh(new THREE.SphereGeometry(0.18,6,6),ckWingMat);
-ckWing1.position.set(-0.35,0.5,0);playerGroup.add(ckWing1);
-playerParts.leftArm=ckWing1;
-const ckWing2=ckWing1.clone();ckWing2.position.x=0.35;playerGroup.add(ckWing2);
-playerParts.rightArm=ckWing2;
-const ckLegMat=new THREE.MeshStandardMaterial({color:0xFFA500});
-const ckLeg1=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,0.3,6),ckLegMat);
-ckLeg1.position.set(-0.15,0.15,0);playerGroup.add(ckLeg1);
-playerParts.leftLeg=ckLeg1;
-const ckLeg2=ckLeg1.clone();ckLeg2.position.x=0.15;playerGroup.add(ckLeg2);
-playerParts.rightLeg=ckLeg2;
-const ckTail=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.01,0.5,6),ckWingMat);
-ckTail.position.set(0,0.6,-0.4);ckTail.rotation.x=Math.PI/3;playerGroup.add(ckTail);
-playerParts.tail=ckTail;
 }
 scene.add(playerGroup);
 let player2Group=null;
@@ -1761,8 +1742,6 @@ showNPCDialogue(n);
 }
 }
 }
-}
-}
 function checkCollectibles(){
 for(let c of coinList){
 if(!c.c){
@@ -1796,41 +1775,6 @@ h.c=true;P.hp=Math.min(P.hp+25,P.mh);
 createHitParticle(h.x,h.y,h.z,0xFF0000);
 playCoinSound();
 scene.remove(h.mesh);
-}
-}
-}
-if(twoPlayerMode&&P2){
-for(let c of coinList){
-if(!c.c){
-let dx=P2.x-c.x,dy=P2.y-c.y,dz=P2.z-c.z;
-if(Math.sqrt(dx*dx+dy*dy+dz*dz)<1.8){
-c.c=true;coins+=5;tc+=5;lC+=5;
-createHitParticle(c.x,c.y,c.z,0xFFD700);
-playCoinSound();
-scene.remove(c.mesh);
-}
-}
-}
-for(let c of bonusList){
-if(!c.c){
-let dx=P2.x-c.x,dy=P2.y-c.y,dz=P2.z-c.z;
-if(Math.sqrt(dx*dx+dy*dy+dz*dz)<2){
-c.c=true;bc++;tb++;coins+=20;lB++;
-createVictoryParticles(c.x,c.y,c.z);
-playCoinSound();
-scene.remove(c.mesh);
-}
-}
-}
-for(let h of healthList){
-if(!h.c){
-let dx=P2.x-h.x,dz=P2.z-h.z;
-if(Math.sqrt(dx*dx+dz*dz)<2){
-h.c=true;P2.hp=Math.min(P2.hp+25,P2.mh);
-createHitParticle(h.x,h.y,h.z,0xFF0000);
-playCoinSound();
-scene.remove(h.mesh);
-}
 }
 }
 }
@@ -1895,29 +1839,6 @@ let dx=P2.x-boss.x,dz=P2.z-boss.z;
 if(Math.sqrt(dx*dx+dz*dz)<3.5){
 boss.hp-=P2.attackDmg*0.8;
 createHitParticle(boss.x,boss.y+1.5,boss.z,0xFFD700);
-}
-}
-}
-for(let e of enemies){
-if(e.ac&&!e.stationary){
-let dx=P.x-e.x,dz=P.z-e.z;
-if(Math.sqrt(dx*dx+dz*dz)<1.5&&P.i<=0){
-P.hp-=15;P.i=30;playHitSound();
-createHitParticle(P.x,P.y+1,P.z,0xFF0000);
-if(P.hp<=0){deaths++;restartLevel();return;}
-}
-}
-}
-if(twoPlayerMode&&P2){
-for(let e of enemies){
-if(e.ac&&!e.stationary){
-let dx2=P2.x-e.x,dz2=P2.z-e.z;
-if(Math.sqrt(dx2*dx2+dz2*dz2)<1.5&&P2.i<=0){
-P2.hp-=15;P2.i=30;
-createHitParticle(P2.x,P2.y+1,P2.z,0xFF0000);
-playHitSound();
-if(P2.hp<=0){P2.hp=100;P2.x=P.x;P2.y=P.y;P2.z=P.z+1;}
-}
 }
 }
 }
