@@ -469,11 +469,13 @@ let p1dx=p1Mesh.position.x-col.x;
 let p1dz=p1Mesh.position.z-col.z;
 let p1dist=Math.sqrt(p1dx*p1dx+p1dz*p1dz);
 if(p1dist<col.radius&&p1dist>0){
+if(p1Mesh.position.y<col.height-0.5){
 let pushX=p1dx/p1dist*(col.radius-p1dist);
 let pushZ=p1dz/p1dist*(col.radius-p1dist);
 p1Mesh.position.x+=pushX;
 p1Mesh.position.z+=pushZ;
-if(p1Mesh.position.y<col.height&&p1Mesh.position.y>col.height-0.5){
+}
+if(p1Mesh.position.y>=col.height-0.8&&p1Mesh.position.y<=col.height+0.3){
 p1Mesh.position.y=col.height;
 p1vy=0;
 }
@@ -483,14 +485,15 @@ let p2dx=p2Mesh.position.x-col.x;
 let p2dz=p2Mesh.position.z-col.z;
 let p2dist=Math.sqrt(p2dx*p2dx+p2dz*p2dz);
 if(p2dist<col.radius&&p2dist>0){
+if(p2Mesh.position.y<col.height-0.5){
 let pushX=p2dx/p2dist*(col.radius-p2dist);
 let pushZ=p2dz/p2dist*(col.radius-p2dist);
 p2Mesh.position.x+=pushX;
 p2Mesh.position.z+=pushZ;
-if(p2Mesh.position.y<col.height&&p2Mesh.position.y>col.height-0.5){
+}
+if(p2Mesh.position.y>=col.height-0.8&&p2Mesh.position.y<=col.height+0.3){
 p2Mesh.position.y=col.height;
 p2vy=0;
-}
 }
 }
 }
