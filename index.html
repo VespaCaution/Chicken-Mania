@@ -550,8 +550,8 @@ cuts={
 10:fr?[['🔥','LE REPAIRE DU SORCIER !'],['🧙','Ton poulet est à moi !'],['🐔','Sauve-moi Joe !'],['👨‍🌾','JE VAIS TE SAUVER !']]:[['🔥','THE WIZARD\'S LAIR!'],['🧙','Your chicken is mine!'],['🐔','Save me Joe!'],['👨‍🌾','I WILL SAVE YOU!']],
 15:fr?[['🗻','Les montagnes sont dangereuses...'],['👨‍🌾','Fermier Joe : Je dois continuer !']]:[['🗻','The mountains are dangerous...'],['👨‍🌾','Farmer Joe: I must keep going!']],
 20:fr?[['🏰','Le château du Sorcier est proche...'],['🐔','Poulet : *cot cot* Je suis là !']]:[['🏰','The Wizard\'s castle is near...'],['🐔','Chicken: *cluck cluck* I\'m here!']],
-25:fr?[['⚔️','LA BATAILLE FINALE !'],['👨‍🌾','Fermier Joe : JE VAIS TE SAUVER !']]:[['⚔️','THE FINAL BATTLE!'],['👨‍🌾','Farmer Joe: I WILL SAVE YOU!']],
-11:fr?[['🎉','NIVEAU BONUS !'],['👨‍🌾','Tu as sauvé le poulet !'],['🐔','Merci Joe ! *cot cot*']]:[['🎉','BONUS LEVEL!'],['👨‍🌾','You saved the chicken!'],['🐔','Thank you Joe! *cluck cluck*']],
+25:fr?[['👨‍🌾','Fermier Joe : JE VAIS TE SAUVER !'],['🧙','Sorcier : Ton poulet est à moi !'],['🐔','Poulet : Sauve-moi Joe !'],['👨‍🌾','Fermier Joe : Tu es sauvé Poulet !'],['🐔','Poulet : Merci Joe ! *cot cot*']]:[['👨‍🌾','Farmer Joe: I WILL SAVE YOU!'],['🧙','Wizard: Your chicken is mine!'],['🐔','Chicken: Save me Joe!'],['👨‍🌾','Farmer Joe: You\'re saved Chicken!'],['🐔','Chicken: Thank you Joe! *cluck cluck*']],
+11:fr?[['🧙','Sorcier : Je m\'échappe vers les montagnes !'],['👨‍🌾','Fermier Joe : Je te retrouverai !']]:[['🧙','Wizard: I\'m escaping to the mountains!'],['👨‍🌾','Farmer Joe: I will find you!']],
 26:fr?[['🌟','MONDE SECRET !'],['👨‍🌾','Découvre les secrets !']]:[['🌟','SECRET WORLD!'],['👨‍🌾','Discover the secrets!']]
 };
 }
@@ -1143,6 +1143,9 @@ setTimeout(function(){playerParts.pitchfork.visible=false;},200);
 playerGroup.rotation.y=P.rotY+Math.sin(tt*0.5)*0.2;
 }else{
 playerGroup.rotation.y=P.rotY;
+}
+if(selectedCharacter=='dog'){
+playerGroup.rotation.y=P.rotY+Math.PI;
 }
 if(P.i>0&&Math.floor(P.i/5)%2==0){
 playerGroup.visible=false;
