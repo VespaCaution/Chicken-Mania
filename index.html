@@ -313,8 +313,17 @@ g.rotation.x=-Math.PI/2;
 g.position.set(Math.random()*36-18,0.01,Math.random()*36-18);
 scene.add(g);
 }
+const flowerColors=[0xFF69B4,0xFFD700,0xFF4500,0xFF6347,0x9370DB];
+for(let i=0;i<15;i++){
+const flower=new THREE.Group();
+const stem=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,0.5,6),new THREE.MeshStandardMaterial({color:0x228B22}));
+stem.position.y=0.25;flower.add(stem);
+const petal=new THREE.Mesh(new THREE.SphereGeometry(0.15,6,6),new THREE.MeshStandardMaterial({color:flowerColors[i%5]}));
+petal.position.y=0.5;flower.add(petal);
+flower.position.set(Math.random()*30-15,0,Math.random()*30-15);
+scene.add(flower);
+}
 const propColliders=[];
-const propPlatforms=[];
 for(let i=0;i<10;i++){
 const tree=new THREE.Group();
 const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.5,3,8),new THREE.MeshStandardMaterial({color:0x654321,roughness:0.9}));
@@ -330,20 +339,27 @@ const leaf4=new THREE.Mesh(new THREE.SphereGeometry(1.2,8,8),leafMat);
 leaf4.position.set(0.5,4.5,-0.8);tree.add(leaf4);
 tree.position.set(Math.random()*40-20,0,Math.random()*40-20);
 scene.add(tree);
-propColliders.push({x:tree.position.x,z:tree.position.z,radius:1,height:3});
+propColliders.push({x:tree.position.x,z:tree.position.z,radius:1,height:1.5});
 }
 for(let i=0;i<6;i++){
 const plat=new THREE.Mesh(new THREE.BoxGeometry(2,0.4,1.5),new THREE.MeshStandardMaterial({color:0xD2691E,roughness:0.6}));
-plat.position.set(Math.random()*24-12,1+Math.random()*2,Math.random()*24-12);
+plat.position.set(Math.random()*24-12,0.5+Math.random()*1,Math.random()*24-12);
 plat.castShadow=true;plat.receiveShadow=true;
+const edgeMat=new THREE.MeshStandardMaterial({color:0x8B4513});
+const edge1=new THREE.Mesh(new THREE.BoxGeometry(2.1,0.1,0.1),edgeMat);
+edge1.position.set(0,0,0.7);plat.add(edge1);
+const edge2=edge1.clone();edge2.position.z=-0.7;plat.add(edge2);
+const grassTop=new THREE.Mesh(new THREE.BoxGeometry(1.8,0.05,1.3),new THREE.MeshStandardMaterial({color:0x90EE90}));
+grassTop.position.y=0.2;plat.add(grassTop);
 scene.add(plat);
-propColliders.push({x:plat.position.x,z:plat.position.z,radius:1.5,height:plat.position.y});
-propPlatforms.push({x:plat.position.x,y:plat.position.y,z:plat.position.z,w:2,d:1.5});
+propColliders.push({x:plat.position.x,z:plat.position.z,radius:1.5,height:plat.position.y+0.4});
 }
 for(let i=0;i<4;i++){
 const rock=new THREE.Mesh(new THREE.SphereGeometry(0.5+Math.random()*0.5,8,8),new THREE.MeshStandardMaterial({color:0x888888,roughness:0.9}));
 rock.position.set(Math.random()*24-12,0.4,Math.random()*24-12);
 rock.castShadow=true;scene.add(rock);
+const rock2=new THREE.Mesh(new THREE.SphereGeometry(0.3,6,6),new THREE.MeshStandardMaterial({color:0x777777}));
+rock2.position.set(rock.position.x+0.4,0.3,rock.position.z+0.2);scene.add(rock2);
 propColliders.push({x:rock.position.x,z:rock.position.z,radius:0.8,height:1});
 }
 for(let i=0;i<3;i++){
@@ -353,6 +369,8 @@ const pipe=new THREE.Mesh(new THREE.CylinderGeometry(1,1,4,20),pipeMat);
 pipe.position.y=2;pipe.castShadow=true;pipeGroup.add(pipe);
 const rim=new THREE.Mesh(new THREE.CylinderGeometry(1.2,1.2,0.5,20),pipeMat);
 rim.position.y=4;rim.castShadow=true;pipeGroup.add(rim);
+const highlight=new THREE.Mesh(new THREE.CylinderGeometry(0.9,0.9,4.2,20),new THREE.MeshStandardMaterial({color:0x00EE00,roughness:0.3}));
+highlight.position.set(0.2,2,0.2);pipeGroup.add(highlight);
 pipeGroup.position.set(Math.random()*16-8,0,Math.random()*16-8);
 scene.add(pipeGroup);
 propColliders.push({x:pipeGroup.position.x,z:pipeGroup.position.z,radius:2,height:4});
@@ -361,10 +379,16 @@ const p1Mesh=new THREE.Group();
 if(selectedCharacter=='farmer'){
 const p1Body=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.5),new THREE.MeshStandardMaterial({color:0x4A90E2,roughness:0.5}));
 p1Body.position.y=0.9;p1Body.castShadow=true;p1Mesh.add(p1Body);
+const p1Overall=new THREE.Mesh(new THREE.BoxGeometry(0.7,0.5,0.45),new THREE.MeshStandardMaterial({color:0x4169E1}));
+p1Overall.position.y=0.7;p1Mesh.add(p1Overall);
 const p1Head=new THREE.Mesh(new THREE.SphereGeometry(0.35,20,20),new THREE.MeshStandardMaterial({color:0xFFD2B3}));
-p1Head.position.y=1.7;p1Mesh.add(p1Head);
+p1Head.position.y=1.7;p1Head.castShadow=true;p1Mesh.add(p1Head);
 const p1Hat=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.45,0.3,12),new THREE.MeshStandardMaterial({color:0x8B4513}));
 p1Hat.position.y=2.1;p1Mesh.add(p1Hat);
+const p1EyeMat=new THREE.MeshStandardMaterial({color:0x000000});
+const p1Eye1=new THREE.Mesh(new THREE.SphereGeometry(0.05,8,8),p1EyeMat);
+p1Eye1.position.set(-0.12,1.75,0.3);p1Mesh.add(p1Eye1);
+const p1Eye2=p1Eye1.clone();p1Eye2.position.x=0.12;p1Mesh.add(p1Eye2);
 }else if(selectedCharacter=='chicken'){
 const p1Body=new THREE.Mesh(new THREE.SphereGeometry(0.5,16,16),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
 p1Body.position.y=0.6;p1Body.castShadow=true;p1Mesh.add(p1Body);
@@ -372,23 +396,33 @@ const p1Head=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,12),new THREE.MeshSt
 p1Head.position.y=1.1;p1Mesh.add(p1Head);
 const beak=new THREE.Mesh(new THREE.ConeGeometry(0.1,0.2,6),new THREE.MeshStandardMaterial({color:0xFFA500}));
 beak.position.set(0,1.1,0.25);beak.rotation.x=Math.PI/2;p1Mesh.add(beak);
+const comb=new THREE.Mesh(new THREE.SphereGeometry(0.1,8,8),new THREE.MeshStandardMaterial({color:0xFF0000}));
+comb.position.y=1.4;p1Mesh.add(comb);
 }else if(selectedCharacter=='dog'){
 const p1Body=new THREE.Mesh(new THREE.BoxGeometry(0.9,0.7,1.2),new THREE.MeshStandardMaterial({color:0x8B4513}));
 p1Body.position.y=0.5;p1Body.castShadow=true;p1Mesh.add(p1Body);
 const p1Head=new THREE.Mesh(new THREE.SphereGeometry(0.35,12,12),new THREE.MeshStandardMaterial({color:0x8B4513}));
-p1Head.position.set(0,0.9,0.3);p1Mesh.add(p1Head);
+p1Head.position.set(0,0.9,0.5);p1Mesh.add(p1Head);
 const snout=new THREE.Mesh(new THREE.BoxGeometry(0.2,0.15,0.3),new THREE.MeshStandardMaterial({color:0x4A2A0A}));
-snout.position.set(0,0.85,0.55);p1Mesh.add(snout);
+snout.position.set(0,0.85,0.8);p1Mesh.add(snout);
+const nose=new THREE.Mesh(new THREE.SphereGeometry(0.06,6,6),new THREE.MeshStandardMaterial({color:0x000000}));
+nose.position.set(0,0.85,0.95);p1Mesh.add(nose);
 }else if(selectedCharacter=='cat'){
 const p1Body=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.6,0.8),new THREE.MeshStandardMaterial({color:0xFF6600}));
 p1Body.position.y=0.4;p1Body.castShadow=true;p1Mesh.add(p1Body);
 const p1Head=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,12),new THREE.MeshStandardMaterial({color:0xFF6600}));
 p1Head.position.y=0.8;p1Mesh.add(p1Head);
+const ear1=new THREE.Mesh(new THREE.ConeGeometry(0.12,0.25,6),new THREE.MeshStandardMaterial({color:0xFF6600}));
+ear1.position.set(-0.15,1,0);p1Mesh.add(ear1);
+const ear2=ear1.clone();ear2.position.x=0.15;p1Mesh.add(ear2);
 }else if(selectedCharacter=='chickencat'){
 const p1Body=new THREE.Mesh(new THREE.SphereGeometry(0.45,16,16),new THREE.MeshStandardMaterial({color:0xFFD700}));
 p1Body.position.y=0.5;p1Body.castShadow=true;p1Mesh.add(p1Body);
 const p1Head=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,12),new THREE.MeshStandardMaterial({color:0xFF6600}));
 p1Head.position.y=1;p1Mesh.add(p1Head);
+const ckEar1=new THREE.Mesh(new THREE.ConeGeometry(0.12,0.25,6),new THREE.MeshStandardMaterial({color:0xFF6600}));
+ckEar1.position.set(-0.15,1.25,0);p1Mesh.add(ckEar1);
+const ckEar2=ckEar1.clone();ckEar2.position.x=0.15;p1Mesh.add(ckEar2);
 }
 p1Mesh.position.set(0,0,0);
 scene.add(p1Mesh);
@@ -401,6 +435,8 @@ const p2head=new THREE.Mesh(new THREE.SphereGeometry(0.25,10,10),new THREE.MeshS
 p2head.position.y=0.9;p2Mesh.add(p2head);
 const p2beak=new THREE.Mesh(new THREE.ConeGeometry(0.08,0.15,6),new THREE.MeshStandardMaterial({color:0xFFA500}));
 p2beak.position.set(0,0.9,0.2);p2beak.rotation.x=Math.PI/2;p2Mesh.add(p2beak);
+const p2comb=new THREE.Mesh(new THREE.SphereGeometry(0.07,6,6),new THREE.MeshStandardMaterial({color:0xFF0000}));
+p2comb.position.y=1.1;p2Mesh.add(p2comb);
 p2Mesh.position.set(1,0,0);
 scene.add(p2Mesh);
 }
@@ -449,19 +485,19 @@ if(window.propI1.left)p1Mesh.position.x-=0.1;
 if(window.propI1.right)p1Mesh.position.x+=0.1;
 if(window.propI1.up)p1Mesh.position.z-=0.1;
 if(window.propI1.down)p1Mesh.position.z+=0.1;
-if(window.propI1.jump&&p1Mesh.position.y<=0.1){p1vy=0.3;window.propI1.jump=false;}
+if(window.propI1.jump&&p1Mesh.position.y<=0.1){p1vy=0.5;window.propI1.jump=false;}
 }
 if(window.propI2&&p2Mesh){
 if(window.propI2.left)p2Mesh.position.x-=0.1;
 if(window.propI2.right)p2Mesh.position.x+=0.1;
 if(window.propI2.up)p2Mesh.position.z-=0.1;
 if(window.propI2.down)p2Mesh.position.z+=0.1;
-if(window.propI2.jump&&p2Mesh.position.y<=0.1){p2vy=0.3;window.propI2.jump=false;}
+if(window.propI2.jump&&p2Mesh.position.y<=0.1){p2vy=0.5;window.propI2.jump=false;}
 }
-p1vy-=0.01;p1Mesh.position.y+=p1vy;
+p1vy-=0.008;p1Mesh.position.y+=p1vy;
 if(p1Mesh.position.y<0){p1Mesh.position.y=0;p1vy=0;}
 if(p2Mesh){
-p2vy-=0.01;p2Mesh.position.y+=p2vy;
+p2vy-=0.008;p2Mesh.position.y+=p2vy;
 if(p2Mesh.position.y<0){p2Mesh.position.y=0;p2vy=0;}
 }
 for(let col of propColliders){
@@ -494,6 +530,7 @@ p2Mesh.position.z+=pushZ;
 if(p2Mesh.position.y>=col.height-0.8&&p2Mesh.position.y<=col.height+0.3){
 p2Mesh.position.y=col.height;
 p2vy=0;
+}
 }
 }
 }
