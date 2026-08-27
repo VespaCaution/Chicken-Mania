@@ -2483,33 +2483,33 @@ document.body.appendChild(gpIndicator);
 }
 gpIndicator.textContent=text;
 }
-
 function updateGamepad(){
 if(!gamepadConnected||gamepadIndex===null)return;
 const gamepads=navigator.getGamepads?navigator.getGamepads():null;
 if(!gamepads)return;
 const gp=gamepads[gamepadIndex];
 if(!gp)return;
-const threshold=0.3;
-const lx=gp.axes[0]||0;
-const ly=gp.axes[1]||0;
 I.left=false;I.right=false;I.forward=false;I.backward=false;
-if(lx<-threshold)I.left=true;
-if(lx>threshold)I.right=true;
-if(ly<-threshold)I.forward=true;
-if(ly>threshold)I.backward=true;
-I.jump=false;I.attack=false;
 const totalButtons=gp.buttons.length;
-if(totalButtons>0&&gp.buttons[0]&&gp.buttons[0].pressed)I.jump=true;
-if(totalButtons>1&&gp.buttons[1]&&gp.buttons[1].pressed)I.attack=true;
-if(totalButtons>2&&gp.buttons[2]&&gp.buttons[2].pressed)I.attack=true;
-if(totalButtons>3&&gp.buttons[3]&&gp.buttons[3].pressed)I.jump=true;
-if(totalButtons>4&&gp.buttons[4]&&gp.buttons[4].pressed)I.jump=true;
-if(totalButtons>5&&gp.buttons[5]&&gp.buttons[5].pressed)I.attack=true;
-if(totalButtons>9&&gp.buttons[9]&&gp.buttons[9].pressed){
+const btnX=totalButtons>2?gp.buttons[2]:null;
+const btnB=totalButtons>1?gp.buttons[1]:null;
+const btnY=totalButtons>3?gp.buttons[3]:null;
+const btnA=totalButtons>0?gp.buttons[0]:null;
+const btnSR=totalButtons>15?gp.buttons[15]:null;
+const btnSL=totalButtons>14?gp.buttons[14]:null;
+if(btnX&&btnX.pressed){I.forward=true;}
+if(btnB&&btnB.pressed){I.backward=true;}
+if(btnY&&btnY.pressed){I.left=true;}
+if(btnA&&btnA.pressed){I.right=true;}
+I.jump=false;I.attack=false;
+if(btnSL&&btnSL.pressed){I.jump=true;}
+if(btnSR&&btnSR.pressed){I.attack=true;}
+const btnPlus=totalButtons>9?gp.buttons[9]:null;
+const btnHome=totalButtons>16?gp.buttons[16]:null;
+if(btnPlus&&btnPlus.pressed){
 if(!prevPadButtons[9]){togglePauseMenu();prevPadButtons[9]=true;}
 }else{prevPadButtons[9]=false;}
-if(totalButtons>16&&gp.buttons[16]&&gp.buttons[16].pressed){
+if(btnHome&&btnHome.pressed){
 if(!prevPadButtons[16]){quitToMenu();prevPadButtons[16]=true;}
 }else{prevPadButtons[16]=false;}
 }
