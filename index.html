@@ -2490,20 +2490,19 @@ if(!gamepads)return;
 const gp=gamepads[gamepadIndex];
 if(!gp)return;
 I.left=false;I.right=false;I.forward=false;I.backward=false;
-const totalButtons=gp.buttons.length;
 const btnA=gp.buttons[0];
 const btnB=gp.buttons[1];
 const btnX=gp.buttons[2];
 const btnY=gp.buttons[3];
-const btnSL=gp.buttons[4];
-const btnSR=gp.buttons[5];
+const btnR=gp.buttons[7];
+const btnZR=gp.buttons[8];
 if(btnX&&btnX.pressed){I.forward=true;}
 if(btnB&&btnB.pressed){I.backward=true;}
 if(btnY&&btnY.pressed){I.left=true;}
 if(btnA&&btnA.pressed){I.right=true;}
 I.jump=false;I.attack=false;
-if(btnSL&&btnSL.pressed){I.jump=true;}
-if(btnSR&&btnSR.pressed){I.attack=true;}
+if(btnZR&&btnZR.pressed){I.jump=true;}
+if(btnR&&btnR.pressed){I.attack=true;}
 const btnPlus=gp.buttons[9];
 const btnHome=gp.buttons[16];
 if(btnPlus&&btnPlus.pressed){
