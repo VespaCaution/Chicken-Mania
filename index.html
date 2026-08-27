@@ -91,6 +91,7 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 <div class="h"><span>🪙</span><span id="cc">0</span></div>
 <div class="h"><span>⭐</span><span id="bc">0/3</span></div>
 <div class="h"><span>🏆</span><span id="lv">Lv 1</span></div>
+<button onclick="quitToMenu()" style="background:#f44;color:#fff;border:none;border-radius:50%;cursor:pointer;pointer-events:auto;width:25px;height:25px;font-size:12px;font-weight:bold">✕</button>
 </div>
 <div id="c"></div>
 <div id="b">
@@ -314,6 +315,7 @@ g.position.set(Math.random()*36-18,0.01,Math.random()*36-18);
 scene.add(g);
 }
 const propColliders=[];
+const propPlatforms=[];
 for(let i=0;i<10;i++){
 const tree=new THREE.Group();
 const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.5,3,8),new THREE.MeshStandardMaterial({color:0x654321,roughness:0.9}));
@@ -337,6 +339,7 @@ plat.position.set(Math.random()*24-12,1.5+Math.random()*3,Math.random()*24-12);
 plat.castShadow=true;plat.receiveShadow=true;
 scene.add(plat);
 propColliders.push({x:plat.position.x,z:plat.position.z,radius:1.5});
+propPlatforms.push({x:plat.position.x,y:plat.position.y,z:plat.position.z,w:2,d:1.5});
 }
 for(let i=0;i<3;i++){
 const pipeGroup=new THREE.Group();
@@ -368,7 +371,9 @@ beak.position.set(0,1.1,0.25);beak.rotation.x=Math.PI/2;p1Mesh.add(beak);
 const p1Body=new THREE.Mesh(new THREE.BoxGeometry(0.9,0.7,0.6),new THREE.MeshStandardMaterial({color:0x8B4513}));
 p1Body.position.y=0.5;p1Body.castShadow=true;p1Mesh.add(p1Body);
 const p1Head=new THREE.Mesh(new THREE.SphereGeometry(0.35,12,12),new THREE.MeshStandardMaterial({color:0x8B4513}));
-p1Head.position.set(0.4,0.9,0);p1Mesh.add(p1Head);
+p1Head.position.set(0,0.9,0.3);p1Mesh.add(p1Head);
+const snout=new THREE.Mesh(new THREE.BoxGeometry(0.2,0.15,0.3),new THREE.MeshStandardMaterial({color:0x4A2A0A}));
+snout.position.set(0,0.85,0.55);p1Mesh.add(snout);
 }else if(selectedCharacter=='cat'){
 const p1Body=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.6,0.8),new THREE.MeshStandardMaterial({color:0xFF6600}));
 p1Body.position.y=0.4;p1Body.castShadow=true;p1Mesh.add(p1Body);
@@ -439,18 +444,37 @@ if(window.propI1.left)p1Mesh.position.x-=0.1;
 if(window.propI1.right)p1Mesh.position.x+=0.1;
 if(window.propI1.up)p1Mesh.position.z-=0.1;
 if(window.propI1.down)p1Mesh.position.z+=0.1;
-if(window.propI1.jump&&p1Mesh.position.y<=0){p1vy=0.3;window.propI1.jump=false;}
+if(window.propI1.jump&&p1Mesh.position.y<=0.1){p1vy=0.3;window.propI1.jump=false;}
 }
 if(window.propI2&&p2Mesh){
 if(window.propI2.left)p2Mesh.position.x-=0.1;
 if(window.propI2.right)p2Mesh.position.x+=0.1;
 if(window.propI2.up)p2Mesh.position.z-=0.1;
 if(window.propI2.down)p2Mesh.position.z+=0.1;
-if(window.propI2.jump&&p2Mesh.position.y<=0){p2vy=0.3;window.propI2.jump=false;}
+if(window.propI2.jump&&p2Mesh.position.y<=0.1){p2vy=0.3;window.propI2.jump=false;}
 }
 p1vy-=0.01;p1Mesh.position.y+=p1vy;
-if(p1Mesh.position.y<0){p1Mesh.position.y=0;p1vy=0;}
-if(p2Mesh){p2vy-=0.01;p2Mesh.position.y+=p2vy;if(p2Mesh.position.y<0){p2Mesh.position.y=0;p2vy=0;}}
+let p1OnPlatform=false;
+for(let pp of propPlatforms){
+if(Math.abs(p1Mesh.position.x-pp.x)<pp.w/2&&Math.abs(p1Mesh.position.z-pp.z)<pp.d/2){
+if(p1vy<=0&&p1Mesh.position.y>=pp.y&&p1Mesh.position.y<=pp.y+0.5){
+p1Mesh.position.y=pp.y;p1vy=0;p1OnPlatform=true;
+}
+}
+}
+if(!p1OnPlatform&&p1Mesh.position.y<0){p1Mesh.position.y=0;p1vy=0;}
+if(p2Mesh){
+p2vy-=0.01;p2Mesh.position.y+=p2vy;
+let p2OnPlatform=false;
+for(let pp of propPlatforms){
+if(Math.abs(p2Mesh.position.x-pp.x)<pp.w/2&&Math.abs(p2Mesh.position.z-pp.z)<pp.d/2){
+if(p2vy<=0&&p2Mesh.position.y>=pp.y&&p2Mesh.position.y<=pp.y+0.5){
+p2Mesh.position.y=pp.y;p2vy=0;p2OnPlatform=true;
+}
+}
+}
+if(!p2OnPlatform&&p2Mesh.position.y<0){p2Mesh.position.y=0;p2vy=0;}
+}
 for(let col of propColliders){
 let p1dx=p1Mesh.position.x-col.x;
 let p1dz=p1Mesh.position.z-col.z;
@@ -479,15 +503,11 @@ let pdz=p1Mesh.position.z-p2Mesh.position.z;
 let pdist=Math.sqrt(pdx*pdx+pdz*pdz);
 if(pdist<1.5){
 if(window.propI1.attack&&p1AttackCooldown<=0){
-propP2HP-=10;
-p1AttackCooldown=30;
-window.propI1.attack=false;
+propP2HP-=10;p1AttackCooldown=30;window.propI1.attack=false;
 createHitParticle(p2Mesh.position.x,p2Mesh.position.y+0.5,p2Mesh.position.z,0xFF0000);
 }
 if(window.propI2.attack&&p2AttackCooldown<=0){
-propP1HP-=10;
-p2AttackCooldown=30;
-window.propI2.attack=false;
+propP1HP-=10;p2AttackCooldown=30;window.propI2.attack=false;
 createHitParticle(p1Mesh.position.x,p1Mesh.position.y+0.5,p1Mesh.position.z,0xFF0000);
 }
 }
@@ -500,7 +520,7 @@ renderer.render(scene,camera);
 requestAnimationFrame(propRenderLoop);
 }
 propRenderLoop();
-         }
+}
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;document.getElementById('ib').style.display='block';});
 window.addEventListener('appinstalled',function(){deferredPrompt=null;document.getElementById('ib').style.display='none';});
 const savedChar=localStorage.getItem('cmchar');
