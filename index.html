@@ -2491,12 +2491,12 @@ const gp=gamepads[gamepadIndex];
 if(!gp)return;
 I.left=false;I.right=false;I.forward=false;I.backward=false;
 const totalButtons=gp.buttons.length;
-const btnX=totalButtons>2?gp.buttons[2]:null;
-const btnB=totalButtons>1?gp.buttons[1]:null;
-const btnY=totalButtons>3?gp.buttons[3]:null;
-const btnA=totalButtons>0?gp.buttons[0]:null;
-const btnSR=totalButtons>15?gp.buttons[15]:null;
-const btnSL=totalButtons>14?gp.buttons[14]:null;
+const btnA=gp.buttons[0];
+const btnB=gp.buttons[1];
+const btnX=gp.buttons[2];
+const btnY=gp.buttons[3];
+const btnSL=gp.buttons[4];
+const btnSR=gp.buttons[5];
 if(btnX&&btnX.pressed){I.forward=true;}
 if(btnB&&btnB.pressed){I.backward=true;}
 if(btnY&&btnY.pressed){I.left=true;}
@@ -2504,8 +2504,8 @@ if(btnA&&btnA.pressed){I.right=true;}
 I.jump=false;I.attack=false;
 if(btnSL&&btnSL.pressed){I.jump=true;}
 if(btnSR&&btnSR.pressed){I.attack=true;}
-const btnPlus=totalButtons>9?gp.buttons[9]:null;
-const btnHome=totalButtons>16?gp.buttons[16]:null;
+const btnPlus=gp.buttons[9];
+const btnHome=gp.buttons[16];
 if(btnPlus&&btnPlus.pressed){
 if(!prevPadButtons[9]){togglePauseMenu();prevPadButtons[9]=true;}
 }else{prevPadButtons[9]=false;}
