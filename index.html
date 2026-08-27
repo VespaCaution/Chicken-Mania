@@ -2454,33 +2454,24 @@ if(e.key==' '||e.key=='j')I.jump=false;
 if(e.key=='x'||e.key=='k')I.attack=false;
 });
 }
-let leftJoyConIndex=null;
-let rightJoyConIndex=null;
+let gamepadIndex=null;
 let gamepadConnected=false;
 let prevPadButtons={};
 let gpIndicator=null;
 
 window.addEventListener('gamepadconnected',function(e){
 console.log('Gamepad connected:',e.gamepad.id);
-if(e.gamepad.id.includes('Joy-Con (L)')||e.gamepad.id.includes('Joy-Con L')){
-leftJoyConIndex=e.gamepad.index;
-}else if(e.gamepad.id.includes('Joy-Con (R)')||e.gamepad.id.includes('Joy-Con R')){
-rightJoyConIndex=e.gamepad.index;
-}else{
-leftJoyConIndex=e.gamepad.index;
-rightJoyConIndex=e.gamepad.index;
-}
+gamepadIndex=e.gamepad.index;
 gamepadConnected=true;
+prevPadButtons={};
 showGPIndicator('🎮 Connected');
 });
 
 window.addEventListener('gamepaddisconnected',function(e){
-if(leftJoyConIndex===e.gamepad.index)leftJoyConIndex=null;
-if(rightJoyConIndex===e.gamepad.index)rightJoyConIndex=null;
-if(leftJoyConIndex===null&&rightJoyConIndex===null){
+if(gamepadIndex===e.gamepad.index){
+gamepadIndex=null;
 gamepadConnected=false;
 showGPIndicator('🎮 Disconnected');
-setTimeout(function(){if(gpIndicator)gpIndicator.remove();gpIndicator=null;},2000);
 }
 });
 
@@ -2494,73 +2485,33 @@ gpIndicator.textContent=text;
 }
 
 function updateGamepad(){
-if(!gamepadConnected)return;
+if(!gamepadConnected||gamepadIndex===null)return;
 const gamepads=navigator.getGamepads?navigator.getGamepads():null;
 if(!gamepads)return;
-let leftJC=null;
-let rightJC=null;
-if(leftJoyConIndex!==null&&gamepads[leftJoyConIndex])leftJC=gamepads[leftJoyConIndex];
-if(rightJoyConIndex!==null&&gamepads[rightJoyConIndex])rightJC=gamepads[rightJoyConIndex];
-if(!leftJC&&!rightJC){
-for(let i=0;i<gamepads.length;i++){
-if(gamepads[i]){
-leftJC=gamepads[i];
-rightJC=gamepads[i];
-break;
-}
-}
-}
-if(!leftJC&&!rightJC)return;
+const gp=gamepads[gamepadIndex];
+if(!gp)return;
 const threshold=0.3;
+const lx=gp.axes[0]||0;
+const ly=gp.axes[1]||0;
 I.left=false;I.right=false;I.forward=false;I.backward=false;
-if(leftJC){
-const lx=leftJC.axes[0]||0;
-const ly=leftJC.axes[1]||0;
 if(lx<-threshold)I.left=true;
 if(lx>threshold)I.right=true;
 if(ly<-threshold)I.forward=true;
 if(ly>threshold)I.backward=true;
-}
 I.jump=false;I.attack=false;
-if(rightJC){
-const a=rightJC.buttons[0];
-const b=rightJC.buttons[1];
-const x=rightJC.buttons[2];
-const y=rightJC.buttons[3];
-const plus=rightJC.buttons[9];
-const home=rightJC.buttons[16];
-if(a&&a.pressed)I.jump=true;
-if(b&&b.pressed)I.attack=true;
-if(x&&x.pressed)I.attack=true;
-if(y&&y.pressed)I.jump=true;
-if(plus&&plus.pressed){
+const totalButtons=gp.buttons.length;
+if(totalButtons>0&&gp.buttons[0]&&gp.buttons[0].pressed)I.jump=true;
+if(totalButtons>1&&gp.buttons[1]&&gp.buttons[1].pressed)I.attack=true;
+if(totalButtons>2&&gp.buttons[2]&&gp.buttons[2].pressed)I.attack=true;
+if(totalButtons>3&&gp.buttons[3]&&gp.buttons[3].pressed)I.jump=true;
+if(totalButtons>4&&gp.buttons[4]&&gp.buttons[4].pressed)I.jump=true;
+if(totalButtons>5&&gp.buttons[5]&&gp.buttons[5].pressed)I.attack=true;
+if(totalButtons>9&&gp.buttons[9]&&gp.buttons[9].pressed){
 if(!prevPadButtons[9]){togglePauseMenu();prevPadButtons[9]=true;}
 }else{prevPadButtons[9]=false;}
-if(home&&home.pressed){
+if(totalButtons>16&&gp.buttons[16]&&gp.buttons[16].pressed){
 if(!prevPadButtons[16]){quitToMenu();prevPadButtons[16]=true;}
 }else{prevPadButtons[16]=false;}
-}
-if(twoPlayerMode&&window.I2){
-let p2JC=null;
-for(let i=0;i<gamepads.length;i++){
-if(i===leftJoyConIndex||i===rightJoyConIndex)continue;
-if(gamepads[i]){p2JC=gamepads[i];break;}
-}
-if(p2JC){
-const lx2=p2JC.axes[0]||0;
-const ly2=p2JC.axes[1]||0;
-window.I2.left=false;window.I2.right=false;window.I2.forward=false;window.I2.backward=false;
-if(lx2<-threshold)window.I2.left=true;
-if(lx2>threshold)window.I2.right=true;
-if(ly2<-threshold)window.I2.forward=true;
-if(ly2>threshold)window.I2.backward=true;
-const a2=p2JC.buttons[0];
-const b2=p2JC.buttons[1];
-window.I2.jump=false;window.I2.attack=false;
-if(a2&&a2.pressed)window.I2.jump=true;
-if(b2&&b2.pressed)window.I2.attack=true;
-}
-}
 }
 function drawMiniMap(){
 let mm=document.getElementById('miniMap');
