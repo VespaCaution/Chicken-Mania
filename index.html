@@ -2501,8 +2501,8 @@ if(e.key=='ArrowLeft'||e.key=='a')I.left=true;
 if(e.key=='ArrowRight'||e.key=='d')I.right=true;
 if(e.key=='ArrowUp'||e.key=='w')I.forward=true;
 if(e.key=='ArrowDown'||e.key=='s')I.backward=true;
-if(e.key==' '||e.key=='j')I.jump=true;
-if(e.key=='x'||e.key=='k')I.attack=true;
+if(e.key==' '||e.key=='j'){if(!I.jump){I.jump=true;}}
+if(e.key=='x'||e.key=='k'){if(!I.attack){I.attack=true;}}
 if(e.key=='p'||e.key=='Escape')togglePauseMenu();
 });
 document.addEventListener('keyup',function(e){
@@ -2513,21 +2513,19 @@ if(e.key=='ArrowDown'||e.key=='s')I.backward=false;
 if(e.key==' '||e.key=='j')I.jump=false;
 if(e.key=='x'||e.key=='k')I.attack=false;
 });
+}
 let gamepadIndex=null;
 let gamepadConnected=false;
 let prevPadButtons={};
 let gpIndicator=null;
 let gamepadAttack=false;
 let gamepadJump=false;
-
 window.addEventListener('gamepadconnected',function(e){
 gamepadConnected=true;
 gamepadIndex=e.gamepad.index;
 prevPadButtons={};
-console.log('🎮 Gamepad connected:',e.gamepad.id);
 showGPIndicator('🎮 Connected');
 });
-
 window.addEventListener('gamepaddisconnected',function(e){
 if(gamepadIndex===e.gamepad.index){
 gamepadConnected=false;
@@ -2539,7 +2537,6 @@ showGPIndicator('🎮 Disconnected');
 setTimeout(function(){if(gpIndicator)gpIndicator.remove();gpIndicator=null;},2000);
 }
 });
-
 function showGPIndicator(text){
 if(!gpIndicator){
 gpIndicator=document.createElement('div');
@@ -2548,7 +2545,6 @@ document.body.appendChild(gpIndicator);
 }
 gpIndicator.textContent=text;
 }
-
 function updateGamepad(){
 if(!gamepadConnected)return;
 const gamepads=navigator.getGamepads?navigator.getGamepads():null;
@@ -2568,24 +2564,12 @@ const btnX=gp.buttons[2];
 const btnY=gp.buttons[3];
 const btnPlus=gp.buttons[9];
 const btnHome=gp.buttons[16];
-if(btnA&&btnA.pressed){
-if(!prevPadButtons[0]){gamepadJump=true;prevPadButtons[0]=true;}
-}else{prevPadButtons[0]=false;}
-if(btnB&&btnB.pressed){
-if(!prevPadButtons[1]){gamepadAttack=true;prevPadButtons[1]=true;}
-}else{prevPadButtons[1]=false;}
-if(btnX&&btnX.pressed){
-if(!prevPadButtons[2]){gamepadAttack=true;prevPadButtons[2]=true;}
-}else{prevPadButtons[2]=false;}
-if(btnY&&btnY.pressed){
-if(!prevPadButtons[3]){gamepadJump=true;prevPadButtons[3]=true;}
-}else{prevPadButtons[3]=false;}
-if(btnPlus&&btnPlus.pressed){
-if(!prevPadButtons[9]){togglePauseMenu();prevPadButtons[9]=true;}
-}else{prevPadButtons[9]=false;}
-if(btnHome&&btnHome.pressed){
-if(!prevPadButtons[16]){quitToMenu();prevPadButtons[16]=true;}
-}else{prevPadButtons[16]=false;}
+if(btnA&&btnA.pressed){if(!prevPadButtons[0]){gamepadJump=true;prevPadButtons[0]=true;}}else{prevPadButtons[0]=false;}
+if(btnB&&btnB.pressed){if(!prevPadButtons[1]){gamepadAttack=true;prevPadButtons[1]=true;}}else{prevPadButtons[1]=false;}
+if(btnX&&btnX.pressed){if(!prevPadButtons[2]){gamepadAttack=true;prevPadButtons[2]=true;}}else{prevPadButtons[2]=false;}
+if(btnY&&btnY.pressed){if(!prevPadButtons[3]){gamepadJump=true;prevPadButtons[3]=true;}}else{prevPadButtons[3]=false;}
+if(btnPlus&&btnPlus.pressed){if(!prevPadButtons[9]){togglePauseMenu();prevPadButtons[9]=true;}}else{prevPadButtons[9]=false;}
+if(btnHome&&btnHome.pressed){if(!prevPadButtons[16]){quitToMenu();prevPadButtons[16]=true;}}else{prevPadButtons[16]=false;}
 if(gamepadJump){I.jump=true;gamepadJump=false;}
 if(gamepadAttack){I.attack=true;gamepadAttack=false;}
 if(twoPlayerMode&&window.I2){
@@ -2599,12 +2583,8 @@ window.I2.forward=(ly2<-threshold);
 window.I2.backward=(ly2>threshold);
 const a2=gp2.buttons[0];
 const b2=gp2.buttons[1];
-if(a2&&a2.pressed){
-if(!window.prevPad2A){window.I2.jump=true;window.prevPad2A=true;}
-}else{window.prevPad2A=false;}
-if(b2&&b2.pressed){
-if(!window.prevPad2B){window.I2.attack=true;window.prevPad2B=true;}
-}else{window.prevPad2B=false;}
+if(a2&&a2.pressed){if(!window.prevPad2A){window.I2.jump=true;window.prevPad2A=true;}}else{window.prevPad2A=false;}
+if(b2&&b2.pressed){if(!window.prevPad2B){window.I2.attack=true;window.prevPad2B=true;}}else{window.prevPad2B=false;}
 }
 }
 }
@@ -2636,7 +2616,7 @@ ctx.fillRect(bx,22,(b.w/lw)*100,16);
 for(let e of enemies){
 if(!e.ac)continue;
 const ex=(e.x/lw)*100;
-ctx.fillStyle=e.type=='boss'?'#FF00FF':'#FF0000';
+ctx.fillStyle='#FF0000';
 ctx.fillRect(ex-2,27,4,4);
 }
 for(let n of npcs){
