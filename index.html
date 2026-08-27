@@ -242,13 +242,37 @@ if(typeof startMusic==='function'){startMusic(typeof L!=='undefined'&&(L==3||L==
 function buyItem(type){
 if(typeof coins==='undefined')return;
 if(typeof P==='undefined')return;
-if(type=='speed'&&P.speedBought){alert(t('purchased'));return;}
-if(type=='attack'&&P.attackBought){alert(t('purchased'));return;}
-if(type=='shield'&&P.shieldBought){alert(t('purchased'));return;}
-if(type=='speed'&&coins>=50){coins-=50;P.s=CHARACTERS[selectedCharacter].speed+0.15;P.speedBought=true;playVictorySound();alert(t('purchased'));}
-else if(type=='attack'&&coins>=50){coins-=50;P.au=true;P.attackBought=true;playVictorySound();alert(t('purchased'));}
-else if(type=='shield'&&coins>=75){coins-=75;P.hasShield=true;P.shieldBought=true;playVictorySound();alert(t('purchased'));}
-else{alert(t('insufficient'));}
+if(type=='speed'){
+let cost=50+(P.speedLevel||0)*25;
+if(coins>=cost){
+coins-=cost;
+P.speedLevel=(P.speedLevel||0)+1;
+P.s=CHARACTERS[selectedCharacter].speed+0.05*P.speedLevel;
+playVictorySound();
+alert(t('purchased')+' +0.05 speed');
+}else{alert(t('insufficient'));}
+}
+else if(type=='attack'){
+let cost=50+(P.attackLevel||0)*25;
+if(coins>=cost){
+coins-=cost;
+P.attackLevel=(P.attackLevel||0)+1;
+P.attackDmg=CHARACTERS[selectedCharacter].attack+P.attackLevel*5;
+P.au=true;
+playVictorySound();
+alert(t('purchased')+' +5 damage');
+}else{alert(t('insufficient'));}
+}
+else if(type=='shield'){
+let cost=75+(P.shieldLevel||0)*25;
+if(coins>=cost){
+coins-=cost;
+P.shieldLevel=(P.shieldLevel||0)+1;
+P.hasShield=true;
+playVictorySound();
+alert(t('purchased')+' shield level '+P.shieldLevel);
+}else{alert(t('insufficient'));}
+}
 closeDialogue();
 if(typeof saveGame==='function')saveGame();
 }
@@ -483,26 +507,12 @@ if(window.propI1.left)p1Mesh.position.x-=0.1;
 if(window.propI1.right)p1Mesh.position.x+=0.1;
 if(window.propI1.up)p1Mesh.position.z-=0.1;
 if(window.propI1.down)p1Mesh.position.z+=0.1;
-let canJump1=p1Mesh.position.y<=0.1;
-for(let col of propColliders){
-if(Math.abs(p1Mesh.position.x-col.x)<col.radius&&Math.abs(p1Mesh.position.z-col.z)<col.radius){
-if(Math.abs(p1Mesh.position.y-col.height)<0.3){canJump1=true;break;}
-}
-}
-if(window.propI1.jump&&canJump1){p1vy=0.25;window.propI1.jump=false;}
 }
 if(window.propI2&&p2Mesh){
 if(window.propI2.left)p2Mesh.position.x-=0.1;
 if(window.propI2.right)p2Mesh.position.x+=0.1;
 if(window.propI2.up)p2Mesh.position.z-=0.1;
 if(window.propI2.down)p2Mesh.position.z+=0.1;
-let canJump2=p2Mesh.position.y<=0.1;
-for(let col of propColliders){
-if(Math.abs(p2Mesh.position.x-col.x)<col.radius&&Math.abs(p2Mesh.position.z-col.z)<col.radius){
-if(Math.abs(p2Mesh.position.y-col.height)<0.3){canJump2=true;break;}
-}
-}
-if(window.propI2.jump&&canJump2){p2vy=0.25;window.propI2.jump=false;}
 }
 p1vy-=0.01;p1Mesh.position.y+=p1vy;
 if(p1Mesh.position.y<=0.01){p1Mesh.position.y=0;p1vy=0;}
@@ -543,6 +553,24 @@ p2vy=0;
 }
 }
 }
+}
+if(window.propI1){
+let canJump1=p1Mesh.position.y<=0.1;
+for(let col of propColliders){
+if(Math.abs(p1Mesh.position.x-col.x)<col.radius&&Math.abs(p1Mesh.position.z-col.z)<col.radius){
+if(Math.abs(p1Mesh.position.y-col.height)<0.3){canJump1=true;break;}
+}
+}
+if(window.propI1.jump&&canJump1){p1vy=0.25;window.propI1.jump=false;}
+}
+if(window.propI2&&p2Mesh){
+let canJump2=p2Mesh.position.y<=0.1;
+for(let col of propColliders){
+if(Math.abs(p2Mesh.position.x-col.x)<col.radius&&Math.abs(p2Mesh.position.z-col.z)<col.radius){
+if(Math.abs(p2Mesh.position.y-col.height)<0.3){canJump2=true;break;}
+}
+}
+if(window.propI2.jump&&canJump2){p2vy=0.25;window.propI2.jump=false;}
 }
 p1Mesh.position.x=Math.max(-18,Math.min(18,p1Mesh.position.x));
 p1Mesh.position.z=Math.max(-18,Math.min(18,p1Mesh.position.z));
