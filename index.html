@@ -1929,38 +1929,71 @@ if(globalSkipFn)globalSkipFn();
 function upd(){
 if(!running||S!='playing')return;
 lt++;tt++;
-updatePlayerMovement();
-if(twoPlayerMode&&P2&&window.I2){
-const I2=window.I2;
-let mX=0,mZ=0;
-if(I2.left)mX-=1;
-if(I2.right)mX+=1;
-if(I2.forward)mZ-=1;
-if(I2.backward)mZ+=1;
-if(mX!=0||mZ!=0){let len=Math.sqrt(mX*mX+mZ*mZ);mX/=len;mZ/=len;P2.rotY=Math.atan2(mX,mZ);P2.isWalking=true;}else{P2.isWalking=false;}
-P2.vx=mX*P2.s;P2.vz=mZ*P2.s;
-if(I2.jump){if(P2.g){P2.vy=P2.j;P2.g=false;I2.jump=false;playJumpSound();}}
-if(I2.attack&&P2.ac<=0){P2.ac=20;P2.ad=8;playAttackSound();}
-if(P2.ac>0)P2.ac--;if(P2.ad>0)P2.ad--;
-P2.vy-=0.02;if(P2.vy<-0.5)P2.vy=-0.5;
-P2.x+=P2.vx;P2.z+=P2.vz;P2.y+=P2.vy;
-if(P2.y<=0.5){P2.y=0.5;P2.vy=0;P2.g=true;}else{P2.g=false;}
-for(let p of platforms){if(Math.abs(P2.x-p.x)<p.w/2&&Math.abs(P2.z-p.z)<p.d/2&&Math.abs(P2.y-p.y)<1&&P2.vy<=0){P2.y=p.y+0.5;P2.vy=0;P2.g=true;}}
-if(P2.x<0)P2.x=0;if(P2.x>lw)P2.x=lw;
-if(P2.z<-8)P2.z=-8;if(P2.z>8)P2.z=8;
-if(P2.y<-5){P2.hp=0;}
-if(P2.i>0)P2.i--;
-if(P2.hp<=0){P2.hp=100;P2.x=P.x;P2.y=P.y;P2.z=P.z+1;}
-if(player2Group){player2Group.position.set(P2.x,P2.y,P2.z);player2Group.rotation.y=P2.rotY;}
-if(P2.isWalking&&P2.g){player2Group.position.y=P2.y+Math.sin(tt*0.2)*0.05;}
-for(let c of coinList){
-if(!c.c){let dx=P2.x-c.x,dy=P2.y-c.y,dz=P2.z-c.z;if(Math.sqrt(dx*dx+dy*dy+dz*dz)<1.5){c.c=true;coins+=5;tc+=5;lC+=5;createHitParticle(c.x,c.y,c.z,0xFFD700);playCoinSound();scene.remove(c.mesh);}}
-}
-for(let e of enemies){
-if(e.ac&&!e.stationary){let dx=P2.x-e.x,dz=P2.z-e.z;if(Math.sqrt(dx*dx+dz*dz)<1.5&&P2.i<=0){P2.hp-=10;P2.i=30;if(P2.hp<=0){P2.hp=100;P2.x=P.x;P2.y=P.y;P2.z=P.z+1;}}}
+let moveX=0,moveZ=0;
+if(I.left)moveX-=1;
+if(I.right)moveX+=1;
+if(I.forward)moveZ-=1;
+if(I.backward)moveZ+=1;
+if(moveX!=0||moveZ!=0){
+let len=Math.sqrt(moveX*moveX+moveZ*moveZ);
+moveX/=len;moveZ/=len;
+P.rotY=Math.atan2(moveX,moveZ);
+P.isWalking=true;
+}else{P.isWalking=false;}
+P.vx=moveX*P.s;
+P.vz=moveZ*P.s;
+if(I.jump){
+if(P.g){
+P.vy=P.j;P.g=false;I.jump=false;
+playJumpSound();
+}else if(P.dj&&P.dja){
+P.vy=P.j*0.8;P.dja=false;I.jump=false;
+playJumpSound();
 }
 }
-updateEnemyAI_All();
+if(I.attack&&P.ac<=0){
+P.ac=20;P.ad=8;P.attackCombo++;
+if(P.attackCombo>3){P.ac=40;P.attackCombo=0;}
+pitchfork.visible=true;
+playAttackSound();
+setTimeout(function(){pitchfork.visible=false;},200);
+I.attack=false;
+}
+if(P.ac>0)P.ac--;if(P.ad>0)P.ad--;
+P.vy-=0.02;if(P.vy<-0.5)P.vy=-0.5;
+P.x+=P.vx;P.z+=P.vz;P.y+=P.vy;
+if(P.y<=0.5){P.y=0.5;P.vy=0;P.g=true;}else{P.g=false;}
+for(let p of platforms){
+if(Math.abs(P.x-p.x)<p.w/2&&Math.abs(P.z-p.z)<p.d/2&&Math.abs(P.y-p.y)<1&&P.vy<=0){
+P.y=p.y+0.5;P.vy=0;P.g=true;
+}
+}
+let onBridge=false;
+for(let b of bridges){
+if(Math.abs(P.x-b.x)<b.w/2&&Math.abs(P.z-b.z)<1.5){
+if(P.y>0.2&&P.y<1){
+P.y=0.35;P.vy=0;P.g=true;
+onBridge=true;
+}
+}
+}
+if(!onBridge){
+for(let w of waterAreas){
+if(Math.abs(P.x-w.x)<w.w/2&&Math.abs(P.z-w.z)<w.d/2){
+P.hp-=0.5;
+if(P.hp<=0){deaths++;playDeathSound();restartLevel();return;}
+}
+}
+}
+if(P.x<0)P.x=0;if(P.x>lw)P.x=lw;
+if(P.z<-8)P.z=-8;if(P.z>8)P.z=8;
+if(P.y<-5||P.hp<=0){deaths++;playDeathSound();restartLevel();return;}
+if(P.i>0)P.i--;
+if(hasCheckpoint&&P.x>=checkpointX&&P.x<checkpointX+2){
+checkpointX=P.x;
+saveGame();
+}
+for(let e of enemies){updateEnemyAI(e);}
 if(boss&&boss.ac)updateBossAI();
 updateProjectiles();
 updateParticles();
@@ -1972,7 +2005,34 @@ updateNPCInteraction();
 checkCollectibles();
 updateCamera();
 updatePlayerAnimation();
-checkLevelComplete();
+if(twoPlayerMode&&P2&&window.I2){
+const I2=window.I2;
+let mX=0,mZ=0;
+if(I2.left)mX-=1;
+if(I2.right)mX+=1;
+if(I2.forward)mZ-=1;
+if(I2.backward)mZ+=1;
+if(mX!=0||mZ!=0){let len=Math.sqrt(mX*mX+mZ*mZ);mX/=len;mZ/=len;P2.rotY=Math.atan2(mX,mZ);P2.isWalking=true;}else{P2.isWalking=false;}
+P2.vx=mX*P2.s;P2.vz=mZ*P2.s;
+if(I2.jump){
+if(P2.g){P2.vy=P2.j;P2.g=false;I2.jump=false;playJumpSound();}
+}
+if(I2.attack&&P2.ac<=0){
+P2.ac=20;P2.ad=8;playAttackSound();
+I2.attack=false;
+}
+if(P2.ac>0)P2.ac--;if(P2.ad>0)P2.ad--;
+P2.vy-=0.02;if(P2.vy<-0.5)P2.vy=-0.5;
+P2.x+=P2.vx;P2.z+=P2.vz;P2.y+=P2.vy;
+if(P2.y<=0.5){P2.y=0.5;P2.vy=0;P2.g=true;}else{P2.g=false;}
+for(let p of platforms){if(Math.abs(P2.x-p.x)<p.w/2&&Math.abs(P2.z-p.z)<p.d/2&&Math.abs(P2.y-p.y)<1&&P2.vy<=0){P2.y=p.y+0.5;P2.vy=0;P2.g=true;}}
+if(P2.x<0)P2.x=0;if(P2.x>lw)P2.x=lw;
+if(P2.z<-8)P2.z=-8;if(P2.z>8)P2.z=8;
+if(P2.i>0)P2.i--;
+if(P2.hp<=0){P2.hp=100;P2.x=P.x;P2.y=P.y;P2.z=P.z+1;}
+if(player2Group){player2Group.position.set(P2.x,P2.y,P2.z);player2Group.rotation.y=P2.rotY;}
+}
+if(!boss&&P.x>=gx)cl__();
 }
 function updateEnemyAI_All(){
 for(let e of enemies){updateEnemyAI(e);}
@@ -2453,11 +2513,13 @@ if(e.key=='ArrowDown'||e.key=='s')I.backward=false;
 if(e.key==' '||e.key=='j')I.jump=false;
 if(e.key=='x'||e.key=='k')I.attack=false;
 });
-}
 let gamepadIndex=null;
 let gamepadConnected=false;
 let prevPadButtons={};
 let gpIndicator=null;
+let gamepadAttack=false;
+let gamepadJump=false;
+
 window.addEventListener('gamepadconnected',function(e){
 gamepadConnected=true;
 gamepadIndex=e.gamepad.index;
@@ -2465,15 +2527,19 @@ prevPadButtons={};
 console.log('🎮 Gamepad connected:',e.gamepad.id);
 showGPIndicator('🎮 Connected');
 });
+
 window.addEventListener('gamepaddisconnected',function(e){
 if(gamepadIndex===e.gamepad.index){
 gamepadConnected=false;
 gamepadIndex=null;
 prevPadButtons={};
+gamepadAttack=false;
+gamepadJump=false;
 showGPIndicator('🎮 Disconnected');
 setTimeout(function(){if(gpIndicator)gpIndicator.remove();gpIndicator=null;},2000);
 }
 });
+
 function showGPIndicator(text){
 if(!gpIndicator){
 gpIndicator=document.createElement('div');
@@ -2482,6 +2548,7 @@ document.body.appendChild(gpIndicator);
 }
 gpIndicator.textContent=text;
 }
+
 function updateGamepad(){
 if(!gamepadConnected)return;
 const gamepads=navigator.getGamepads?navigator.getGamepads():null;
@@ -2491,49 +2558,53 @@ if(!gp)return;
 const threshold=0.3;
 const lx=gp.axes[0]||0;
 const ly=gp.axes[1]||0;
-if(lx<-threshold){I.left=true;I.right=false;}
-else if(lx>threshold){I.right=true;I.left=false;}
-else{I.left=false;I.right=false;}
-if(ly<-threshold){I.forward=true;I.backward=false;}
-else if(ly>threshold){I.backward=true;I.forward=false;}
-else{I.forward=false;I.backward=false;}
+I.left=(lx<-threshold);
+I.right=(lx>threshold);
+I.forward=(ly<-threshold);
+I.backward=(ly>threshold);
 const btnA=gp.buttons[0];
 const btnB=gp.buttons[1];
 const btnX=gp.buttons[2];
 const btnY=gp.buttons[3];
 const btnPlus=gp.buttons[9];
 const btnHome=gp.buttons[16];
-if(btnA&&btnA.pressed){if(!prevPadButtons[0]){I.jump=true;prevPadButtons[0]=true;}}
-else{prevPadButtons[0]=false;}
-if(btnB&&btnB.pressed){if(!prevPadButtons[1]){I.attack=true;prevPadButtons[1]=true;}}
-else{prevPadButtons[1]=false;}
-if(btnX&&btnX.pressed){if(!prevPadButtons[2]){I.attack=true;prevPadButtons[2]=true;}}
-else{prevPadButtons[2]=false;}
-if(btnY&&btnY.pressed){if(!prevPadButtons[3]){I.jump=true;prevPadButtons[3]=true;}}
-else{prevPadButtons[3]=false;}
+if(btnA&&btnA.pressed){
+if(!prevPadButtons[0]){gamepadJump=true;prevPadButtons[0]=true;}
+}else{prevPadButtons[0]=false;}
+if(btnB&&btnB.pressed){
+if(!prevPadButtons[1]){gamepadAttack=true;prevPadButtons[1]=true;}
+}else{prevPadButtons[1]=false;}
+if(btnX&&btnX.pressed){
+if(!prevPadButtons[2]){gamepadAttack=true;prevPadButtons[2]=true;}
+}else{prevPadButtons[2]=false;}
+if(btnY&&btnY.pressed){
+if(!prevPadButtons[3]){gamepadJump=true;prevPadButtons[3]=true;}
+}else{prevPadButtons[3]=false;}
 if(btnPlus&&btnPlus.pressed){
 if(!prevPadButtons[9]){togglePauseMenu();prevPadButtons[9]=true;}
 }else{prevPadButtons[9]=false;}
 if(btnHome&&btnHome.pressed){
 if(!prevPadButtons[16]){quitToMenu();prevPadButtons[16]=true;}
 }else{prevPadButtons[16]=false;}
+if(gamepadJump){I.jump=true;gamepadJump=false;}
+if(gamepadAttack){I.attack=true;gamepadAttack=false;}
 if(twoPlayerMode&&window.I2){
 const gp2=gamepads[1]||gamepads[2];
 if(gp2){
 const lx2=gp2.axes[0]||0;
 const ly2=gp2.axes[1]||0;
-if(lx2<-threshold){window.I2.left=true;window.I2.right=false;}
-else if(lx2>threshold){window.I2.right=true;window.I2.left=false;}
-else{window.I2.left=false;window.I2.right=false;}
-if(ly2<-threshold){window.I2.forward=true;window.I2.backward=false;}
-else if(ly2>threshold){window.I2.backward=true;window.I2.forward=false;}
-else{window.I2.forward=false;window.I2.backward=false;}
+window.I2.left=(lx2<-threshold);
+window.I2.right=(lx2>threshold);
+window.I2.forward=(ly2<-threshold);
+window.I2.backward=(ly2>threshold);
 const a2=gp2.buttons[0];
 const b2=gp2.buttons[1];
-if(a2&&a2.pressed){if(!window.prevPad2A){window.I2.jump=true;window.prevPad2A=true;}}
-else{window.prevPad2A=false;}
-if(b2&&b2.pressed){if(!window.prevPad2B){window.I2.attack=true;window.prevPad2B=true;}}
-else{window.prevPad2B=false;}
+if(a2&&a2.pressed){
+if(!window.prevPad2A){window.I2.jump=true;window.prevPad2A=true;}
+}else{window.prevPad2A=false;}
+if(b2&&b2.pressed){
+if(!window.prevPad2B){window.I2.attack=true;window.prevPad2B=true;}
+}else{window.prevPad2B=false;}
 }
 }
 }
