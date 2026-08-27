@@ -495,12 +495,11 @@ if(window.propI2.down)p2Mesh.position.z+=0.1;
 if(window.propI2.jump&&p2Grounded){p2vy=0.25;p2Grounded=false;window.propI2.jump=false;}
 }
 p1vy-=0.01;p1Mesh.position.y+=p1vy;
-if(p1vy<0)p1Grounded=false;
-if(p1Mesh.position.y<0){p1Mesh.position.y=0;p1vy=0;p1Grounded=true;}
+let p1WasGrounded=false;
+if(p1Mesh.position.y<=0.01){p1Mesh.position.y=0;p1vy=0;p1Grounded=true;}
 if(p2Mesh){
 p2vy-=0.01;p2Mesh.position.y+=p2vy;
-if(p2vy<0)p2Grounded=false;
-if(p2Mesh.position.y<0){p2Mesh.position.y=0;p2vy=0;p2Grounded=true;}
+if(p2Mesh.position.y<=0.01){p2Mesh.position.y=0;p2vy=0;p2Grounded=true;}
 }
 for(let col of propColliders){
 let p1dx=p1Mesh.position.x-col.x;
