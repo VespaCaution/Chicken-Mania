@@ -444,6 +444,8 @@ let p1vy=0;
 let p2vy=0;
 let p1AttackCooldown=0;
 let p2AttackCooldown=0;
+let p1Grounded=true;
+let p2Grounded=true;
 function createHitParticle(x,y,z,color){
 const p=new THREE.Mesh(new THREE.SphereGeometry(0.1,6,6),new THREE.MeshStandardMaterial({color:color,emissive:color,emissiveIntensity:1}));
 p.position.set(x,y,z);
@@ -483,20 +485,22 @@ if(window.propI1.left)p1Mesh.position.x-=0.1;
 if(window.propI1.right)p1Mesh.position.x+=0.1;
 if(window.propI1.up)p1Mesh.position.z-=0.1;
 if(window.propI1.down)p1Mesh.position.z+=0.1;
-if(window.propI1.jump&&p1Mesh.position.y<=0.1){p1vy=0.25;window.propI1.jump=false;}
+if(window.propI1.jump&&p1Grounded){p1vy=0.25;p1Grounded=false;window.propI1.jump=false;}
 }
 if(window.propI2&&p2Mesh){
 if(window.propI2.left)p2Mesh.position.x-=0.1;
 if(window.propI2.right)p2Mesh.position.x+=0.1;
 if(window.propI2.up)p2Mesh.position.z-=0.1;
 if(window.propI2.down)p2Mesh.position.z+=0.1;
-if(window.propI2.jump&&p2Mesh.position.y<=0.1){p2vy=0.25;window.propI2.jump=false;}
+if(window.propI2.jump&&p2Grounded){p2vy=0.25;p2Grounded=false;window.propI2.jump=false;}
 }
 p1vy-=0.01;p1Mesh.position.y+=p1vy;
-if(p1Mesh.position.y<0){p1Mesh.position.y=0;p1vy=0;}
+if(p1vy<0)p1Grounded=false;
+if(p1Mesh.position.y<0){p1Mesh.position.y=0;p1vy=0;p1Grounded=true;}
 if(p2Mesh){
 p2vy-=0.01;p2Mesh.position.y+=p2vy;
-if(p2Mesh.position.y<0){p2Mesh.position.y=0;p2vy=0;}
+if(p2vy<0)p2Grounded=false;
+if(p2Mesh.position.y<0){p2Mesh.position.y=0;p2vy=0;p2Grounded=true;}
 }
 for(let col of propColliders){
 let p1dx=p1Mesh.position.x-col.x;
@@ -512,6 +516,7 @@ p1Mesh.position.z+=pushZ;
 if(p1Mesh.position.y>=col.height-0.8&&p1Mesh.position.y<=col.height+0.3){
 p1Mesh.position.y=col.height;
 p1vy=0;
+p1Grounded=true;
 }
 }
 if(p2Mesh){
@@ -528,6 +533,7 @@ p2Mesh.position.z+=pushZ;
 if(p2Mesh.position.y>=col.height-0.8&&p2Mesh.position.y<=col.height+0.3){
 p2Mesh.position.y=col.height;
 p2vy=0;
+p2Grounded=true;
 }
 }
 }
@@ -550,8 +556,8 @@ propP1HP-=10;p2AttackCooldown=30;window.propI2.attack=false;
 createHitParticle(p1Mesh.position.x,p1Mesh.position.y+0.5,p1Mesh.position.z,0xFF0000);
 }
 }
-if(propP1HP<=0){propP1HP=50;p1Mesh.position.set(Math.random()*20-10,0,Math.random()*20-10);}
-if(propP2HP<=0){propP2HP=50;p2Mesh.position.set(Math.random()*20-10,0,Math.random()*20-10);}
+if(propP1HP<=0){propP1HP=50;p1Mesh.position.set(Math.random()*20-10,0,Math.random()*20-10);p1Grounded=true;}
+if(propP2HP<=0){propP2HP=50;p2Mesh.position.set(Math.random()*20-10,0,Math.random()*20-10);p2Grounded=true;}
 }
 camera.position.set(p1Mesh.position.x,8,p1Mesh.position.z+12);
 camera.lookAt(p1Mesh.position.x,0,p1Mesh.position.z);
