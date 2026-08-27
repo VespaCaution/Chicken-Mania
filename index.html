@@ -1568,7 +1568,7 @@ playHitSound();
 if(P2.hp<=0){P2.hp=100;P2.x=P.x;P2.y=P.y;P2.z=P.z+1;}
 }
 }
-    }
+}
 function updateBossAI(){
 if(!boss||!boss.ac)return;
 boss.at++;
@@ -1750,7 +1750,7 @@ let type=enemyTypes[i%enemyTypes.length];
 if(L<3)type=enemyTypes[i%2];
 else if(L<6)type=enemyTypes[i%4];
 else if(L<10)type=enemyTypes[i%6];
-let hp=type=='boar'?40:type=='crow'?30:type=='robot'?80:type=='cf'?120:type=='wolf'?100:type=='golem'?160:type=='snake'?70:50;
+let hp=type=='boar'?80:type=='crow'?60:type=='robot'?160:type=='cf'?240:type=='wolf'?200:type=='golem'?320:type=='snake'?140:100;
 hp*=diffData.enemyHpMult;
 let e;
 if(type=='wolf'||type=='golem'||type=='snake'||type=='bat'){
