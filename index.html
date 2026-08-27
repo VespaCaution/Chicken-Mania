@@ -2455,14 +2455,35 @@ if(e.key=='x'||e.key=='k')I.attack=false;
 });
 }
 let gamepadIndex=null;
+let gamepadConnected=false;
+let prevPadButtons={};
+let gpIndicator=null;
 window.addEventListener('gamepadconnected',function(e){
+gamepadConnected=true;
 gamepadIndex=e.gamepad.index;
-console.log('Gamepad connected:',e.gamepad.id);
+prevPadButtons={};
+console.log('🎮 Gamepad connected:',e.gamepad.id);
+showGPIndicator('🎮 Connected');
 });
 window.addEventListener('gamepaddisconnected',function(e){
-if(gamepadIndex===e.gamepad.index)gamepadIndex=null;
+if(gamepadIndex===e.gamepad.index){
+gamepadConnected=false;
+gamepadIndex=null;
+prevPadButtons={};
+showGPIndicator('🎮 Disconnected');
+setTimeout(function(){if(gpIndicator)gpIndicator.remove();gpIndicator=null;},2000);
+}
 });
+function showGPIndicator(text){
+if(!gpIndicator){
+gpIndicator=document.createElement('div');
+gpIndicator.style.cssText='position:fixed;bottom:10px;left:10px;background:rgba(0,0,0,.8);color:#0f0;padding:5px 10px;border-radius:10px;font-size:12px;z-index:200;border:1px solid #0f0';
+document.body.appendChild(gpIndicator);
+}
+gpIndicator.textContent=text;
+}
 function updateGamepad(){
+if(!gamepadConnected)return;
 const gamepads=navigator.getGamepads?navigator.getGamepads():null;
 if(!gamepads)return;
 const gp=gamepads[gamepadIndex]||gamepads[0];
@@ -2470,35 +2491,49 @@ if(!gp)return;
 const threshold=0.3;
 const lx=gp.axes[0]||0;
 const ly=gp.axes[1]||0;
-if(lx<-threshold)I.left=true;else if(lx>threshold)I.right=true;
-if(ly<-threshold)I.forward=true;else if(ly>threshold)I.backward=true;
-if(lx>=-threshold&&lx<=threshold){I.left=false;I.right=false;}
-if(ly>=-threshold&&ly<=threshold){I.forward=false;I.backward=false;}
+if(lx<-threshold){I.left=true;I.right=false;}
+else if(lx>threshold){I.right=true;I.left=false;}
+else{I.left=false;I.right=false;}
+if(ly<-threshold){I.forward=true;I.backward=false;}
+else if(ly>threshold){I.backward=true;I.forward=false;}
+else{I.forward=false;I.backward=false;}
 const btnA=gp.buttons[0];
 const btnB=gp.buttons[1];
 const btnX=gp.buttons[2];
 const btnY=gp.buttons[3];
 const btnPlus=gp.buttons[9];
 const btnHome=gp.buttons[16];
-if(btnA&&btnA.pressed)I.jump=true;
-if(btnB&&btnB.pressed)I.attack=true;
-if(btnX&&btnX.pressed)I.attack=true;
-if(btnY&&btnY.pressed)I.jump=true;
-if(btnPlus&&btnPlus.pressed){togglePauseMenu();btnPlus.pressed=false;}
-if(btnHome&&btnHome.pressed){quitToMenu();btnHome.pressed=false;}
+if(btnA&&btnA.pressed){if(!prevPadButtons[0]){I.jump=true;prevPadButtons[0]=true;}}
+else{prevPadButtons[0]=false;}
+if(btnB&&btnB.pressed){if(!prevPadButtons[1]){I.attack=true;prevPadButtons[1]=true;}}
+else{prevPadButtons[1]=false;}
+if(btnX&&btnX.pressed){if(!prevPadButtons[2]){I.attack=true;prevPadButtons[2]=true;}}
+else{prevPadButtons[2]=false;}
+if(btnY&&btnY.pressed){if(!prevPadButtons[3]){I.jump=true;prevPadButtons[3]=true;}}
+else{prevPadButtons[3]=false;}
+if(btnPlus&&btnPlus.pressed){
+if(!prevPadButtons[9]){togglePauseMenu();prevPadButtons[9]=true;}
+}else{prevPadButtons[9]=false;}
+if(btnHome&&btnHome.pressed){
+if(!prevPadButtons[16]){quitToMenu();prevPadButtons[16]=true;}
+}else{prevPadButtons[16]=false;}
 if(twoPlayerMode&&window.I2){
-const gp2=gamepads[1]||gamepads[2]||gamepads[3];
+const gp2=gamepads[1]||gamepads[2];
 if(gp2){
 const lx2=gp2.axes[0]||0;
 const ly2=gp2.axes[1]||0;
-if(lx2<-threshold)window.I2.left=true;else if(lx2>threshold)window.I2.right=true;
-if(ly2<-threshold)window.I2.forward=true;else if(ly2>threshold)window.I2.backward=true;
-if(lx2>=-threshold&&lx2<=threshold){window.I2.left=false;window.I2.right=false;}
-if(ly2>=-threshold&&ly2<=threshold){window.I2.forward=false;window.I2.backward=false;}
+if(lx2<-threshold){window.I2.left=true;window.I2.right=false;}
+else if(lx2>threshold){window.I2.right=true;window.I2.left=false;}
+else{window.I2.left=false;window.I2.right=false;}
+if(ly2<-threshold){window.I2.forward=true;window.I2.backward=false;}
+else if(ly2>threshold){window.I2.backward=true;window.I2.forward=false;}
+else{window.I2.forward=false;window.I2.backward=false;}
 const a2=gp2.buttons[0];
 const b2=gp2.buttons[1];
-if(a2&&a2.pressed)window.I2.jump=true;
-if(b2&&b2.pressed)window.I2.attack=true;
+if(a2&&a2.pressed){if(!window.prevPad2A){window.I2.jump=true;window.prevPad2A=true;}}
+else{window.prevPad2A=false;}
+if(b2&&b2.pressed){if(!window.prevPad2B){window.I2.attack=true;window.prevPad2B=true;}}
+else{window.prevPad2B=false;}
 }
 }
 }
