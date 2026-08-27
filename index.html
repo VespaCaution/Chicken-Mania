@@ -249,7 +249,7 @@ coins-=cost;
 P.speedLevel=(P.speedLevel||0)+1;
 P.s=CHARACTERS[selectedCharacter].speed+0.05*P.speedLevel;
 playVictorySound();
-alert(t('purchased')+' +0.05 speed');
+alert(t('purchased')+' Speed Lv'+P.speedLevel);
 }else{alert(t('insufficient'));}
 }
 else if(type=='attack'){
@@ -260,7 +260,7 @@ P.attackLevel=(P.attackLevel||0)+1;
 P.attackDmg=CHARACTERS[selectedCharacter].attack+P.attackLevel*5;
 P.au=true;
 playVictorySound();
-alert(t('purchased')+' +5 damage');
+alert(t('purchased')+' Attack Lv'+P.attackLevel);
 }else{alert(t('insufficient'));}
 }
 else if(type=='shield'){
@@ -270,7 +270,7 @@ coins-=cost;
 P.shieldLevel=(P.shieldLevel||0)+1;
 P.hasShield=true;
 playVictorySound();
-alert(t('purchased')+' shield level '+P.shieldLevel);
+alert(t('purchased')+' Shield Lv'+P.shieldLevel);
 }else{alert(t('insufficient'));}
 }
 closeDialogue();
@@ -479,9 +479,19 @@ window.propI2=twoPlayerMode?{left:false,right:false,up:false,down:false,attack:f
 function bindPropBtn(id,action,target){
 const el=document.getElementById(id);
 if(!el)return;
-el.addEventListener('touchstart',function(e){e.preventDefault();target[action]=true;},{passive:false});
-el.addEventListener('touchend',function(e){e.preventDefault();target[action]=false;},{passive:false});
-el.addEventListener('mousedown',function(){target[action]=true;});
+el.addEventListener('touchstart',function(e){
+e.preventDefault();
+target[action]=true;
+if(action=='jump'){target.jumpRequested=true;}
+},{passive:false});
+el.addEventListener('touchend',function(e){
+e.preventDefault();
+target[action]=false;
+},{passive:false});
+el.addEventListener('mousedown',function(){
+target[action]=true;
+if(action=='jump'){target.jumpRequested=true;}
+});
 el.addEventListener('mouseup',function(){target[action]=false;});
 }
 bindPropBtn('l','left',window.propI1);
@@ -555,22 +565,42 @@ p2vy=0;
 }
 }
 if(window.propI1){
+if(window.propI1.jumpRequested){
 let canJump1=p1Mesh.position.y<=0.1;
 for(let col of propColliders){
-if(Math.abs(p1Mesh.position.x-col.x)<col.radius&&Math.abs(p1Mesh.position.z-col.z)<col.radius){
-if(Math.abs(p1Mesh.position.y-col.height)<0.3){canJump1=true;break;}
+let dx=p1Mesh.position.x-col.x;
+let dz=p1Mesh.position.z-col.z;
+let dist=Math.sqrt(dx*dx+dz*dz);
+if(dist<col.radius+0.5){
+if(p1Mesh.position.y>=col.height-0.2&&p1Mesh.position.y<=col.height+0.5){
+canJump1=true;break;
 }
 }
-if(window.propI1.jump&&canJump1){p1vy=0.25;window.propI1.jump=false;}
+}
+if(canJump1){
+p1vy=0.25;
+window.propI1.jumpRequested=false;
+}
+}
 }
 if(window.propI2&&p2Mesh){
+if(window.propI2.jumpRequested){
 let canJump2=p2Mesh.position.y<=0.1;
 for(let col of propColliders){
-if(Math.abs(p2Mesh.position.x-col.x)<col.radius&&Math.abs(p2Mesh.position.z-col.z)<col.radius){
-if(Math.abs(p2Mesh.position.y-col.height)<0.3){canJump2=true;break;}
+let dx=p2Mesh.position.x-col.x;
+let dz=p2Mesh.position.z-col.z;
+let dist=Math.sqrt(dx*dx+dz*dz);
+if(dist<col.radius+0.5){
+if(p2Mesh.position.y>=col.height-0.2&&p2Mesh.position.y<=col.height+0.5){
+canJump2=true;break;
 }
 }
-if(window.propI2.jump&&canJump2){p2vy=0.25;window.propI2.jump=false;}
+}
+if(canJump2){
+p2vy=0.25;
+window.propI2.jumpRequested=false;
+}
+}
 }
 p1Mesh.position.x=Math.max(-18,Math.min(18,p1Mesh.position.x));
 p1Mesh.position.z=Math.max(-18,Math.min(18,p1Mesh.position.z));
@@ -2040,11 +2070,16 @@ scene.remove(pu);
 }
 }
 }
+let npcCooldown=0;
 function updateNPCInteraction(){
+if(npcCooldown>0)npcCooldown--;
 for(let n of npcs){
+if(n.userData.isTalking)continue;
 let dx=P.x-n.position.x,dz=P.z-n.position.z;
-if(Math.sqrt(dx*dx+dz*dz)<2){
+if(Math.sqrt(dx*dx+dz*dz)<2&&npcCooldown<=0){
 showNPCDialogue(n);
+npcCooldown=60;
+break;
 }
 }
 }
