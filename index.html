@@ -508,6 +508,7 @@ bindPropBtn('p2bw','down',window.propI2);
 bindPropBtn('p2a','attack',window.propI2);
 bindPropBtn('p2j','jump',window.propI2);
 }
+}
 function propRenderLoop(){
 if(!propModeActive)return;
 if(p1AttackCooldown>0)p1AttackCooldown--;
@@ -564,43 +565,17 @@ p2vy=0;
 }
 }
 }
-if(window.propI1){
-if(window.propI1.jumpRequested){
-let canJump1=p1Mesh.position.y<=0.1;
-for(let col of propColliders){
-let dx=p1Mesh.position.x-col.x;
-let dz=p1Mesh.position.z-col.z;
-let dist=Math.sqrt(dx*dx+dz*dz);
-if(dist<col.radius+0.5){
-if(p1Mesh.position.y>=col.height-0.2&&p1Mesh.position.y<=col.height+0.5){
-canJump1=true;break;
-}
-}
-}
-if(canJump1){
+if(window.propI1&&window.propI1.jumpRequested){
+if(p1vy<=0.01&&p1vy>=-0.01){
 p1vy=0.25;
+}
 window.propI1.jumpRequested=false;
 }
-}
-}
-if(window.propI2&&p2Mesh){
-if(window.propI2.jumpRequested){
-let canJump2=p2Mesh.position.y<=0.1;
-for(let col of propColliders){
-let dx=p2Mesh.position.x-col.x;
-let dz=p2Mesh.position.z-col.z;
-let dist=Math.sqrt(dx*dx+dz*dz);
-if(dist<col.radius+0.5){
-if(p2Mesh.position.y>=col.height-0.2&&p2Mesh.position.y<=col.height+0.5){
-canJump2=true;break;
-}
-}
-}
-if(canJump2){
+if(window.propI2&&window.propI2.jumpRequested){
+if(p2vy<=0.01&&p2vy>=-0.01){
 p2vy=0.25;
+}
 window.propI2.jumpRequested=false;
-}
-}
 }
 p1Mesh.position.x=Math.max(-18,Math.min(18,p1Mesh.position.x));
 p1Mesh.position.z=Math.max(-18,Math.min(18,p1Mesh.position.z));
@@ -627,7 +602,7 @@ camera.position.set(p1Mesh.position.x,8,p1Mesh.position.z+12);
 camera.lookAt(p1Mesh.position.x,0,p1Mesh.position.z);
 renderer.render(scene,camera);
 requestAnimationFrame(propRenderLoop);
-}
+    }
 propRenderLoop();
 }
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;document.getElementById('ib').style.display='block';});
@@ -1906,10 +1881,8 @@ let h=createEnemy3D(x,0,0,'robot');
 healthList.push({mesh:h,x:x,y:0,z:0,c:false});
 }
 if(L==1){createNPC(8,-2,'chicken',t('hint1'));createNPC(12,2,'villager',t('hint2'));}
-if(L==2){createNPC(10,0,'merchant',t('hint3'));}
 if(L==5){createNPC(15,-2,'chicken',t('hint2'));}
 if(L==8){createNPC(18,2,'villager',t('hint3'));}
-if(L==12){createNPC(20,0,'merchant',t('hint1'));}
 if(L==2){createPowerUp(8,0,'speed');}
 if(L==5){createPowerUp(14,0,'attack');}
 if(L==8){createPowerUp(18,0,'shield');}
