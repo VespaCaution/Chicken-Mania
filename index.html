@@ -998,20 +998,20 @@ if(selectedCharacter=='dog'){
 const body=new THREE.Mesh(new THREE.BoxGeometry(0.9,0.7,0.6),new THREE.MeshStandardMaterial({color:0x8B4513}));
 body.position.y=0.5;body.castShadow=true;playerGroup.add(body);
 const head=new THREE.Mesh(new THREE.SphereGeometry(0.35,12,12),new THREE.MeshStandardMaterial({color:0x8B4513}));
-head.position.set(0.4,0.9,0);playerGroup.add(head);
+head.position.set(0,0.9,0.3);playerGroup.add(head);
 playerParts.head=head;
-const snout=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.15,0.15),new THREE.MeshStandardMaterial({color:0x4A2A0A}));
-snout.position.set(0.7,0.85,0);playerGroup.add(snout);
+const snout=new THREE.Mesh(new THREE.BoxGeometry(0.2,0.15,0.3),new THREE.MeshStandardMaterial({color:0x4A2A0A}));
+snout.position.set(0,0.85,0.55);playerGroup.add(snout);
 const nose=new THREE.Mesh(new THREE.SphereGeometry(0.06,6,6),new THREE.MeshStandardMaterial({color:0x000000}));
-nose.position.set(0.85,0.85,0);playerGroup.add(nose);
+nose.position.set(0,0.85,0.7);playerGroup.add(nose);
 const eyeMat=new THREE.MeshStandardMaterial({color:0x000000});
 const leftEye=new THREE.Mesh(new THREE.SphereGeometry(0.05,8,8),eyeMat);
-leftEye.position.set(0.35,1,0.25);playerGroup.add(leftEye);
-const rightEye=leftEye.clone();rightEye.position.z=-0.25;playerGroup.add(rightEye);
+leftEye.position.set(-0.15,1,0.4);playerGroup.add(leftEye);
+const rightEye=leftEye.clone();rightEye.position.x=0.15;playerGroup.add(rightEye);
 const earMat=new THREE.MeshStandardMaterial({color:0x4A2A0A});
 const leftEar=new THREE.Mesh(new THREE.ConeGeometry(0.1,0.3,6),earMat);
-leftEar.position.set(0.3,1.2,0.2);leftEar.rotation.z=-0.3;playerGroup.add(leftEar);
-const rightEar=leftEar.clone();rightEar.position.z=-0.2;rightEar.rotation.z=0.3;playerGroup.add(rightEar);
+leftEar.position.set(-0.2,1.2,0.3);leftEar.rotation.x=-0.3;playerGroup.add(leftEar);
+const rightEar=leftEar.clone();rightEar.position.x=0.2;rightEar.rotation.x=0.3;playerGroup.add(rightEar);
 const legMat=new THREE.MeshStandardMaterial({color:0x4A2A0A});
 const leftLeg=new THREE.Mesh(new THREE.BoxGeometry(0.2,0.4,0.2),legMat);
 leftLeg.position.set(-0.3,0.2,0.15);playerGroup.add(leftLeg);
@@ -1019,7 +1019,7 @@ playerParts.leftLeg=leftLeg;
 const rightLeg=leftLeg.clone();rightLeg.position.z=-0.15;playerGroup.add(rightLeg);
 playerParts.rightLeg=rightLeg;
 const tail=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.02,0.5,6),new THREE.MeshStandardMaterial({color:0x8B4513}));
-tail.position.set(-0.5,0.6,0);tail.rotation.z=Math.PI/2;playerGroup.add(tail);
+tail.position.set(0,0.6,-0.5);tail.rotation.x=Math.PI/2;playerGroup.add(tail);
 playerParts.tail=tail;
 }
 if(selectedCharacter=='cat'){
@@ -1143,9 +1143,6 @@ setTimeout(function(){playerParts.pitchfork.visible=false;},200);
 playerGroup.rotation.y=P.rotY+Math.sin(tt*0.5)*0.2;
 }else{
 playerGroup.rotation.y=P.rotY;
-}
-if(selectedCharacter=='dog'){
-playerGroup.rotation.y=P.rotY+Math.PI;
 }
 if(P.i>0&&Math.floor(P.i/5)%2==0){
 playerGroup.visible=false;
@@ -1487,12 +1484,9 @@ e.animPhase=(e.animPhase||0)+0.02;
 e.x+=Math.sin(e.animPhase)*1.5;
 if(e.x<3)e.x=3;
 if(e.x>lw-3)e.x=lw-3;
-if(dist<4&&dist>0.5){
-e.x+=Math.sign(dx)*0.04;
-}
+if(dist<4&&dist>0.5){e.x+=Math.sign(dx)*0.04;}
 e.z+=Math.sign(dz)*0.01;
-}
-else if(e.type=='crow'){
+}else if(e.type=='crow'){
 if(dist<6){e.x+=dx/dist*0.08;e.z+=dz/dist*0.08;e.y+=Math.sign(P.y+1-e.y)*0.05;}
 else{e.x+=Math.sin(tt*0.02+e.animPhase)*0.05;e.z+=Math.cos(tt*0.02+e.animPhase)*0.05;}
 if(e.mesh.userData.wings){
@@ -1557,15 +1551,21 @@ playHitSound();
 createHitParticle(P.x,P.y+1,P.z,0xFF0000);
 if(P.hp<=0){deaths++;playDeathSound();restartLevel();return;}
 }
-if(twoPlayerMode&&P2){
-let dx2=P2.x-e.x,dz2=P2.z-e.z;
+if(twoPlayerMode&&P2&&P2.hp>0){
+let dx2=P2.x-e.x;
+let dz2=P2.z-e.z;
 let dist2=Math.sqrt(dx2*dx2+dz2*dz2);
 if(dist2<1.5&&P2.i<=0){
 P2.hp-=15;
 P2.i=30;
 createHitParticle(P2.x,P2.y+1,P2.z,0xFF0000);
 playHitSound();
-if(P2.hp<=0){P2.hp=100;P2.x=P.x;P2.y=P.y;P2.z=P.z+1;}
+if(P2.hp<=0){
+P2.hp=100;
+P2.x=P.x;
+P2.y=P.y;
+P2.z=P.z+1;
+}
 }
 }
 }
@@ -1848,6 +1848,7 @@ for(let p of platforms){if(Math.abs(P2.x-p.x)<p.w/2&&Math.abs(P2.z-p.z)<p.d/2&&M
 if(P2.x<0)P2.x=0;if(P2.x>lw)P2.x=lw;
 if(P2.z<-8)P2.z=-8;if(P2.z>8)P2.z=8;
 if(P2.y<-5){P2.hp=0;}
+if(P2.i>0)P2.i--;
 if(P2.hp<=0){P2.hp=100;P2.x=P.x;P2.y=P.y;P2.z=P.z+1;}
 if(player2Group){player2Group.position.set(P2.x,P2.y,P2.z);player2Group.rotation.y=P2.rotY;}
 if(P2.isWalking&&P2.g){player2Group.position.y=P2.y+Math.sin(tt*0.2)*0.05;}
