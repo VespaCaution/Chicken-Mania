@@ -2517,6 +2517,7 @@ if(isPressed(14))I.left=true;
 if(isPressed(15))I.right=true;
 const btnPlus=isPressed(9);
 const btnMinus=isPressed(8);
+const btnHome=isPressed(16);
 if(!prevPadButtons)prevPadButtons={};
 if(btnPlus&&!prevPadButtons.Plus){
 prevPadButtons.Plus=true;
@@ -2525,8 +2526,12 @@ else if(typeof S!=='undefined'&&S=='playing'){togglePauseMenu();}
 }else if(!btnPlus){prevPadButtons.Plus=false;}
 if(btnMinus&&!prevPadButtons.Minus){
 prevPadButtons.Minus=true;
-if(propModeActive){exitPropMode();}
+gamepadMinusAction();
 }else if(!btnMinus){prevPadButtons.Minus=false;}
+if(btnHome&&!prevPadButtons.Home){
+prevPadButtons.Home=true;
+if(typeof quitToMenu==='function')quitToMenu();
+}else if(!btnHome){prevPadButtons.Home=false;}
 if(propModeActive&&window.propI1){
 window.propI1.left=I.left;
 window.propI1.right=I.right;
@@ -2562,6 +2567,32 @@ window.propI2.down=window.I2.backward;
 window.propI2.attack=window.I2.attack;
 if(window.I2.jump)window.propI2.jumpRequested=true;
 }
+}
+}
+function gamepadMinusAction(){
+if(document.getElementById('npcDialogue')){
+closeDialogue();
+return;
+}
+if(document.getElementById('pauseMenu')&&document.getElementById('pauseMenu').style.display=='block'){
+resumeGame();
+return;
+}
+if(document.getElementById('ss').style.display!=='none'){
+startGameBtn();
+return;
+}
+if(document.getElementById('lc')&&document.getElementById('lc').style.display=='block'){
+document.getElementById('lc').style.display='none';
+if(L<30){L++;mk(L);}else{gc(true);}
+return;
+}
+if(propModeActive){
+exitPropMode();
+return;
+}
+if(typeof S!=='undefined'&&S=='playing'){
+togglePauseMenu();
 }
 }
 function drawMiniMap(){
