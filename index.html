@@ -224,7 +224,7 @@ P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:CHARACTERS.chicken.speed,j:CHARACTERS.chicken.j
 }
 });
 conn.on('data',function(data){receiveRemoteData(data);});
-conn.on('close',function(){alert('Player 2 disconnected');twoPlayerMode=false;window.I2=null;P2=null;});
+conn.on('close',function(){alert('Player 2 disconnected');twoPlayerMode=false;window.I2=null;});
 });
 peer.on('error',function(err){alert('Room error: '+err.type);});
 }
@@ -242,7 +242,6 @@ peerConnection=peer.connect('chicken-mania-'+roomCode);
 peerConnection.on('open',function(){
 alert('Connected to room: '+roomCode);
 twoPlayerMode=true;
-window.I2={left:false,right:false,forward:false,backward:false,jump:false,attack:false};
 });
 peerConnection.on('data',function(data){receiveRemoteData(data);});
 peerConnection.on('close',function(){alert('Disconnected from room');twoPlayerMode=false;window.I2=null;});
@@ -258,23 +257,10 @@ window.I2.forward=data.forward||false;
 window.I2.backward=data.backward||false;
 window.I2.jump=data.jump||false;
 window.I2.attack=data.attack||false;
-if(data.p2x!==undefined&&typeof P2!=='undefined'){
+}
+if(data.type=='sync'&&typeof P2!=='undefined'){
 P2.x=data.p2x;
 P2.z=data.p2z;
-}
-}
-if(data.type=='sync'){
-if(typeof window.I2!=='undefined'){
-window.I2.hostX=data.p2x;
-window.I2.hostZ=data.p2z;
-}
-if(data.hostX!==undefined){
-if(typeof P2==='undefined'||!P2){
-P2={x:data.hostX,y:1,z:data.hostZ,vx:0,vy:0,vz:0,s:0.25,j:0.5,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:20,character:'farmer',hitboxW:0.8,hitboxH:1.8,hitboxD:0.6};
-}
-P2.x=data.hostX;
-P2.z=data.hostZ;
-}
 }
 if(data.type=='propInput'&&window.propI2){
 window.propI2.left=data.left||false;
@@ -288,26 +274,11 @@ if(data.jump)window.propI2.jumpRequested=true;
 function sendPlayerState(){
 if(peerConnection&&peerConnection.open){
 if(isHost){
-peerConnection.send({
-type:'sync',
-p2x:typeof P!=='undefined'?P.x:0,
-p2z:typeof P!=='undefined'?P.z:0
-});
+peerConnection.send({type:'sync',p2x:typeof P!=='undefined'?P.x:0,p2z:typeof P!=='undefined'?P.z:0});
 }else{
-peerConnection.send({
-type:'input',
-left:I.left,right:I.right,forward:I.forward,backward:I.backward,
-jump:I.jump,attack:I.attack,
-p2x:typeof P!=='undefined'?P.x:0,
-p2z:typeof P!=='undefined'?P.z:0
-});
+peerConnection.send({type:'input',left:I.left,right:I.right,forward:I.forward,backward:I.backward,jump:I.jump,attack:I.attack});
 if(propModeActive&&window.propI2){
-peerConnection.send({
-type:'propInput',
-left:window.propI2.left,right:window.propI2.right,
-up:window.propI2.up,down:window.propI2.down,
-jump:window.propI2.jump,attack:window.propI2.attack
-});
+peerConnection.send({type:'propInput',left:window.propI2.left,right:window.propI2.right,up:window.propI2.up,down:window.propI2.down,jump:window.propI2.jump,attack:window.propI2.attack});
 }
 }
 }
@@ -418,7 +389,7 @@ p1Head.position.y=1.7;p1Mesh.add(p1Head);
 p1Mesh.position.set(0,0,0);
 scene.add(p1Mesh);
 let p2Mesh=null;
-if(twoPlayerMode&&isHost){
+if(twoPlayerMode){
 p2Mesh=new THREE.Group();
 const p2body=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
 p2body.position.y=0.5;p2Mesh.add(p2body);
@@ -694,7 +665,7 @@ let achievements=JSON.parse(localStorage.getItem('cmachieve')||'{}');
 const charData=CHARACTERS[selectedCharacter];
 const I={left:false,right:false,forward:false,backward:false,jump:false,attack:false,pause:false};
 const P={x:0,y:1,z:0,vx:0,vy:0,vz:0,s:charData.speed,j:charData.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,dj:selectedCharacter=='chicken',dja:true,au:selectedCharacter=='dog',su:false,attackCombo:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:charData.attack,character:selectedCharacter,hitboxW:0.8,hitboxH:1.8,hitboxD:0.6};
-if(twoPlayerMode&&isHost){
+if(twoPlayerMode){
 P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:CHARACTERS.chicken.speed,j:CHARACTERS.chicken.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:CHARACTERS.chicken.attack,character:'chicken',hitboxW:0.6,hitboxH:1.2,hitboxD:0.5};
 }
 let platforms=[],enemies=[],coinList=[],bonusList=[],healthList=[],projectiles=[],particles=[],boss=null,lw=0,gx=0,weatherEffects=[],decorations=[],npcs=[],powerUps=[],bridges=[],waterAreas=[],gameObjects=[],loreFound=[];
@@ -1114,7 +1085,7 @@ playerParts.rightLeg=ckLeg2;
 }
 scene.add(playerGroup);
 let player2Group=null;
-if(twoPlayerMode&&P2&&isHost){
+if(twoPlayerMode&&P2){
 player2Group=new THREE.Group();
 const p2body=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
 p2body.position.y=0.5;player2Group.add(p2body);
@@ -2428,18 +2399,36 @@ function pairP2Controller(){
 pairingP2=true;
 alert('Press any button on the SECOND controller to pair it as P2');
 }
-let prevPadButtons={};
 
 function updateGamepad(){
 const gamepads=navigator.getGamepads?navigator.getGamepads():null;
 if(!gamepads)return;
 let p1gp=null;
 let p2gp=null;
+if(pairingP2){
 for(let i=0;i<gamepads.length;i++){
 const gp=gamepads[i];
 if(!gp)continue;
+for(let b=0;b<gp.buttons.length;b++){
+if(gp.buttons[b]&&gp.buttons[b].pressed){
+p2GamepadIndex=i;
+pairingP2=false;
+alert('P2 Controller paired!');
+break;
+}
+}
+if(!pairingP2)break;
+}
+}
+for(let i=0;i<gamepads.length;i++){
+const gp=gamepads[i];
+if(!gp)continue;
+if(p2GamepadIndex!==null&&i===p2GamepadIndex){
+p2gp=gp;
+continue;
+}
 if(!p1gp){p1gp=gp;continue;}
-if(!p2gp){p2gp=gp;break;}
+if(!p2gp){p2gp=gp;}
 }
 if(!p1gp)return;
 I.left=false;I.right=false;I.forward=false;I.backward=false;I.jump=false;I.attack=false;
@@ -2453,16 +2442,9 @@ if(sy<-0.3)I.forward=true;
 if(sy>0.3)I.backward=true;
 function isPressed(idx){return buttons[idx]&&buttons[idx].pressed===true;}
 function isTrigger(idx){return buttons[idx]&&typeof buttons[idx].value!=='undefined'&&buttons[idx].value>0.3;}
-if(isPressed(0))I.jump=true;
-if(isPressed(1))I.attack=true;
-if(isPressed(2))I.attack=true;
-if(isPressed(3))I.jump=true;
 if(isPressed(4))I.jump=true;
-if(isPressed(5))I.attack=true;
 if(isTrigger(6))I.attack=true;
 if(isTrigger(7))I.attack=true;
-if(isPressed(8))I.attack=true;
-if(isPressed(9))I.attack=true;
 if(isPressed(12))I.forward=true;
 if(isPressed(13))I.backward=true;
 if(isPressed(14))I.left=true;
@@ -2470,6 +2452,7 @@ if(isPressed(15))I.right=true;
 const btnPlus=isPressed(9);
 const btnMinus=isPressed(8);
 const btnHome=isPressed(16);
+if(!prevPadButtons)prevPadButtons={};
 if(btnPlus&&!prevPadButtons.Plus){
 prevPadButtons.Plus=true;
 if(propModeActive){exitPropMode();}
@@ -2503,12 +2486,7 @@ if(sy2<-0.3)window.I2.forward=true;
 if(sy2>0.3)window.I2.backward=true;
 function isPressed2(idx){return buttons2[idx]&&buttons2[idx].pressed===true;}
 function isTrigger2(idx){return buttons2[idx]&&buttons2[idx].value>0.3;}
-if(isPressed2(0))window.I2.jump=true;
-if(isPressed2(1))window.I2.attack=true;
-if(isPressed2(2))window.I2.attack=true;
-if(isPressed2(3))window.I2.jump=true;
 if(isPressed2(4))window.I2.jump=true;
-if(isPressed2(5))window.I2.attack=true;
 if(isTrigger2(6))window.I2.attack=true;
 if(isTrigger2(7))window.I2.attack=true;
 if(isPressed2(12))window.I2.forward=true;
@@ -2523,32 +2501,6 @@ window.propI2.down=window.I2.backward;
 window.propI2.attack=window.I2.attack;
 if(window.I2.jump)window.propI2.jumpRequested=true;
 }
-}
-}
-function gamepadMinusAction(){
-if(document.getElementById('npcDialogue')){
-closeDialogue();
-return;
-}
-if(document.getElementById('pauseMenu')&&document.getElementById('pauseMenu').style.display=='block'){
-resumeGame();
-return;
-}
-if(document.getElementById('ss').style.display!=='none'){
-startGameBtn();
-return;
-}
-if(document.getElementById('lc')&&document.getElementById('lc').style.display=='block'){
-document.getElementById('lc').style.display='none';
-if(L<30){L++;mk(L);}else{gc(true);}
-return;
-}
-if(propModeActive){
-exitPropMode();
-return;
-}
-if(typeof S!=='undefined'&&S=='playing'){
-togglePauseMenu();
 }
 }
 function drawMiniMap(){
@@ -2611,9 +2563,6 @@ ctx.fillRect(95,22,5,15);
 function loop(){
 if(!running)return;
 updateGamepad();
-if(onlineMode&&peerConnection&&peerConnection.open){
-sendPlayerState();
-}
 if(S=='playing'){upd();}
 renderer.render(scene,camera);
 document.getElementById('hp').style.width=(P.hp/P.mh*100)+'%';
