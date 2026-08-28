@@ -243,12 +243,19 @@ peerConnection.on('open',function(){
 alert('Connected to room: '+roomCode);
 twoPlayerMode=true;
 window.I2={left:false,right:false,forward:false,backward:false,jump:false,attack:false};
+if(typeof P2==='undefined'||!P2){
+P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:CHARACTERS.chicken.speed,j:CHARACTERS.chicken.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:CHARACTERS.chicken.attack,character:'chicken',hitboxW:0.6,hitboxH:1.2,hitboxD:0.5};
+}
 });
 peerConnection.on('data',function(data){receiveRemoteData(data);});
-peerConnection.on('close',function(){alert('Disconnected from room');twoPlayerMode=false;window.I2=null;});
+peerConnection.on('close',function(){
+alert('Disconnected from room');
+twoPlayerMode=false;
+window.I2=null;
+});
 });
 peer.on('error',function(err){alert('Connection error: '+err.type);});
-}
+    }
 function receiveRemoteData(data){
 if(!window.I2)window.I2={left:false,right:false,forward:false,backward:false,jump:false,attack:false};
 if(data.type=='input'){
@@ -694,7 +701,7 @@ let achievements=JSON.parse(localStorage.getItem('cmachieve')||'{}');
 const charData=CHARACTERS[selectedCharacter];
 const I={left:false,right:false,forward:false,backward:false,jump:false,attack:false,pause:false};
 const P={x:0,y:1,z:0,vx:0,vy:0,vz:0,s:charData.speed,j:charData.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,dj:selectedCharacter=='chicken',dja:true,au:selectedCharacter=='dog',su:false,attackCombo:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:charData.attack,character:selectedCharacter,hitboxW:0.8,hitboxH:1.8,hitboxD:0.6};
-if(twoPlayerMode&&isHost){
+if(twoPlayerMode){
 P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:CHARACTERS.chicken.speed,j:CHARACTERS.chicken.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:CHARACTERS.chicken.attack,character:'chicken',hitboxW:0.6,hitboxH:1.2,hitboxD:0.5};
 }
 let platforms=[],enemies=[],coinList=[],bonusList=[],healthList=[],projectiles=[],particles=[],boss=null,lw=0,gx=0,weatherEffects=[],decorations=[],npcs=[],powerUps=[],bridges=[],waterAreas=[],gameObjects=[],loreFound=[];
