@@ -80,6 +80,7 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 <button class="sb" id="sb" style="pointer-events:auto" onclick="startGameBtn()">▶️ Start Game</button>
 <button class="sb" id="twoPlayerBtn" style="pointer-events:auto;background:linear-gradient(145deg,#FF6600,#FF3300);color:#fff" onclick="toggleTwoPlayerMode()">👥 2 Player: OFF</button>
 <button class="sb" id="propModeBtn" style="pointer-events:auto;background:linear-gradient(145deg,#9370DB,#6A0DAD);color:#fff" onclick="enterPropMode()">🎭 Prop Battle</button>
+<button class="sb" id="pairP2Btn" style="pointer-events:auto;background:linear-gradient(145deg,#FF6600,#FF3300);color:#fff;font-size:14px;padding:8px 15px" onclick="pairP2Controller()">🎮 Pair P2 Controller</button>
 <button class="ib" id="ib" style="pointer-events:auto" onclick="installApp()">📲 Install App</button>
 <button class="rb" id="rb" style="pointer-events:auto" onclick="restartGame()">🔄 Restart Game</button>
 <p class="vr">Made by Ben with the help of DeepSeek</p>
@@ -2485,16 +2486,43 @@ document.body.appendChild(gpIndicator);
 }
 gpIndicator.textContent=text;
 }
+let p2GamepadIndex=null;
+let pairingP2=false;
+
+function pairP2Controller(){
+pairingP2=true;
+alert('Press any button on the SECOND controller to pair it as P2');
+}
+
 function updateGamepad(){
 const gamepads=navigator.getGamepads?navigator.getGamepads():null;
 if(!gamepads)return;
 let p1gp=null;
 let p2gp=null;
+if(pairingP2){
 for(let i=0;i<gamepads.length;i++){
 const gp=gamepads[i];
 if(!gp)continue;
+for(let b=0;b<gp.buttons.length;b++){
+if(gp.buttons[b]&&gp.buttons[b].pressed){
+p2GamepadIndex=i;
+pairingP2=false;
+alert('P2 Controller paired!');
+break;
+}
+}
+if(!pairingP2)break;
+}
+}
+for(let i=0;i<gamepads.length;i++){
+const gp=gamepads[i];
+if(!gp)continue;
+if(p2GamepadIndex!==null&&i===p2GamepadIndex){
+p2gp=gp;
+continue;
+}
 if(!p1gp){p1gp=gp;continue;}
-if(!p2gp){p2gp=gp;break;}
+if(!p2gp){p2gp=gp;}
 }
 if(!p1gp)return;
 I.left=false;I.right=false;I.forward=false;I.backward=false;I.jump=false;I.attack=false;
@@ -2567,32 +2595,6 @@ window.propI2.down=window.I2.backward;
 window.propI2.attack=window.I2.attack;
 if(window.I2.jump)window.propI2.jumpRequested=true;
 }
-}
-}
-function gamepadMinusAction(){
-if(document.getElementById('npcDialogue')){
-closeDialogue();
-return;
-}
-if(document.getElementById('pauseMenu')&&document.getElementById('pauseMenu').style.display=='block'){
-resumeGame();
-return;
-}
-if(document.getElementById('ss').style.display!=='none'){
-startGameBtn();
-return;
-}
-if(document.getElementById('lc')&&document.getElementById('lc').style.display=='block'){
-document.getElementById('lc').style.display='none';
-if(L<30){L++;mk(L);}else{gc(true);}
-return;
-}
-if(propModeActive){
-exitPropMode();
-return;
-}
-if(typeof S!=='undefined'&&S=='playing'){
-togglePauseMenu();
 }
 }
 function drawMiniMap(){
