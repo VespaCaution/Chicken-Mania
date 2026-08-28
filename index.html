@@ -2506,26 +2506,27 @@ if(sx<-0.3)I.left=true;
 if(sx>0.3)I.right=true;
 if(sy<-0.3)I.forward=true;
 if(sy>0.3)I.backward=true;
-function isPressed(idx){
-return buttons[idx]&&buttons[idx].pressed===true;
-}
-function isTrigger(idx){
-return buttons[idx]&&buttons[idx].value>0.5;
-}
-if(isPressed(0))I.jump=true;
-if(isPressed(1))I.attack=true;
-if(isPressed(2))I.attack=true;
-if(isPressed(3))I.jump=true;
+function isPressed(idx){return buttons[idx]&&buttons[idx].pressed===true;}
+function isTrigger(idx){return buttons[idx]&&typeof buttons[idx].value!=='undefined'&&buttons[idx].value>0.3;}
 if(isPressed(4))I.jump=true;
-if(isPressed(5))I.attack=true;
-if(isTrigger(6))I.jump=true;
+if(isTrigger(6))I.attack=true;
 if(isTrigger(7))I.attack=true;
-if(isPressed(8))I.attack=true;
-if(isPressed(9))I.attack=true;
 if(isPressed(12))I.forward=true;
 if(isPressed(13))I.backward=true;
 if(isPressed(14))I.left=true;
 if(isPressed(15))I.right=true;
+const btnPlus=isPressed(9);
+const btnMinus=isPressed(8);
+if(!prevPadButtons)prevPadButtons={};
+if(btnPlus&&!prevPadButtons.Plus){
+prevPadButtons.Plus=true;
+if(propModeActive){exitPropMode();}
+else if(typeof S!=='undefined'&&S=='playing'){togglePauseMenu();}
+}else if(!btnPlus){prevPadButtons.Plus=false;}
+if(btnMinus&&!prevPadButtons.Minus){
+prevPadButtons.Minus=true;
+if(propModeActive){exitPropMode();}
+}else if(!btnMinus){prevPadButtons.Minus=false;}
 if(propModeActive&&window.propI1){
 window.propI1.left=I.left;
 window.propI1.right=I.right;
@@ -2545,14 +2546,9 @@ if(sx2>0.3)window.I2.right=true;
 if(sy2<-0.3)window.I2.forward=true;
 if(sy2>0.3)window.I2.backward=true;
 function isPressed2(idx){return buttons2[idx]&&buttons2[idx].pressed===true;}
-function isTrigger2(idx){return buttons2[idx]&&buttons2[idx].value>0.5;}
-if(isPressed2(0))window.I2.jump=true;
-if(isPressed2(1))window.I2.attack=true;
-if(isPressed2(2))window.I2.attack=true;
-if(isPressed2(3))window.I2.jump=true;
+function isTrigger2(idx){return buttons2[idx]&&buttons2[idx].value>0.3;}
 if(isPressed2(4))window.I2.jump=true;
-if(isPressed2(5))window.I2.attack=true;
-if(isTrigger2(6))window.I2.jump=true;
+if(isTrigger2(6))window.I2.attack=true;
 if(isTrigger2(7))window.I2.attack=true;
 if(isPressed2(12))window.I2.forward=true;
 if(isPressed2(13))window.I2.backward=true;
