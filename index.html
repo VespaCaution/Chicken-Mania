@@ -224,7 +224,7 @@ P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:CHARACTERS.chicken.speed,j:CHARACTERS.chicken.j
 }
 });
 conn.on('data',function(data){receiveRemoteData(data);});
-conn.on('close',function(){alert('Player 2 disconnected');twoPlayerMode=false;window.I2=null;});
+conn.on('close',function(){alert('Player 2 disconnected');twoPlayerMode=false;window.I2=null;P2=null;});
 });
 peer.on('error',function(err){alert('Room error: '+err.type);});
 }
@@ -242,6 +242,7 @@ peerConnection=peer.connect('chicken-mania-'+roomCode);
 peerConnection.on('open',function(){
 alert('Connected to room: '+roomCode);
 twoPlayerMode=true;
+window.I2={left:false,right:false,forward:false,backward:false,jump:false,attack:false};
 });
 peerConnection.on('data',function(data){receiveRemoteData(data);});
 peerConnection.on('close',function(){alert('Disconnected from room');twoPlayerMode=false;window.I2=null;});
@@ -257,10 +258,23 @@ window.I2.forward=data.forward||false;
 window.I2.backward=data.backward||false;
 window.I2.jump=data.jump||false;
 window.I2.attack=data.attack||false;
-}
-if(data.type=='sync'&&typeof P2!=='undefined'){
+if(data.p2x!==undefined&&typeof P2!=='undefined'){
 P2.x=data.p2x;
 P2.z=data.p2z;
+}
+}
+if(data.type=='sync'){
+if(typeof window.I2!=='undefined'){
+window.I2.hostX=data.p2x;
+window.I2.hostZ=data.p2z;
+}
+if(data.hostX!==undefined){
+if(typeof P2==='undefined'||!P2){
+P2={x:data.hostX,y:1,z:data.hostZ,vx:0,vy:0,vz:0,s:0.25,j:0.5,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:20,character:'farmer',hitboxW:0.8,hitboxH:1.8,hitboxD:0.6};
+}
+P2.x=data.hostX;
+P2.z=data.hostZ;
+}
 }
 if(data.type=='propInput'&&window.propI2){
 window.propI2.left=data.left||false;
@@ -274,11 +288,26 @@ if(data.jump)window.propI2.jumpRequested=true;
 function sendPlayerState(){
 if(peerConnection&&peerConnection.open){
 if(isHost){
-peerConnection.send({type:'sync',p2x:typeof P!=='undefined'?P.x:0,p2z:typeof P!=='undefined'?P.z:0});
+peerConnection.send({
+type:'sync',
+p2x:typeof P!=='undefined'?P.x:0,
+p2z:typeof P!=='undefined'?P.z:0
+});
 }else{
-peerConnection.send({type:'input',left:I.left,right:I.right,forward:I.forward,backward:I.backward,jump:I.jump,attack:I.attack});
+peerConnection.send({
+type:'input',
+left:I.left,right:I.right,forward:I.forward,backward:I.backward,
+jump:I.jump,attack:I.attack,
+p2x:typeof P!=='undefined'?P.x:0,
+p2z:typeof P!=='undefined'?P.z:0
+});
 if(propModeActive&&window.propI2){
-peerConnection.send({type:'propInput',left:window.propI2.left,right:window.propI2.right,up:window.propI2.up,down:window.propI2.down,jump:window.propI2.jump,attack:window.propI2.attack});
+peerConnection.send({
+type:'propInput',
+left:window.propI2.left,right:window.propI2.right,
+up:window.propI2.up,down:window.propI2.down,
+jump:window.propI2.jump,attack:window.propI2.attack
+});
 }
 }
 }
@@ -389,7 +418,7 @@ p1Head.position.y=1.7;p1Mesh.add(p1Head);
 p1Mesh.position.set(0,0,0);
 scene.add(p1Mesh);
 let p2Mesh=null;
-if(twoPlayerMode){
+if(twoPlayerMode&&isHost){
 p2Mesh=new THREE.Group();
 const p2body=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
 p2body.position.y=0.5;p2Mesh.add(p2body);
@@ -665,7 +694,7 @@ let achievements=JSON.parse(localStorage.getItem('cmachieve')||'{}');
 const charData=CHARACTERS[selectedCharacter];
 const I={left:false,right:false,forward:false,backward:false,jump:false,attack:false,pause:false};
 const P={x:0,y:1,z:0,vx:0,vy:0,vz:0,s:charData.speed,j:charData.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,dj:selectedCharacter=='chicken',dja:true,au:selectedCharacter=='dog',su:false,attackCombo:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:charData.attack,character:selectedCharacter,hitboxW:0.8,hitboxH:1.8,hitboxD:0.6};
-if(twoPlayerMode){
+if(twoPlayerMode&&isHost){
 P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:CHARACTERS.chicken.speed,j:CHARACTERS.chicken.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:CHARACTERS.chicken.attack,character:'chicken',hitboxW:0.6,hitboxH:1.2,hitboxD:0.5};
 }
 let platforms=[],enemies=[],coinList=[],bonusList=[],healthList=[],projectiles=[],particles=[],boss=null,lw=0,gx=0,weatherEffects=[],decorations=[],npcs=[],powerUps=[],bridges=[],waterAreas=[],gameObjects=[],loreFound=[];
@@ -1085,7 +1114,7 @@ playerParts.rightLeg=ckLeg2;
 }
 scene.add(playerGroup);
 let player2Group=null;
-if(twoPlayerMode&&P2){
+if(twoPlayerMode&&P2&&isHost){
 player2Group=new THREE.Group();
 const p2body=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
 p2body.position.y=0.5;player2Group.add(p2body);
@@ -2563,6 +2592,9 @@ ctx.fillRect(95,22,5,15);
 function loop(){
 if(!running)return;
 updateGamepad();
+if(onlineMode&&peerConnection&&peerConnection.open){
+sendPlayerState();
+}
 if(S=='playing'){upd();}
 renderer.render(scene,camera);
 document.getElementById('hp').style.width=(P.hp/P.mh*100)+'%';
