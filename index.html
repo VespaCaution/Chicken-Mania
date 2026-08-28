@@ -257,31 +257,25 @@ window.I2=null;
 peer.on('error',function(err){alert('Connection error: '+err.type);});
     }
 function receiveRemoteData(data){
+if(data.type=='guestInput'){
 if(!window.I2)window.I2={left:false,right:false,forward:false,backward:false,jump:false,attack:false};
-if(data.type=='input'){
 window.I2.left=data.left||false;
 window.I2.right=data.right||false;
 window.I2.forward=data.forward||false;
 window.I2.backward=data.backward||false;
 window.I2.jump=data.jump||false;
 window.I2.attack=data.attack||false;
-if(data.p2x!==undefined&&typeof P2!=='undefined'){
-P2.x=data.p2x;
-P2.z=data.p2z;
+if(data.x!==undefined&&typeof P2!=='undefined'&&P2){
+P2.x=data.x;
+P2.z=data.z;
 }
 }
-if(data.type=='sync'){
-if(typeof window.I2!=='undefined'){
-window.I2.hostX=data.p2x;
-window.I2.hostZ=data.p2z;
-}
-if(data.hostX!==undefined){
+if(data.type=='hostPos'){
 if(typeof P2==='undefined'||!P2){
-P2={x:data.hostX,y:1,z:data.hostZ,vx:0,vy:0,vz:0,s:0.25,j:0.5,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:20,character:'farmer',hitboxW:0.8,hitboxH:1.8,hitboxD:0.6};
+P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:CHARACTERS.chicken.speed,j:CHARACTERS.chicken.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:CHARACTERS.chicken.attack,character:'chicken',hitboxW:0.6,hitboxH:1.2,hitboxD:0.5};
 }
-P2.x=data.hostX;
-P2.z=data.hostZ;
-}
+P2.x=data.x;
+P2.z=data.z;
 }
 if(data.type=='propInput'&&window.propI2){
 window.propI2.left=data.left||false;
@@ -291,32 +285,27 @@ window.propI2.down=data.down||false;
 window.propI2.attack=data.attack||false;
 if(data.jump)window.propI2.jumpRequested=true;
 }
-}
+    }
 function sendPlayerState(){
-if(peerConnection&&peerConnection.open){
+if(!peerConnection||!peerConnection.open)return;
 if(isHost){
 peerConnection.send({
-type:'sync',
-p2x:typeof P!=='undefined'?P.x:0,
-p2z:typeof P!=='undefined'?P.z:0
+type:'hostPos',
+x:typeof P!=='undefined'?P.x:0,
+z:typeof P!=='undefined'?P.z:0
 });
 }else{
 peerConnection.send({
-type:'input',
-left:I.left,right:I.right,forward:I.forward,backward:I.backward,
-jump:I.jump,attack:I.attack,
-p2x:typeof P!=='undefined'?P.x:0,
-p2z:typeof P!=='undefined'?P.z:0
+type:'guestInput',
+left:I.left,
+right:I.right,
+forward:I.forward,
+backward:I.backward,
+jump:I.jump,
+attack:I.attack,
+x:typeof P!=='undefined'?P.x:0,
+z:typeof P!=='undefined'?P.z:0
 });
-if(propModeActive&&window.propI2){
-peerConnection.send({
-type:'propInput',
-left:window.propI2.left,right:window.propI2.right,
-up:window.propI2.up,down:window.propI2.down,
-jump:window.propI2.jump,attack:window.propI2.attack
-});
-}
-}
 }
 }
 function enterPropMode(){
@@ -1896,6 +1885,7 @@ if(P2.i>0)P2.i--;
 if(P2.hp<=0){P2.hp=100;P2.x=P.x;P2.y=P.y;P2.z=P.z+1;}
 if(player2Group){player2Group.position.set(P2.x,P2.y,P2.z);player2Group.rotation.y=P2.rotY;}
 if(P2.isWalking&&P2.g){player2Group.position.y=P2.y+Math.sin(tt*0.2)*0.05;}
+}
 for(let c of coinList){
 if(!c.c){let dx=P2.x-c.x,dy=P2.y-c.y,dz=P2.z-c.z;if(Math.sqrt(dx*dx+dy*dy+dz*dz)<1.5){c.c=true;coins+=5;tc+=5;lC+=5;createHitParticle(c.x,c.y,c.z,0xFFD700);playCoinSound();scene.remove(c.mesh);}}
 }
