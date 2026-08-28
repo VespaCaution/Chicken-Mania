@@ -668,6 +668,7 @@ if(currentBeat>=song.melody.length)currentBeat=0;
 }
 function stopMusic(){if(musicInterval){clearInterval(musicInterval);musicInterval=null;}currentMusic=null;}
 function initGame(startLevel){
+try{
 if(typeof THREE==='undefined'){alert('3D engine not loaded. Reload page.');return;}
 if(gameInstance){gameInstance.stop();gameInstance=null;}
 const testCanvas=document.createElement('canvas');
@@ -728,145 +729,101 @@ scene.add(new THREE.HemisphereLight(0x87CEEB,0x228B22,0.4));
 const sky=new THREE.Mesh(new THREE.SphereGeometry(100,32,32),new THREE.MeshBasicMaterial({color:0x87CEEB,side:THREE.BackSide}));
 scene.add(sky);
 const cloudMat=new THREE.MeshStandardMaterial({color:0xFFFFFF,roughness:0.9});
-for(let i=0;i<18;i++){
+for(let i=0;i<15;i++){
 const cloud=new THREE.Group();
-const c1=new THREE.Mesh(new THREE.SphereGeometry(2+Math.random()*1.5,8,8),cloudMat);
+const c1=new THREE.Mesh(new THREE.SphereGeometry(2+Math.random(),8,8),cloudMat);
 cloud.add(c1);
 const c2=new THREE.Mesh(new THREE.SphereGeometry(1.5+Math.random(),8,8),cloudMat);
-c2.position.set(2,0.4,0);cloud.add(c2);
+c2.position.set(2,0.5,0);cloud.add(c2);
 const c3=new THREE.Mesh(new THREE.SphereGeometry(1.8+Math.random(),8,8),cloudMat);
-c3.position.set(-1.5,0.3,0.4);cloud.add(c3);
-const c4=new THREE.Mesh(new THREE.SphereGeometry(1.2+Math.random(),8,8),cloudMat);
-c4.position.set(0.5,0.6,-0.5);cloud.add(c4);
-cloud.position.set(Math.random()*100-50,18+Math.random()*12,Math.random()*80-40);
-scene.add(cloud);
-decorations.push(cloud);
+c3.position.set(-1.5,0.3,0.5);cloud.add(c3);
+cloud.position.set(Math.random()*80-40,20+Math.random()*10,Math.random()*60-30);
+scene.add(cloud);decorations.push(cloud);
 }
 const mountainMat=new THREE.MeshStandardMaterial({color:0x666666,roughness:0.8});
-for(let i=0;i<25;i++){
-const m=new THREE.Mesh(new THREE.ConeGeometry(5+Math.random()*10,15+Math.random()*15,8),mountainMat);
-m.position.set(i*8-60,5,-45+Math.random()*15);
+for(let i=0;i<20;i++){
+const m=new THREE.Mesh(new THREE.ConeGeometry(5+Math.random()*8,15+Math.random()*10,8),mountainMat);
+m.position.set(i*10-50,5,-40+Math.random()*10);
 scene.add(m);
-const snow=new THREE.Mesh(new THREE.ConeGeometry(m.geometry.parameters.radius*0.3,m.geometry.parameters.height*0.25,8),new THREE.MeshStandardMaterial({color:0xFFFFFF,roughness:0.3}));
+const snow=new THREE.Mesh(new THREE.ConeGeometry(m.geometry.parameters.radius*0.3,m.geometry.parameters.height*0.2,8),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
 snow.position.set(m.position.x,m.position.y+m.geometry.parameters.height*0.4,m.position.z);
 scene.add(snow);
 }
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(300,300),new THREE.MeshStandardMaterial({color:0x8B4513,roughness:0.9}));
-ground.rotation.x=-Math.PI/2;
-ground.position.y=0;
-ground.receiveShadow=true;
+ground.rotation.x=-Math.PI/2;ground.position.y=0;ground.receiveShadow=true;
 scene.add(ground);
 const grassMat=new THREE.MeshStandardMaterial({color:0x228B22,roughness:0.8});
-for(let i=0;i<100;i++){
-const g=new THREE.Mesh(new THREE.CircleGeometry(1.2+Math.random()*2.5,8),grassMat);
+for(let i=0;i<80;i++){
+const g=new THREE.Mesh(new THREE.CircleGeometry(1.5+Math.random()*2.5,8),grassMat);
 g.rotation.x=-Math.PI/2;
-g.position.set(Math.random()*120-60,0.01,Math.random()*120-60);
+g.position.set(Math.random()*100-50,0.01,Math.random()*100-50);
 scene.add(g);
 }
-const flowerColors=[0xFF69B4,0xFFD700,0xFF4500,0xFF6347,0x9370DB,0xFFA500,0x00CED1];
-for(let i=0;i<50;i++){
+const flowerColors=[0xFF69B4,0xFFD700,0xFF4500,0xFF6347,0x9370DB];
+for(let i=0;i<40;i++){
 const flower=new THREE.Group();
-const stem=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.04,0.5,6),new THREE.MeshStandardMaterial({color:0x228B22}));
+const stem=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,0.5,6),new THREE.MeshStandardMaterial({color:0x228B22}));
 stem.position.y=0.25;flower.add(stem);
-const leaf=new THREE.Mesh(new THREE.SphereGeometry(0.08,6,6),new THREE.MeshStandardMaterial({color:0x32CD32}));
-leaf.position.set(0.08,0.3,0);flower.add(leaf);
-const petal=new THREE.Mesh(new THREE.SphereGeometry(0.15,8,8),new THREE.MeshStandardMaterial({color:flowerColors[i%7]}));
+const petal=new THREE.Mesh(new THREE.SphereGeometry(0.15,6,6),new THREE.MeshStandardMaterial({color:flowerColors[i%5]}));
 petal.position.y=0.5;flower.add(petal);
-const center=new THREE.Mesh(new THREE.SphereGeometry(0.06,6,6),new THREE.MeshStandardMaterial({color:0xFFFF00}));
-center.position.y=0.5;flower.add(center);
-flower.position.set(Math.random()*100-50,0,Math.random()*100-50);
-scene.add(flower);
-decorations.push(flower);
+flower.position.set(Math.random()*80-40,0,Math.random()*80-40);
+scene.add(flower);decorations.push(flower);
 }
 function createTree(x,z,far){
 const tree=new THREE.Group();
-const trunkHeight=far?3.5:3;
-const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.5,trunkHeight,10),new THREE.MeshStandardMaterial({color:0x654321,roughness:0.9}));
-trunk.position.y=trunkHeight/2;
-tree.add(trunk);
+const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.5,3,8),new THREE.MeshStandardMaterial({color:0x654321,roughness:0.9}));
+trunk.position.y=1.5;tree.add(trunk);
 const leafMat=new THREE.MeshStandardMaterial({color:far?'#1a5a1a':'#228B22',roughness:0.7});
 const size=far?4:2.5;
 const leaf1=new THREE.Mesh(new THREE.SphereGeometry(size,10,10),leafMat);
-leaf1.position.y=trunkHeight+1;
-leaf1.castShadow=true;
-tree.add(leaf1);
+leaf1.position.y=4;leaf1.castShadow=true;tree.add(leaf1);
 const leaf2=new THREE.Mesh(new THREE.SphereGeometry(size*0.7,8,8),leafMat);
-leaf2.position.set(size*0.5,trunkHeight,size*0.3);
-tree.add(leaf2);
+leaf2.position.set(size*0.5,3.5,size*0.3);tree.add(leaf2);
 const leaf3=new THREE.Mesh(new THREE.SphereGeometry(size*0.6,8,8),leafMat);
-leaf3.position.set(-size*0.4,trunkHeight+0.5,size*0.2);
-tree.add(leaf3);
+leaf3.position.set(-size*0.4,4,size*0.2);tree.add(leaf3);
 const leaf4=new THREE.Mesh(new THREE.SphereGeometry(size*0.5,8,8),leafMat);
-leaf4.position.set(size*0.2,trunkHeight+1.5,-size*0.3);
-tree.add(leaf4);
+leaf4.position.set(size*0.2,4.5,-size*0.3);tree.add(leaf4);
 tree.position.set(x,0,z);
-scene.add(tree);
-return tree;
+scene.add(tree);return tree;
 }
 function createTorch(x,z){
 const torch=new THREE.Group();
-const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.15,2.2,8),new THREE.MeshStandardMaterial({color:0x8B4513}));
-pole.position.y=1.1;
-torch.add(pole);
-const flame=new THREE.Mesh(new THREE.SphereGeometry(0.35,10,10),new THREE.MeshStandardMaterial({color:0xFF6600,emissive:0xFF4400,emissiveIntensity:3}));
-flame.position.y=2.3;
-torch.add(flame);
-torch.userData={flame:flame};
-const glow=new THREE.Mesh(new THREE.SphereGeometry(0.6,8,8),new THREE.MeshBasicMaterial({color:0xFF6600,transparent:true,opacity:0.3}));
-glow.position.y=2.3;
-torch.add(glow);
-const flame2=new THREE.Mesh(new THREE.SphereGeometry(0.2,6,6),new THREE.MeshStandardMaterial({color:0xFFFF00,emissive:0xFFAA00,emissiveIntensity:3}));
-flame2.position.y=2.1;
-torch.add(flame2);
+const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.15,2,6),new THREE.MeshStandardMaterial({color:0x8B4513}));
+pole.position.y=1;torch.add(pole);
+const flame=new THREE.Mesh(new THREE.SphereGeometry(0.35,10,10),new THREE.MeshStandardMaterial({color:0xFF6600,emissive:0xFF4400,emissiveIntensity:2}));
+flame.position.y=2.3;torch.add(flame);torch.userData={flame:flame};
+const glow=new THREE.Mesh(new THREE.SphereGeometry(0.5,8,8),new THREE.MeshBasicMaterial({color:0xFF6600,transparent:true,opacity:0.3}));
+glow.position.y=2.3;torch.add(glow);
 torch.position.set(x,0,z);
-scene.add(torch);
-decorations.push(torch);
-return torch;
+scene.add(torch);decorations.push(torch);return torch;
 }
 function createWater(x,z,w,d){
 const waterGeo=new THREE.PlaneGeometry(w,d);
 const waterMat=new THREE.MeshStandardMaterial({color:0x4488FF,roughness:0.1,metalness:0.5,transparent:true,opacity:0.8});
 const water=new THREE.Mesh(waterGeo,waterMat);
-water.rotation.x=-Math.PI/2;
-water.position.set(x,0.05,z);
-scene.add(water);
-waterAreas.push({x:x,z:z,w:w,d:d,mesh:water});
-return water;
+water.rotation.x=-Math.PI/2;water.position.set(x,0.05,z);
+scene.add(water);waterAreas.push({x:x,z:z,w:w,d:d,mesh:water});return water;
 }
 function createBridge(x,z,w){
 const bridgeGroup=new THREE.Group();
 const plankMat=new THREE.MeshStandardMaterial({color:0x8B4513,roughness:0.7});
 for(let i=0;i<w;i+=0.5){
-const plank=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.1,1.6),plankMat);
-plank.position.set(i,0.3,0);
-bridgeGroup.add(plank);
+const plank=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.1,1.5),plankMat);
+plank.position.set(i,0.3,0);bridgeGroup.add(plank);
 }
-const ropeMat=new THREE.MeshStandardMaterial({color:0xA0522D});
-const rope1=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,w,6),ropeMat);
-rope1.rotation.z=Math.PI/2;
-rope1.position.set(w/2,0.7,0.7);
-bridgeGroup.add(rope1);
-const rope2=rope1.clone();
-rope2.position.z=-0.7;
-bridgeGroup.add(rope2);
-const postMat=new THREE.MeshStandardMaterial({color:0x654321});
-const post1=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,1,6),postMat);
-post1.position.set(0,0.5,0.7);
-bridgeGroup.add(post1);
-const post2=post1.clone();
-post2.position.z=-0.7;
-bridgeGroup.add(post2);
-const post3=post1.clone();
-post3.position.x=w;
-bridgeGroup.add(post3);
-const post4=post1.clone();
-post4.position.x=w;
-post4.position.z=-0.7;
-bridgeGroup.add(post4);
+const railMat=new THREE.MeshStandardMaterial({color:0x654321});
+const rail1=new THREE.Mesh(new THREE.BoxGeometry(w,0.1,0.1),railMat);
+rail1.position.set(w/2,0.6,0.6);bridgeGroup.add(rail1);
+const rail2=rail1.clone();rail2.position.z=-0.6;bridgeGroup.add(rail2);
 bridgeGroup.position.set(x,0,z);
-scene.add(bridgeGroup);
-bridges.push({x:x,z:z,w:w,mesh:bridgeGroup});
-return bridgeGroup;
+scene.add(bridgeGroup);bridges.push({x:x,z:z,w:w,mesh:bridgeGroup});return bridgeGroup;
+}
+mk(L);
+loop();
+}catch(e){
+console.error('INIT ERROR:',e.message,e.stack);
+alert('Game error: '+e.message);
+}
 }
 function createWeatherEffect(type){
 const p=new THREE.Mesh(new THREE.SphereGeometry(type=='rain'?0.05:type=='snow'?0.06:0.08,4,4),new THREE.MeshBasicMaterial({color:type=='rain'?0x88BBFF:type=='snow'?0xFFFFFF:0xFF6600,transparent:true,opacity:type=='snow'?0.9:0.7}));
@@ -1108,29 +1065,29 @@ playerParts.leftLeg=ckLeg1;
 const ckLeg2=ckLeg1.clone();ckLeg2.position.x=0.15;playerGroup.add(ckLeg2);
 playerParts.rightLeg=ckLeg2;
 }
-scene.add(playerGroup);
 let player2Group=null;
-if(twoPlayerMode&&P2&&isHost){
+if(twoPlayerMode&&P2){
 player2Group=new THREE.Group();
+if(isHost){
 const p2body=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
-p2body.position.y=0.5;player2Group.add(p2body);
+p2body.position.y=0.5;p2body.castShadow=true;player2Group.add(p2body);
 const p2head=new THREE.Mesh(new THREE.SphereGeometry(0.25,10,10),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
 p2head.position.y=0.9;player2Group.add(p2head);
 const p2beak=new THREE.Mesh(new THREE.ConeGeometry(0.08,0.15,6),new THREE.MeshStandardMaterial({color:0xFFA500}));
 p2beak.position.set(0,0.9,0.2);p2beak.rotation.x=Math.PI/2;player2Group.add(p2beak);
 const p2comb=new THREE.Mesh(new THREE.SphereGeometry(0.07,6,6),new THREE.MeshStandardMaterial({color:0xFF0000}));
 p2comb.position.y=1.1;player2Group.add(p2comb);
-const p2eyeMat=new THREE.MeshStandardMaterial({color:0x000000});
-const p2eye1=new THREE.Mesh(new THREE.SphereGeometry(0.04,6,6),p2eyeMat);
-p2eye1.position.set(-0.08,0.95,0.2);player2Group.add(p2eye1);
-const p2eye2=p2eye1.clone();p2eye2.position.x=0.08;player2Group.add(p2eye2);
-const p2wingMat=new THREE.MeshStandardMaterial({color:0xEEEEEE});
-const p2wing1=new THREE.Mesh(new THREE.SphereGeometry(0.15,6,6),p2wingMat);
-p2wing1.position.set(-0.3,0.5,0);player2Group.add(p2wing1);
-const p2wing2=p2wing1.clone();p2wing2.position.x=0.3;player2Group.add(p2wing2);
+}else{
+const p2body=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.5),new THREE.MeshStandardMaterial({color:0x4A90E2}));
+p2body.position.y=0.9;p2body.castShadow=true;player2Group.add(p2body);
+const p2head=new THREE.Mesh(new THREE.SphereGeometry(0.35,20,20),new THREE.MeshStandardMaterial({color:0xFFD2B3}));
+p2head.position.y=1.7;p2head.castShadow=true;player2Group.add(p2head);
+const p2hat=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.45,0.3,12),new THREE.MeshStandardMaterial({color:0x8B4513}));
+p2hat.position.y=2.1;player2Group.add(p2hat);
+}
 player2Group.position.set(P2.x,P2.y,P2.z);
 scene.add(player2Group);
-    }
+}
 function updatePlayerAnimation(){
 if(P.isWalking&&P.g){
 P.walkCycle+=0.2;
