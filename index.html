@@ -143,7 +143,7 @@ if(typeof THREE==='undefined'){
 document.write('<script src="https://unpkg.com/three@0.128.0/build/three.min.js"><\/script>');
 }
 </script>
-<script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/trystero@0.20.0/dist/trystero.min.js"></script>
 <script>
 let globalSkipFn=null,deferredPrompt=null,gameInstance=null,currentLang='en';
 let audioContext=null,musicInterval=null,currentMusic=null,currentBeat=0;
@@ -154,8 +154,7 @@ let propModeActive=false;
 let propObjects=[];
 let propP1={x:250,y:150,hp:50,emoji:'👨‍🌾'};
 let propP2=null;
-let peer=null;
-let peerConnection=null;
+let room=null;
 let roomCode=null;
 let isHost=false;
 let onlineMode=false;
@@ -232,36 +231,27 @@ function createRoom(){
 roomCode=Math.random().toString(36).substring(2,8).toUpperCase();
 isHost=true;
 onlineMode=true;
-peer=new Peer('chicken-mania-'+roomCode);
-peer.on('open',function(){
-alert('Room created! Share this code: '+roomCode);
-});
-peer.on('connection',function(conn){
-peerConnection=conn;
-conn.on('open',function(){
+try{
+room=self.joinRoom({appId:'chicken-mania-'+roomCode},roomCode);
+room.onPeerJoin(function(peerId){
 alert('Player 2 joined!');
 twoPlayerMode=true;
 if(typeof P2==='undefined'||!P2){
 P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:CHARACTERS.chicken.speed,j:CHARACTERS.chicken.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:CHARACTERS.chicken.attack,character:'chicken',hitboxW:0.6,hitboxH:1.2,hitboxD:0.5};
 }
-if(typeof player2Group==='undefined'||!player2Group){
-player2Group=new THREE.Group();
-const p2body=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
-p2body.position.y=0.5;player2Group.add(p2body);
-player2Group.position.set(P2.x,P2.y,P2.z);
-scene.add(player2Group);
-}
 });
-conn.on('data',function(data){receiveRemoteData(data);});
-conn.on('close',function(){
-alert('Player 2 disconnected');
+room.onPeerLeave(function(peerId){
+alert('Player 2 left');
 twoPlayerMode=false;
 window.I2=null;
-P2=null;
-if(typeof player2Group!=='undefined'&&player2Group){scene.remove(player2Group);player2Group=null;}
 });
+room.onPeerData(function(data,peerId){
+receiveRemoteData(data);
 });
-peer.on('error',function(err){alert('Room error: '+err.type);});
+alert('Room created! Share this code: '+roomCode);
+}catch(e){
+alert('Room error: '+e.message);
+}
 }
 function joinRoomPrompt(){
 var code=prompt('Enter room code:');
@@ -271,33 +261,18 @@ function joinRoom(code){
 roomCode=code.toUpperCase();
 isHost=false;
 onlineMode=true;
-peer=new Peer();
-peer.on('open',function(){
-peerConnection=peer.connect('chicken-mania-'+roomCode);
-peerConnection.on('open',function(){
-alert('Connected to room: '+roomCode);
+try{
+room=self.joinRoom({appId:'chicken-mania-'+roomCode},roomCode);
+room.onPeerJoin(function(peerId){
+alert('Connected to room!');
 twoPlayerMode=true;
-if(typeof P2==='undefined'||!P2){
-P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:CHARACTERS.chicken.speed,j:CHARACTERS.chicken.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:CHARACTERS.chicken.attack,character:'chicken',hitboxW:0.6,hitboxH:1.2,hitboxD:0.5};
+});
+room.onPeerData(function(data,peerId){
+receiveRemoteData(data);
+});
+}catch(e){
+alert('Connection error: '+e.message);
 }
-if(typeof player2Group==='undefined'||!player2Group){
-player2Group=new THREE.Group();
-const p2body=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.5),new THREE.MeshStandardMaterial({color:0x4A90E2}));
-p2body.position.y=0.9;player2Group.add(p2body);
-player2Group.position.set(P2.x,P2.y,P2.z);
-scene.add(player2Group);
-}
-});
-peerConnection.on('data',function(data){receiveRemoteData(data);});
-peerConnection.on('close',function(){
-alert('Disconnected from room');
-twoPlayerMode=false;
-window.I2=null;
-P2=null;
-if(typeof player2Group!=='undefined'&&player2Group){scene.remove(player2Group);player2Group=null;}
-});
-});
-peer.on('error',function(err){alert('Connection error: '+err.type);});
 }
 function receiveRemoteData(data){
 if(!window.I2)window.I2={left:false,right:false,forward:false,backward:false,jump:false,attack:false};
@@ -306,8 +281,8 @@ if(typeof P2!=='undefined'&&P2){
 P2.x=data.x;
 P2.z=data.z;
 }
-if(typeof player2Group!=='undefined'&&player2Group){
-player2Group.position.set(P2.x,P2.y,P2.z);
+if(typeof window.player2Group!=='undefined'&&window.player2Group){
+window.player2Group.position.set(P2.x,P2.y,P2.z);
 }
 }
 if(data.type=='guestInput'){
@@ -320,23 +295,11 @@ window.I2.attack=data.attack||false;
 }
 }
 function sendPlayerState(){
-if(!peerConnection||!peerConnection.open)return;
+if(!room||!onlineMode)return;
 if(isHost){
-peerConnection.send({
-type:'hostPos',
-x:typeof P!=='undefined'?P.x:0,
-z:typeof P!=='undefined'?P.z:0
-});
+room.send({type:'hostPos',x:typeof P!=='undefined'?P.x:0,z:typeof P!=='undefined'?P.z:0});
 }else{
-peerConnection.send({
-type:'guestInput',
-left:I.left,
-right:I.right,
-forward:I.forward,
-backward:I.backward,
-jump:I.jump,
-attack:I.attack
-});
+room.send({type:'guestInput',left:I.left,right:I.right,forward:I.forward,backward:I.backward,jump:I.jump,attack:I.attack});
 }
 }
 function enterPropMode(){
@@ -344,18 +307,6 @@ propModeActive=true;
 document.getElementById('ss').style.display='none';
 document.getElementById('gs').style.display='block';
 document.getElementById('propMode').style.display='block';
-if(gameInstance){gameInstance.stop();gameInstance=null;}
-setTimeout(function(){
-try{initPropMode();}catch(e){alert('Prop mode error: '+e.message);}
-},200);
-}
-function enterPropMode(){
-propModeActive=true;
-document.getElementById('ss').style.display='none';
-document.getElementById('gs').style.display='block';
-document.getElementById('propMode').style.display='block';
-document.getElementById('t').style.display='none';
-document.getElementById('p2controls').style.display=twoPlayerMode?'flex':'none';
 if(gameInstance){gameInstance.stop();gameInstance=null;}
 setTimeout(function(){
 try{initPropMode();}catch(e){alert('Prop mode error: '+e.message);}
@@ -364,7 +315,6 @@ try{initPropMode();}catch(e){alert('Prop mode error: '+e.message);}
 function exitPropMode(){
 propModeActive=false;
 document.getElementById('propMode').style.display='none';
-document.getElementById('t').style.display='flex';
 document.getElementById('gs').style.display='none';
 document.getElementById('ss').style.display='flex';
 }
@@ -394,9 +344,6 @@ scene.add(new THREE.AmbientLight(0xffffff,0.6));
 const sun=new THREE.DirectionalLight(0xffffff,0.9);
 sun.position.set(20,30,10);
 sun.castShadow=true;
-sun.shadow.camera.left=-40;sun.shadow.camera.right=40;
-sun.shadow.camera.top=40;sun.shadow.camera.bottom=-40;
-sun.shadow.mapSize.width=2048;sun.shadow.mapSize.height=2048;
 scene.add(sun);
 scene.add(new THREE.HemisphereLight(0x87CEEB,0x228B22,0.4));
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(50,50),new THREE.MeshStandardMaterial({color:0x8B4513,roughness:0.9}));
@@ -428,112 +375,48 @@ trunk.position.y=1.5;tree.add(trunk);
 const leafMat=new THREE.MeshStandardMaterial({color:'#1a5a1a',roughness:0.7});
 const leaf1=new THREE.Mesh(new THREE.SphereGeometry(2.5,10,10),leafMat);
 leaf1.position.y=4;leaf1.castShadow=true;tree.add(leaf1);
-const leaf2=new THREE.Mesh(new THREE.SphereGeometry(1.8,8,8),leafMat);
-leaf2.position.set(1.2,3.5,0.7);tree.add(leaf2);
-const leaf3=new THREE.Mesh(new THREE.SphereGeometry(1.5,8,8),leafMat);
-leaf3.position.set(-1,4,0.5);tree.add(leaf3);
-const leaf4=new THREE.Mesh(new THREE.SphereGeometry(1.2,8,8),leafMat);
-leaf4.position.set(0.5,4.5,-0.8);tree.add(leaf4);
 tree.position.set(Math.random()*40-20,0,Math.random()*40-20);
 scene.add(tree);
-propColliders.push({x:tree.position.x,z:tree.position.z,radius:1,height:1.5});
+propColliders.push({x:tree.position.x,z:tree.position.z,radius:0.5,height:1.5});
 }
 for(let i=0;i<6;i++){
 const plat=new THREE.Mesh(new THREE.BoxGeometry(2,0.4,1.5),new THREE.MeshStandardMaterial({color:0xD2691E,roughness:0.6}));
 plat.position.set(Math.random()*24-12,0.5+Math.random()*1,Math.random()*24-12);
 plat.castShadow=true;plat.receiveShadow=true;
-const edgeMat=new THREE.MeshStandardMaterial({color:0x8B4513});
-const edge1=new THREE.Mesh(new THREE.BoxGeometry(2.1,0.1,0.1),edgeMat);
-edge1.position.set(0,0,0.7);plat.add(edge1);
-const edge2=edge1.clone();edge2.position.z=-0.7;plat.add(edge2);
-const grassTop=new THREE.Mesh(new THREE.BoxGeometry(1.8,0.05,1.3),new THREE.MeshStandardMaterial({color:0x90EE90}));
-grassTop.position.y=0.2;plat.add(grassTop);
 scene.add(plat);
-propColliders.push({x:plat.position.x,z:plat.position.z,radius:1.5,height:plat.position.y+0.4});
+propColliders.push({x:plat.position.x,z:plat.position.z,radius:1,height:plat.position.y+0.4});
 }
 for(let i=0;i<4;i++){
 const rock=new THREE.Mesh(new THREE.SphereGeometry(0.5+Math.random()*0.5,8,8),new THREE.MeshStandardMaterial({color:0x888888,roughness:0.9}));
 rock.position.set(Math.random()*24-12,0.4,Math.random()*24-12);
 rock.castShadow=true;scene.add(rock);
-propColliders.push({x:rock.position.x,z:rock.position.z,radius:0.8,height:1});
+propColliders.push({x:rock.position.x,z:rock.position.z,radius:0.5,height:1});
 }
 for(let i=0;i<3;i++){
 const pipeGroup=new THREE.Group();
 const pipeMat=new THREE.MeshStandardMaterial({color:0x00CC00,roughness:0.5});
 const pipe=new THREE.Mesh(new THREE.CylinderGeometry(1,1,4,20),pipeMat);
 pipe.position.y=2;pipe.castShadow=true;pipeGroup.add(pipe);
-const rim=new THREE.Mesh(new THREE.CylinderGeometry(1.2,1.2,0.5,20),pipeMat);
-rim.position.y=4;rim.castShadow=true;pipeGroup.add(rim);
-const highlight=new THREE.Mesh(new THREE.CylinderGeometry(0.9,0.9,4.2,20),new THREE.MeshStandardMaterial({color:0x00EE00,roughness:0.3}));
-highlight.position.set(0.2,2,0.2);pipeGroup.add(highlight);
 pipeGroup.position.set(Math.random()*16-8,0,Math.random()*16-8);
 scene.add(pipeGroup);
-propColliders.push({x:pipeGroup.position.x,z:pipeGroup.position.z,radius:2,height:4});
+propColliders.push({x:pipeGroup.position.x,z:pipeGroup.position.z,radius:1.2,height:4});
 }
+const charColor=CHARACTERS[selectedCharacter].color;
 const p1Mesh=new THREE.Group();
-if(selectedCharacter=='farmer'){
-const p1Body=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.5),new THREE.MeshStandardMaterial({color:0x4A90E2,roughness:0.5}));
-p1Body.position.y=0.9;p1Body.castShadow=true;p1Mesh.add(p1Body);
-const p1Overall=new THREE.Mesh(new THREE.BoxGeometry(0.7,0.5,0.45),new THREE.MeshStandardMaterial({color:0x4169E1}));
-p1Overall.position.y=0.7;p1Mesh.add(p1Overall);
+const p1Body=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.5),new THREE.MeshStandardMaterial({color:charColor}));
+p1Body.position.y=0.9;p1Mesh.add(p1Body);
 const p1Head=new THREE.Mesh(new THREE.SphereGeometry(0.35,20,20),new THREE.MeshStandardMaterial({color:0xFFD2B3}));
-p1Head.position.y=1.7;p1Head.castShadow=true;p1Mesh.add(p1Head);
-const p1Hat=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.45,0.3,12),new THREE.MeshStandardMaterial({color:0x8B4513}));
-p1Hat.position.y=2.1;p1Mesh.add(p1Hat);
-const p1EyeMat=new THREE.MeshStandardMaterial({color:0x000000});
-const p1Eye1=new THREE.Mesh(new THREE.SphereGeometry(0.05,8,8),p1EyeMat);
-p1Eye1.position.set(-0.12,1.75,0.3);p1Mesh.add(p1Eye1);
-const p1Eye2=p1Eye1.clone();p1Eye2.position.x=0.12;p1Mesh.add(p1Eye2);
-}else if(selectedCharacter=='chicken'){
-const p1Body=new THREE.Mesh(new THREE.SphereGeometry(0.5,16,16),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
-p1Body.position.y=0.6;p1Body.castShadow=true;p1Mesh.add(p1Body);
-const p1Head=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,12),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
-p1Head.position.y=1.1;p1Mesh.add(p1Head);
-const beak=new THREE.Mesh(new THREE.ConeGeometry(0.1,0.2,6),new THREE.MeshStandardMaterial({color:0xFFA500}));
-beak.position.set(0,1.1,0.25);beak.rotation.x=Math.PI/2;p1Mesh.add(beak);
-const comb=new THREE.Mesh(new THREE.SphereGeometry(0.1,8,8),new THREE.MeshStandardMaterial({color:0xFF0000}));
-comb.position.y=1.4;p1Mesh.add(comb);
-}else if(selectedCharacter=='dog'){
-const p1Body=new THREE.Mesh(new THREE.BoxGeometry(0.9,0.7,1.2),new THREE.MeshStandardMaterial({color:0x8B4513}));
-p1Body.position.y=0.5;p1Body.castShadow=true;p1Mesh.add(p1Body);
-const p1Head=new THREE.Mesh(new THREE.SphereGeometry(0.35,12,12),new THREE.MeshStandardMaterial({color:0x8B4513}));
-p1Head.position.set(0,0.9,0.5);p1Mesh.add(p1Head);
-const snout=new THREE.Mesh(new THREE.BoxGeometry(0.2,0.15,0.3),new THREE.MeshStandardMaterial({color:0x4A2A0A}));
-snout.position.set(0,0.85,0.8);p1Mesh.add(snout);
-const nose=new THREE.Mesh(new THREE.SphereGeometry(0.06,6,6),new THREE.MeshStandardMaterial({color:0x000000}));
-nose.position.set(0,0.85,0.95);p1Mesh.add(nose);
-}else if(selectedCharacter=='cat'){
-const p1Body=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.6,0.8),new THREE.MeshStandardMaterial({color:0xFF6600}));
-p1Body.position.y=0.4;p1Body.castShadow=true;p1Mesh.add(p1Body);
-const p1Head=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,12),new THREE.MeshStandardMaterial({color:0xFF6600}));
-p1Head.position.y=0.8;p1Mesh.add(p1Head);
-const ear1=new THREE.Mesh(new THREE.ConeGeometry(0.12,0.25,6),new THREE.MeshStandardMaterial({color:0xFF6600}));
-ear1.position.set(-0.15,1,0);p1Mesh.add(ear1);
-const ear2=ear1.clone();ear2.position.x=0.15;p1Mesh.add(ear2);
-}else if(selectedCharacter=='chickencat'){
-const p1Body=new THREE.Mesh(new THREE.SphereGeometry(0.45,16,16),new THREE.MeshStandardMaterial({color:0xFFD700}));
-p1Body.position.y=0.5;p1Body.castShadow=true;p1Mesh.add(p1Body);
-const p1Head=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,12),new THREE.MeshStandardMaterial({color:0xFF6600}));
-p1Head.position.y=1;p1Mesh.add(p1Head);
-const ckEar1=new THREE.Mesh(new THREE.ConeGeometry(0.12,0.25,6),new THREE.MeshStandardMaterial({color:0xFF6600}));
-ckEar1.position.set(-0.15,1.25,0);p1Mesh.add(ckEar1);
-const ckEar2=ckEar1.clone();ckEar2.position.x=0.15;p1Mesh.add(ckEar2);
-}
+p1Head.position.y=1.7;p1Mesh.add(p1Head);
 p1Mesh.position.set(0,0,0);
 scene.add(p1Mesh);
 let p2Mesh=null;
-if(twoPlayerMode){
+if(twoPlayerMode&&isHost){
 p2Mesh=new THREE.Group();
 const p2body=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
-p2body.position.y=0.5;p2body.castShadow=true;p2Mesh.add(p2body);
-const p2head=new THREE.Mesh(new THREE.SphereGeometry(0.25,10,10),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
-p2head.position.y=0.9;p2Mesh.add(p2head);
-const p2beak=new THREE.Mesh(new THREE.ConeGeometry(0.08,0.15,6),new THREE.MeshStandardMaterial({color:0xFFA500}));
-p2beak.position.set(0,0.9,0.2);p2beak.rotation.x=Math.PI/2;p2Mesh.add(p2beak);
-const p2comb=new THREE.Mesh(new THREE.SphereGeometry(0.07,6,6),new THREE.MeshStandardMaterial({color:0xFF0000}));
-p2comb.position.y=1.1;p2Mesh.add(p2comb);
+p2body.position.y=0.5;p2Mesh.add(p2body);
 p2Mesh.position.set(1,0,0);
 scene.add(p2Mesh);
+propP2={x:1,y:0,z:0,hp:50};
 }
 let propP1HP=50;
 let propP2HP=50;
@@ -547,24 +430,14 @@ p.position.set(x,y,z);
 scene.add(p);
 setTimeout(function(){scene.remove(p);},200);
 }
-window.propI1={left:false,right:false,up:false,down:false,attack:false,jump:false};
-window.propI2=twoPlayerMode?{left:false,right:false,up:false,down:false,attack:false,jump:false}:null;
+window.propI1={left:false,right:false,up:false,down:false,attack:false,jump:false,jumpRequested:false};
+window.propI2=twoPlayerMode?{left:false,right:false,up:false,down:false,attack:false,jump:false,jumpRequested:false}:null;
 function bindPropBtn(id,action,target){
 const el=document.getElementById(id);
 if(!el)return;
-el.addEventListener('touchstart',function(e){
-e.preventDefault();
-target[action]=true;
-if(action=='jump'){target.jumpRequested=true;}
-},{passive:false});
-el.addEventListener('touchend',function(e){
-e.preventDefault();
-target[action]=false;
-},{passive:false});
-el.addEventListener('mousedown',function(){
-target[action]=true;
-if(action=='jump'){target.jumpRequested=true;}
-});
+el.addEventListener('touchstart',function(e){e.preventDefault();target[action]=true;if(action=='jump'){target.jumpRequested=true;}},{passive:false});
+el.addEventListener('touchend',function(e){e.preventDefault();target[action]=false;},{passive:false});
+el.addEventListener('mousedown',function(){target[action]=true;if(action=='jump'){target.jumpRequested=true;}});
 el.addEventListener('mouseup',function(){target[action]=false;});
 }
 bindPropBtn('l','left',window.propI1);
@@ -573,14 +446,6 @@ bindPropBtn('fw','up',window.propI1);
 bindPropBtn('bw','down',window.propI1);
 bindPropBtn('a','attack',window.propI1);
 bindPropBtn('j','jump',window.propI1);
-if(window.propI2){
-bindPropBtn('p2l','left',window.propI2);
-bindPropBtn('p2r','right',window.propI2);
-bindPropBtn('p2fw','up',window.propI2);
-bindPropBtn('p2bw','down',window.propI2);
-bindPropBtn('p2a','attack',window.propI2);
-bindPropBtn('p2j','jump',window.propI2);
-}
 function propRenderLoop(){
 if(!propModeActive)return;
 if(p1AttackCooldown>0)p1AttackCooldown--;
@@ -609,14 +474,11 @@ let p1dz=p1Mesh.position.z-col.z;
 let p1dist=Math.sqrt(p1dx*p1dx+p1dz*p1dz);
 if(p1dist<col.radius&&p1dist>0){
 if(p1Mesh.position.y<col.height-0.5){
-let pushX=p1dx/p1dist*(col.radius-p1dist);
-let pushZ=p1dz/p1dist*(col.radius-p1dist);
-p1Mesh.position.x+=pushX;
-p1Mesh.position.z+=pushZ;
+p1Mesh.position.x+=p1dx/p1dist*(col.radius-p1dist);
+p1Mesh.position.z+=p1dz/p1dist*(col.radius-p1dist);
 }
 if(p1Mesh.position.y>=col.height-0.8&&p1Mesh.position.y<=col.height+0.3){
-p1Mesh.position.y=col.height;
-p1vy=0;
+p1Mesh.position.y=col.height;p1vy=0;
 }
 }
 if(p2Mesh){
@@ -625,28 +487,21 @@ let p2dz=p2Mesh.position.z-col.z;
 let p2dist=Math.sqrt(p2dx*p2dx+p2dz*p2dz);
 if(p2dist<col.radius&&p2dist>0){
 if(p2Mesh.position.y<col.height-0.5){
-let pushX=p2dx/p2dist*(col.radius-p2dist);
-let pushZ=p2dz/p2dist*(col.radius-p2dist);
-p2Mesh.position.x+=pushX;
-p2Mesh.position.z+=pushZ;
+p2Mesh.position.x+=p2dx/p2dist*(col.radius-p2dist);
+p2Mesh.position.z+=p2dz/p2dist*(col.radius-p2dist);
 }
 if(p2Mesh.position.y>=col.height-0.8&&p2Mesh.position.y<=col.height+0.3){
-p2Mesh.position.y=col.height;
-p2vy=0;
+p2Mesh.position.y=col.height;p2vy=0;
 }
 }
 }
 }
 if(window.propI1&&window.propI1.jumpRequested){
-if(p1vy<=0.01&&p1vy>=-0.01){
-p1vy=0.25;
-}
+if(p1vy<=0.01&&p1vy>=-0.01){p1vy=0.25;}
 window.propI1.jumpRequested=false;
 }
 if(window.propI2&&window.propI2.jumpRequested){
-if(p2vy<=0.01&&p2vy>=-0.01){
-p2vy=0.25;
-}
+if(p2vy<=0.01&&p2vy>=-0.01){p2vy=0.25;}
 window.propI2.jumpRequested=false;
 }
 p1Mesh.position.x=Math.max(-18,Math.min(18,p1Mesh.position.x));
@@ -662,7 +517,7 @@ if(window.propI1.attack&&p1AttackCooldown<=0){
 propP2HP-=10;p1AttackCooldown=30;window.propI1.attack=false;
 createHitParticle(p2Mesh.position.x,p2Mesh.position.y+0.5,p2Mesh.position.z,0xFF0000);
 }
-if(window.propI2.attack&&p2AttackCooldown<=0){
+if(window.propI2&&window.propI2.attack&&p2AttackCooldown<=0){
 propP1HP-=10;p2AttackCooldown=30;window.propI2.attack=false;
 createHitParticle(p1Mesh.position.x,p1Mesh.position.y+0.5,p1Mesh.position.z,0xFF0000);
 }
@@ -674,7 +529,7 @@ camera.position.set(p1Mesh.position.x,8,p1Mesh.position.z+12);
 camera.lookAt(p1Mesh.position.x,0,p1Mesh.position.z);
 renderer.render(scene,camera);
 requestAnimationFrame(propRenderLoop);
-    }
+}
 propRenderLoop();
 }
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;document.getElementById('ib').style.display='block';});
