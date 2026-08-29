@@ -287,19 +287,7 @@ twoPlayerMode=true;
 if(typeof P2==='undefined'||!P2){
 P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:CHARACTERS.chicken.speed,j:CHARACTERS.chicken.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:CHARACTERS.chicken.attack,character:'chicken',hitboxW:0.6,hitboxH:1.2,hitboxD:0.5};
 }
-if(typeof window.scene!=='undefined'&&window.scene){
-if(typeof window.player2Group==='undefined'||!window.player2Group){
-window.player2Group=new THREE.Group();
-const p2body=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
-p2body.position.y=0.5;p2body.castShadow=true;window.player2Group.add(p2body);
-const p2head=new THREE.Mesh(new THREE.SphereGeometry(0.25,10,10),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
-p2head.position.y=0.9;window.player2Group.add(p2head);
-const p2beak=new THREE.Mesh(new THREE.ConeGeometry(0.08,0.15,6),new THREE.MeshStandardMaterial({color:0xFFA500}));
-p2beak.position.set(0,0.9,0.2);p2beak.rotation.x=Math.PI/2;window.player2Group.add(p2beak);
-window.player2Group.position.set(P2.x,P2.y,P2.z);
-window.scene.add(window.player2Group);
-}
-}
+createP2Mesh('chicken');
 }
 }
 if(data.type=='hostPos'){
@@ -308,19 +296,7 @@ P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:0.25,j:0.5,hp:100,mh:100,ac:0,ad:0,f:1,g:false,
 }
 P2.x=data.x;
 P2.z=data.z;
-if(typeof window.scene!=='undefined'&&window.scene){
-if(typeof window.player2Group==='undefined'||!window.player2Group){
-window.player2Group=new THREE.Group();
-const p2body=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.5),new THREE.MeshStandardMaterial({color:0x4A90E2}));
-p2body.position.y=0.9;p2body.castShadow=true;window.player2Group.add(p2body);
-const p2head=new THREE.Mesh(new THREE.SphereGeometry(0.35,20,20),new THREE.MeshStandardMaterial({color:0xFFD2B3}));
-p2head.position.y=1.7;window.player2Group.add(p2head);
-const p2hat=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.45,0.3,12),new THREE.MeshStandardMaterial({color:0x8B4513}));
-p2hat.position.y=2.1;window.player2Group.add(p2hat);
-window.player2Group.position.set(P2.x,P2.y,P2.z);
-window.scene.add(window.player2Group);
-}
-}
+createP2Mesh('farmer');
 }
 if(data.type=='guestInput'){
 if(!window.I2)window.I2={left:false,right:false,forward:false,backward:false,jump:false,attack:false};
@@ -330,7 +306,29 @@ window.I2.forward=data.forward||false;
 window.I2.backward=data.backward||false;
 window.I2.jump=data.jump||false;
 window.I2.attack=data.attack||false;
+if(data.x!==undefined&&typeof P2!=='undefined'&&P2){
+P2.x=data.x;
+P2.z=data.z;
 }
+}
+}
+function createP2Mesh(type){
+if(typeof window.scene==='undefined'||!window.scene)return;
+if(typeof window.player2Group!=='undefined'&&window.player2Group)return;
+window.player2Group=new THREE.Group();
+if(type=='chicken'){
+const p2body=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
+p2body.position.y=0.5;p2body.castShadow=true;window.player2Group.add(p2body);
+const p2head=new THREE.Mesh(new THREE.SphereGeometry(0.25,10,10),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
+p2head.position.y=0.9;window.player2Group.add(p2head);
+}else{
+const p2body=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.5),new THREE.MeshStandardMaterial({color:0x4A90E2}));
+p2body.position.y=0.9;p2body.castShadow=true;window.player2Group.add(p2body);
+const p2head=new THREE.Mesh(new THREE.SphereGeometry(0.35,20,20),new THREE.MeshStandardMaterial({color:0xFFD2B3}));
+p2head.position.y=1.7;window.player2Group.add(p2head);
+}
+window.player2Group.position.set(P2.x,P2.y,P2.z);
+window.scene.add(window.player2Group);
     }
 function sendPlayerState(){
 if(!mqttClient||!mqttClient.connected)return;
@@ -342,7 +340,7 @@ var data;
 if(isHost){
 data={type:'hostPos',x:Math.round(P.x*10)/10,z:Math.round(P.z*10)/10};
 }else{
-data={type:'guestInput',left:I.left,right:I.right,forward:I.forward,backward:I.backward,jump:I.jump,attack:I.attack};
+data={type:'guestInput',left:I.left,right:I.right,forward:I.forward,backward:I.backward,jump:I.jump,attack:I.attack,x:Math.round(P.x*10)/10,z:Math.round(P.z*10)/10};
 }
 var dataStr=JSON.stringify(data);
 if(dataStr!==lastSentData){
