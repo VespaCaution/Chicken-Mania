@@ -540,6 +540,10 @@ window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();def
 window.addEventListener('appinstalled',function(){deferredPrompt=null;document.getElementById('ib').style.display='none';});
 const savedChar=localStorage.getItem('cmchar');
 if(savedChar&&CHARACTERS[savedChar])selectCharacter(savedChar);
+console.log('CHARACTERS defined:',typeof CHARACTERS!=='undefined');
+console.log('mk defined:',typeof mk!=='undefined');
+console.log('loop defined:',typeof loop!=='undefined');
+console.log('initGame defined:',typeof initGame!=='undefined');
 const TRANSLATIONS={
 en:{
 st:'A Farm Adventure',sb:'▶️ Start Game',rb:'🔄 Restart Game',lv:'Level',sk:'Skip ⏭️',
