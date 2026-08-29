@@ -148,17 +148,17 @@ document.write('<script src="https://unpkg.com/three@0.128.0/build/three.min.js"
 let globalSkipFn=null,deferredPrompt=null,gameInstance=null,currentLang='en';
 let audioContext=null,musicInterval=null,currentMusic=null,currentBeat=0;
 let selectedCharacter='farmer';
+let twoPlayerMode=false;
+let P2=null;
+let propModeActive=false;
+let propObjects=[];
+let propP1={x:250,y:150,hp:50,emoji:'👨‍🌾'};
+let propP2=null;
 let peer=null;
 let peerConnection=null;
 let roomCode=null;
 let isHost=false;
 let onlineMode=false;
-let twoPlayerMode=false;
-let P2=null;
-let propModeActive=false;
-let propObjects=[];
-let propP1={x:250,y:150,hp:100,emoji:'👨‍🌾'};
-let propP2=null;
 const diffData={enemyHpMult:1,enemyDmgMult:1,bossHpMult:1};
 const CHARACTERS={
 farmer:{name:'Farmer Joe',desc:'Balanced stats',icon:'👨‍🌾',speed:0.25,jump:0.5,attack:20,color:0x4A90E2},
@@ -170,31 +170,11 @@ chickencat:{name:'Chicken-Cat',desc:'Meow-cluck!',icon:'🐔🐱',speed:0.3,jump
 function skipCutscene(){if(globalSkipFn){globalSkipFn();globalSkipFn=null;}}
 function installApp(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;document.getElementById('ib').style.display='none';}else{alert('To install: Open in Chrome → Menu → "Add to Home Screen"');}}
 function startGameBtn(){
-document.getElementById('p2controls').style.display=twoPlayerMode?'flex':'none';
 document.getElementById('ss').style.display='none';
 document.getElementById('gs').style.display='block';
 if(document.getElementById('propMode'))document.getElementById('propMode').style.display='none';
 if(gameInstance){gameInstance.stop();gameInstance=null;}
 initGame();
-}
-function toggleTwoPlayerMode(){
-twoPlayerMode=!twoPlayerMode;
-const btn=document.getElementById('twoPlayerBtn');
-if(btn){
-if(twoPlayerMode){btn.textContent='👥 2 Player: ON';btn.style.background='linear-gradient(145deg,#00FF00,#00AA00)';}
-else{btn.textContent='👥 2 Player: OFF';btn.style.background='linear-gradient(145deg,#FF6600,#FF3300)';}
-}
-}
-function exitTwoPlayer(){
-twoPlayerMode=false;
-const btn=document.getElementById('twoPlayerBtn');
-if(btn){btn.textContent='👥 2 Player: OFF';btn.style.background='linear-gradient(145deg,#FF6600,#FF3300)';}
-document.getElementById('p2controls').style.display='none';
-window.I2=null;
-P2=null;
-if(gameInstance){gameInstance.stop();gameInstance=null;}
-document.getElementById('gs').style.display='none';
-document.getElementById('ss').style.display='flex';
 }
 function restartGame(){if(confirm(currentLang=='en'?'Restart from beginning?':'Recommencer ?')){localStorage.removeItem('cmsave');localStorage.removeItem('cmcuts');location.reload();}}
 function setLang(l){
@@ -204,7 +184,6 @@ document.getElementById('st').textContent=TRANSLATIONS[l].st;
 document.getElementById('sb').textContent=TRANSLATIONS[l].sb;
 document.getElementById('rb').textContent=TRANSLATIONS[l].rb;
 document.getElementById('skb').textContent=TRANSLATIONS[l].sk;
-if(document.getElementById('charSelectTitle'))document.getElementById('charSelectTitle').textContent=TRANSLATIONS[l].charSelect;
 }
 document.getElementById('le').classList.toggle('ac',l=='en');
 document.getElementById('lf').classList.toggle('ac',l=='fr');
@@ -221,6 +200,34 @@ if(el)el.classList.toggle('ac',key==c);
 if(document.getElementById('charDesc'))document.getElementById('charDesc').textContent=CHARACTERS[c].name+' - '+CHARACTERS[c].desc;
 localStorage.setItem('cmchar',c);
 }
+function togglePauseMenu(){
+const pm=document.getElementById('pauseMenu');
+if(!pm)return;
+if(pm.style.display=='block'){resumeGame();}
+else{pm.style.display='block';if(typeof stopMusic==='function')stopMusic();}
+}
+function resumeGame(){
+const pm=document.getElementById('pauseMenu');
+if(pm)pm.style.display='none';
+if(typeof startMusic==='function')startMusic(typeof L!=='undefined'&&(L==3||L==7||L==10||L==15||L==20||L==25||L==30)?'boss':'farm');
+}
+function quitToMenu(){
+const pm=document.getElementById('pauseMenu');
+if(pm)pm.style.display='none';
+document.getElementById('gs').style.display='none';
+document.getElementById('ss').style.display='flex';
+if(gameInstance){gameInstance.stop();gameInstance=null;}
+if(typeof renderer!=='undefined'&&renderer){
+renderer.setScissorTest(false);
+renderer.setViewport(0,0,renderer.domElement.width,renderer.domElement.height);
+}
+}
+function closeDialogue(){
+const d=document.getElementById('npcDialogue');
+if(d)d.remove();
+if(typeof S!=='undefined')S='playing';
+if(typeof npcs!=='undefined'){for(let n of npcs){n.userData.isTalking=false;}}
+}
 function createRoom(){
 roomCode=Math.random().toString(36).substring(2,8).toUpperCase();
 isHost=true;
@@ -228,7 +235,6 @@ onlineMode=true;
 peer=new Peer('chicken-mania-'+roomCode);
 peer.on('open',function(){
 alert('Room created! Share this code: '+roomCode);
-twoPlayerMode=true;
 });
 peer.on('connection',function(conn){
 peerConnection=conn;
@@ -238,14 +244,10 @@ twoPlayerMode=true;
 if(typeof P2==='undefined'||!P2){
 P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:CHARACTERS.chicken.speed,j:CHARACTERS.chicken.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:CHARACTERS.chicken.attack,character:'chicken',hitboxW:0.6,hitboxH:1.2,hitboxD:0.5};
 }
-if(typeof player2Group!=='undefined'&&!player2Group){
+if(typeof player2Group==='undefined'||!player2Group){
 player2Group=new THREE.Group();
 const p2body=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
-p2body.position.y=0.5;p2body.castShadow=true;player2Group.add(p2body);
-const p2head=new THREE.Mesh(new THREE.SphereGeometry(0.25,10,10),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
-p2head.position.y=0.9;player2Group.add(p2head);
-const p2beak=new THREE.Mesh(new THREE.ConeGeometry(0.08,0.15,6),new THREE.MeshStandardMaterial({color:0xFFA500}));
-p2beak.position.set(0,0.9,0.2);p2beak.rotation.x=Math.PI/2;player2Group.add(p2beak);
+p2body.position.y=0.5;player2Group.add(p2body);
 player2Group.position.set(P2.x,P2.y,P2.z);
 scene.add(player2Group);
 }
@@ -278,14 +280,10 @@ twoPlayerMode=true;
 if(typeof P2==='undefined'||!P2){
 P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:CHARACTERS.chicken.speed,j:CHARACTERS.chicken.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:CHARACTERS.chicken.attack,character:'chicken',hitboxW:0.6,hitboxH:1.2,hitboxD:0.5};
 }
-if(typeof player2Group!=='undefined'&&!player2Group){
+if(typeof player2Group==='undefined'||!player2Group){
 player2Group=new THREE.Group();
 const p2body=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.5),new THREE.MeshStandardMaterial({color:0x4A90E2}));
-p2body.position.y=0.9;p2body.castShadow=true;player2Group.add(p2body);
-const p2head=new THREE.Mesh(new THREE.SphereGeometry(0.35,20,20),new THREE.MeshStandardMaterial({color:0xFFD2B3}));
-p2head.position.y=1.7;p2head.castShadow=true;player2Group.add(p2head);
-const p2hat=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.45,0.3,12),new THREE.MeshStandardMaterial({color:0x8B4513}));
-p2hat.position.y=2.1;player2Group.add(p2hat);
+p2body.position.y=0.9;player2Group.add(p2body);
 player2Group.position.set(P2.x,P2.y,P2.z);
 scene.add(player2Group);
 }
@@ -302,14 +300,17 @@ if(typeof player2Group!=='undefined'&&player2Group){scene.remove(player2Group);p
 peer.on('error',function(err){alert('Connection error: '+err.type);});
 }
 function receiveRemoteData(data){
+if(!window.I2)window.I2={left:false,right:false,forward:false,backward:false,jump:false,attack:false};
 if(data.type=='hostPos'){
 if(typeof P2!=='undefined'&&P2){
 P2.x=data.x;
 P2.z=data.z;
 }
+if(typeof player2Group!=='undefined'&&player2Group){
+player2Group.position.set(P2.x,P2.y,P2.z);
+}
 }
 if(data.type=='guestInput'){
-if(!window.I2)window.I2={left:false,right:false,forward:false,backward:false,jump:false,attack:false};
 window.I2.left=data.left||false;
 window.I2.right=data.right||false;
 window.I2.forward=data.forward||false;
@@ -319,79 +320,34 @@ window.I2.attack=data.attack||false;
 }
 }
 function sendPlayerState(){
-if(peerConnection&&peerConnection.open){
+if(!peerConnection||!peerConnection.open)return;
 if(isHost){
-peerConnection.send({type:'hostPos',x:typeof P!=='undefined'?P.x:0,z:typeof P!=='undefined'?P.z:0});
+peerConnection.send({
+type:'hostPos',
+x:typeof P!=='undefined'?P.x:0,
+z:typeof P!=='undefined'?P.z:0
+});
 }else{
-peerConnection.send({type:'guestInput',left:I.left,right:I.right,forward:I.forward,backward:I.backward,jump:I.jump,attack:I.attack});
+peerConnection.send({
+type:'guestInput',
+left:I.left,
+right:I.right,
+forward:I.forward,
+backward:I.backward,
+jump:I.jump,
+attack:I.attack
+});
 }
 }
-}
-function togglePauseMenu(){
-const pm=document.getElementById('pauseMenu');
-if(!pm)return;
-if(pm.style.display=='block'){resumeGame();}
-else{pm.style.display='block';if(typeof stopMusic==='function')stopMusic();}
-}
-function resumeGame(){
-const pm=document.getElementById('pauseMenu');
-if(pm)pm.style.display='none';
-if(typeof startMusic==='function')startMusic(typeof L!=='undefined'&&(L==3||L==7||L==10||L==15||L==20||L==25||L==30)?'boss':'farm');
-}
-function quitToMenu(){
-const pm=document.getElementById('pauseMenu');
-if(pm)pm.style.display='none';
-document.getElementById('gs').style.display='none';
-document.getElementById('ss').style.display='flex';
+function enterPropMode(){
+propModeActive=true;
+document.getElementById('ss').style.display='none';
+document.getElementById('gs').style.display='block';
+document.getElementById('propMode').style.display='block';
 if(gameInstance){gameInstance.stop();gameInstance=null;}
-if(typeof renderer!=='undefined'&&renderer){
-renderer.setScissorTest(false);
-renderer.setViewport(0,0,renderer.domElement.width,renderer.domElement.height);
-}
-}
-function closeDialogue(){
-const d=document.getElementById('npcDialogue');
-if(d)d.remove();
-if(typeof S!=='undefined')S='playing';
-if(typeof npcs!=='undefined'){for(let n of npcs){n.userData.isTalking=false;}}
-if(typeof startMusic==='function'){startMusic(typeof L!=='undefined'&&(L==3||L==7||L==10||L==15||L==20||L==25||L==30)?'boss':'farm');}
-}
-function buyItem(type){
-if(typeof coins==='undefined')return;
-if(typeof P==='undefined')return;
-if(type=='speed'){
-let cost=50+(P.speedLevel||0)*25;
-if(coins>=cost){
-coins-=cost;
-P.speedLevel=(P.speedLevel||0)+1;
-P.s=CHARACTERS[selectedCharacter].speed+0.05*P.speedLevel;
-playVictorySound();
-alert(t('purchased')+' Speed Lv'+P.speedLevel);
-}else{alert(t('insufficient'));}
-}
-else if(type=='attack'){
-let cost=50+(P.attackLevel||0)*25;
-if(coins>=cost){
-coins-=cost;
-P.attackLevel=(P.attackLevel||0)+1;
-P.attackDmg=CHARACTERS[selectedCharacter].attack+P.attackLevel*5;
-P.au=true;
-playVictorySound();
-alert(t('purchased')+' Attack Lv'+P.attackLevel);
-}else{alert(t('insufficient'));}
-}
-else if(type=='shield'){
-let cost=75+(P.shieldLevel||0)*25;
-if(coins>=cost){
-coins-=cost;
-P.shieldLevel=(P.shieldLevel||0)+1;
-P.hasShield=true;
-playVictorySound();
-alert(t('purchased')+' Shield Lv'+P.shieldLevel);
-}else{alert(t('insufficient'));}
-}
-closeDialogue();
-if(typeof saveGame==='function')saveGame();
+setTimeout(function(){
+try{initPropMode();}catch(e){alert('Prop mode error: '+e.message);}
+},200);
 }
 function enterPropMode(){
 propModeActive=true;
