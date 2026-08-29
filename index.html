@@ -232,8 +232,29 @@ peerConnection=conn;
 conn.on('open',function(){
 alert('Player 2 joined!');
 twoPlayerMode=true;
+if(typeof P2==='undefined'||!P2){
+P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:CHARACTERS.chicken.speed,j:CHARACTERS.chicken.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:CHARACTERS.chicken.attack,character:'chicken',hitboxW:0.6,hitboxH:1.2,hitboxD:0.5};
+}
+if(typeof player2Group!=='undefined'&&!player2Group){
+player2Group=new THREE.Group();
+const p2body=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
+p2body.position.y=0.5;p2body.castShadow=true;player2Group.add(p2body);
+const p2head=new THREE.Mesh(new THREE.SphereGeometry(0.25,10,10),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
+p2head.position.y=0.9;player2Group.add(p2head);
+const p2beak=new THREE.Mesh(new THREE.ConeGeometry(0.08,0.15,6),new THREE.MeshStandardMaterial({color:0xFFA500}));
+p2beak.position.set(0,0.9,0.2);p2beak.rotation.x=Math.PI/2;player2Group.add(p2beak);
+player2Group.position.set(P2.x,P2.y,P2.z);
+scene.add(player2Group);
+}
 });
 conn.on('data',function(data){receiveRemoteData(data);});
+conn.on('close',function(){
+alert('Player 2 disconnected');
+twoPlayerMode=false;
+window.I2=null;
+P2=null;
+if(typeof player2Group!=='undefined'&&player2Group){scene.remove(player2Group);player2Group=null;}
+});
 });
 peer.on('error',function(err){alert('Room error: '+err.type);});
 }
@@ -251,12 +272,32 @@ peerConnection=peer.connect('chicken-mania-'+roomCode);
 peerConnection.on('open',function(){
 alert('Connected to room: '+roomCode);
 twoPlayerMode=true;
+if(typeof P2==='undefined'||!P2){
+P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:CHARACTERS.chicken.speed,j:CHARACTERS.chicken.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:CHARACTERS.chicken.attack,character:'chicken',hitboxW:0.6,hitboxH:1.2,hitboxD:0.5};
+}
+if(typeof player2Group!=='undefined'&&!player2Group){
+player2Group=new THREE.Group();
+const p2body=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.5),new THREE.MeshStandardMaterial({color:0x4A90E2}));
+p2body.position.y=0.9;p2body.castShadow=true;player2Group.add(p2body);
+const p2head=new THREE.Mesh(new THREE.SphereGeometry(0.35,20,20),new THREE.MeshStandardMaterial({color:0xFFD2B3}));
+p2head.position.y=1.7;p2head.castShadow=true;player2Group.add(p2head);
+const p2hat=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.45,0.3,12),new THREE.MeshStandardMaterial({color:0x8B4513}));
+p2hat.position.y=2.1;player2Group.add(p2hat);
+player2Group.position.set(P2.x,P2.y,P2.z);
+scene.add(player2Group);
+}
 });
 peerConnection.on('data',function(data){receiveRemoteData(data);});
+peerConnection.on('close',function(){
+alert('Disconnected from room');
+twoPlayerMode=false;
+window.I2=null;
+P2=null;
+if(typeof player2Group!=='undefined'&&player2Group){scene.remove(player2Group);player2Group=null;}
+});
 });
 peer.on('error',function(err){alert('Connection error: '+err.type);});
 }
-
 function receiveRemoteData(data){
 if(data.type=='hostPos'){
 if(typeof P2!=='undefined'&&P2){
@@ -832,10 +873,7 @@ const charData=CHARACTERS[selectedCharacter];
 const I={left:false,right:false,forward:false,backward:false,jump:false,attack:false,pause:false};
 const P={x:0,y:1,z:0,vx:0,vy:0,vz:0,s:charData.speed,j:charData.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,dj:selectedCharacter=='chicken',dja:true,au:selectedCharacter=='dog',su:false,attackCombo:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:charData.attack,character:selectedCharacter,hitboxW:0.8,hitboxH:1.8,hitboxD:0.6};
 if(twoPlayerMode&&!onlineMode){
-P2={...};
-}
-if(onlineMode&&isHost&&peerConnection){
-P2={...};
+P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:CHARACTERS.chicken.speed,j:CHARACTERS.chicken.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:CHARACTERS.chicken.attack,character:'chicken',hitboxW:0.6,hitboxH:1.2,hitboxD:0.5};
 }
 let platforms=[],enemies=[],coinList=[],bonusList=[],healthList=[],projectiles=[],particles=[],boss=null,lw=0,gx=0,weatherEffects=[],decorations=[],npcs=[],powerUps=[],bridges=[],waterAreas=[],gameObjects=[],loreFound=[];
 const save=JSON.parse(localStorage.getItem('cmsave')||'null');
