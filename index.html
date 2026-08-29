@@ -321,15 +321,19 @@ const p2body=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12),new THREE.MeshSt
 p2body.position.y=0.5;p2body.castShadow=true;window.player2Group.add(p2body);
 const p2head=new THREE.Mesh(new THREE.SphereGeometry(0.25,10,10),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
 p2head.position.y=0.9;window.player2Group.add(p2head);
+const p2beak=new THREE.Mesh(new THREE.ConeGeometry(0.08,0.15,6),new THREE.MeshStandardMaterial({color:0xFFA500}));
+p2beak.position.set(0,0.9,0.2);p2beak.rotation.x=Math.PI/2;window.player2Group.add(p2beak);
 }else{
 const p2body=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.5),new THREE.MeshStandardMaterial({color:0x4A90E2}));
 p2body.position.y=0.9;p2body.castShadow=true;window.player2Group.add(p2body);
 const p2head=new THREE.Mesh(new THREE.SphereGeometry(0.35,20,20),new THREE.MeshStandardMaterial({color:0xFFD2B3}));
 p2head.position.y=1.7;window.player2Group.add(p2head);
+const p2hat=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.45,0.3,12),new THREE.MeshStandardMaterial({color:0x8B4513}));
+p2hat.position.y=2.1;window.player2Group.add(p2hat);
 }
 window.player2Group.position.set(P2.x,P2.y,P2.z);
 window.scene.add(window.player2Group);
-    }
+}
 function sendPlayerState(){
 if(!mqttClient||!mqttClient.connected)return;
 var now=Date.now();
@@ -733,9 +737,9 @@ let achievements=JSON.parse(localStorage.getItem('cmachieve')||'{}');
 const charData=CHARACTERS[selectedCharacter];
 const I={left:false,right:false,forward:false,backward:false,jump:false,attack:false,pause:false};
 const P={x:0,y:1,z:0,vx:0,vy:0,vz:0,s:charData.speed,j:charData.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,dj:selectedCharacter=='chicken',dja:true,au:selectedCharacter=='dog',su:false,attackCombo:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:charData.attack,character:selectedCharacter,hitboxW:0.8,hitboxH:1.8,hitboxD:0.6};
-if(twoPlayerMode&&!onlineMode){
-P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:CHARACTERS.chicken.speed,j:CHARACTERS.chicken.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:CHARACTERS.chicken.attack,character:'chicken',hitboxW:0.6,hitboxH:1.2,hitboxD:0.5};
-}
+const scene=new THREE.Scene();
+window.scene=scene;
+window.player2Group=null;
 let platforms=[],enemies=[],coinList=[],bonusList=[],healthList=[],projectiles=[],particles=[],boss=null,lw=0,gx=0,weatherEffects=[],decorations=[],npcs=[],powerUps=[],bridges=[],waterAreas=[],gameObjects=[],loreFound=[];
 const save=JSON.parse(localStorage.getItem('cmsave')||'null');
 if(save&&!startLevel){L=save.L||1;coins=save.coins||0;tc=save.tc||0;bc=save.bc||0;tb=save.tb||0;deaths=save.deaths||0;tt=save.tt||0;}
@@ -1928,8 +1932,8 @@ if(P2.z<-8)P2.z=-8;if(P2.z>8)P2.z=8;
 if(P2.y<-5){P2.hp=0;}
 if(P2.i>0)P2.i--;
 if(P2.hp<=0){P2.hp=100;P2.x=P.x;P2.y=P.y;P2.z=P.z+1;}
-if(player2Group){player2Group.position.set(P2.x,P2.y,P2.z);player2Group.rotation.y=P2.rotY;}
-if(P2.isWalking&&P2.g){player2Group.position.y=P2.y+Math.sin(tt*0.2)*0.05;}
+if(window.player2Group){window.player2Group.position.set(P2.x,P2.y,P2.z);window.player2Group.rotation.y=P2.rotY;}
+if(P2.isWalking&&P2.g&&window.player2Group){window.player2Group.position.y=P2.y+Math.sin(tt*0.2)*0.05;}
 for(let c of coinList){
 if(!c.c){let dx=P2.x-c.x,dy=P2.y-c.y,dz=P2.z-c.z;if(Math.sqrt(dx*dx+dy*dy+dz*dz)<1.5){c.c=true;coins+=5;tc+=5;lC+=5;createHitParticle(c.x,c.y,c.z,0xFFD700);playCoinSound();scene.remove(c.mesh);}}
 }
