@@ -232,7 +232,7 @@ roomCode=Math.random().toString(36).substring(2,8).toUpperCase();
 isHost=true;
 onlineMode=true;
 try{
-room=self.joinRoom({appId:'chicken-mania-'+roomCode},roomCode);
+room=self.joinRoom({appId:'chicken-mania'},roomCode);
 room.onPeerJoin(function(peerId){
 alert('Player 2 joined!');
 twoPlayerMode=true;
@@ -261,11 +261,11 @@ joinRoom(code.trim());
 }
 function joinRoom(code){
 if(!code)return;
-roomCode=String(code).toUpperCase();
+roomCode=String(code).trim().toUpperCase();
 isHost=false;
 onlineMode=true;
 try{
-room=self.joinRoom({appId:'chicken-mania-'+roomCode},roomCode);
+room=self.joinRoom({appId:'chicken-mania'},roomCode);
 room.onPeerJoin(function(peerId){
 alert('Connected to room!');
 twoPlayerMode=true;
