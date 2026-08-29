@@ -2728,6 +2728,9 @@ ctx.fillRect(95,22,5,15);
 function loop(){
 if(!running)return;
 updateGamepad();
+if(onlineMode&&peerConnection&&peerConnection.open){
+sendPlayerState();
+}
 if(S=='playing'){upd();}
 renderer.render(scene,camera);
 document.getElementById('hp').style.width=(P.hp/P.mh*100)+'%';
