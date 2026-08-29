@@ -143,7 +143,7 @@ if(typeof THREE==='undefined'){
 document.write('<script src="https://unpkg.com/three@0.128.0/build/three.min.js"><\/script>');
 }
 </script>
-<script src="https://cdn.jsdelivr.net/npm/trystero@0.20.0/dist/trystero.min.js"></script>
+<script src="https://unpkg.com/trystero@0.20.0/dist/trystero.min.js"></script>
 <script>
 let globalSkipFn=null,deferredPrompt=null,gameInstance=null,currentLang='en';
 let audioContext=null,musicInterval=null,currentMusic=null,currentBeat=0;
@@ -232,25 +232,10 @@ roomCode=Math.random().toString(36).substring(2,8).toUpperCase();
 isHost=true;
 onlineMode=true;
 try{
-room=self.joinRoom({appId:'chicken-mania'},roomCode);
-room.onPeerJoin(function(peerId){
-alert('Player 2 joined!');
-twoPlayerMode=true;
-if(typeof P2==='undefined'||!P2){
-P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:CHARACTERS.chicken.speed,j:CHARACTERS.chicken.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:CHARACTERS.chicken.attack,character:'chicken',hitboxW:0.6,hitboxH:1.2,hitboxD:0.5};
-}
-});
-room.onPeerLeave(function(peerId){
-alert('Player 2 left');
-twoPlayerMode=false;
-window.I2=null;
-});
-room.onPeerData(function(data,peerId){
-receiveRemoteData(data);
-});
-alert('Room created! Share this code: '+roomCode);
+room=self.joinRoom({appId:'test'},'test-room');
+alert('Room created! Code: '+roomCode);
 }catch(e){
-alert('Room error: '+e.message);
+alert('Error: '+e.message);
 }
 }
 function joinRoomPrompt(){
@@ -261,20 +246,11 @@ joinRoom(code.trim());
 }
 function joinRoom(code){
 if(!code)return;
-roomCode=String(code).trim().toUpperCase();
-isHost=false;
-onlineMode=true;
 try{
-room=self.joinRoom({appId:'chicken-mania'},roomCode);
-room.onPeerJoin(function(peerId){
-alert('Connected to room!');
-twoPlayerMode=true;
-});
-room.onPeerData(function(data,peerId){
-receiveRemoteData(data);
-});
+room=self.joinRoom({appId:'test'},'test-room');
+alert('Connected!');
 }catch(e){
-alert('Connection error: '+e.message);
+alert('Error: '+e.message);
 }
 }
 function receiveRemoteData(data){
