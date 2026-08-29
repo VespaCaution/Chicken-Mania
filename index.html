@@ -143,7 +143,7 @@ if(typeof THREE==='undefined'){
 document.write('<script src="https://unpkg.com/three@0.128.0/build/three.min.js"><\/script>');
 }
 </script>
-<script src="https://unpkg.com/trystero@0.20.0/dist/trystero.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@4.3.7/dist/mqtt.min.js"></script>
 <script>
 let globalSkipFn=null,deferredPrompt=null,gameInstance=null,currentLang='en';
 let audioContext=null,musicInterval=null,currentMusic=null,currentBeat=0;
@@ -154,10 +154,11 @@ let propModeActive=false;
 let propObjects=[];
 let propP1={x:250,y:150,hp:50,emoji:'👨‍🌾'};
 let propP2=null;
-let room=null;
+let mqttClient=null;
 let roomCode=null;
 let isHost=false;
 let onlineMode=false;
+let sendCounter=0;
 const diffData={enemyHpMult:1,enemyDmgMult:1,bossHpMult:1};
 const CHARACTERS={
 farmer:{name:'Farmer Joe',desc:'Balanced stats',icon:'👨‍🌾',speed:0.25,jump:0.5,attack:20,color:0x4A90E2},
@@ -232,29 +233,65 @@ roomCode=Math.random().toString(36).substring(2,8).toUpperCase();
 isHost=true;
 onlineMode=true;
 try{
-room=self.joinRoom({appId:'test'},'test-room');
-alert('Room created! Code: '+roomCode);
+mqttClient=mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+mqttClient.on('connect',function(){
+mqttClient.subscribe('chicken-mania/'+roomCode);
+alert('Room created! Share this code: '+roomCode);
+});
+mqttClient.on('message',function(topic,message){
+try{
+var data=JSON.parse(message.toString());
+receiveRemoteData(data);
+}catch(e){}
+});
+mqttClient.on('error',function(err){
+console.error('MQTT error:',err);
+});
 }catch(e){
-alert('Error: '+e.message);
+alert('Room error: '+e.message);
 }
 }
 function joinRoomPrompt(){
 var code=prompt('Enter room code:');
-if(code&&code.trim()!==''){
-joinRoom(code.trim());
-}
+if(code&&code.trim()!=='')joinRoom(code.trim());
 }
 function joinRoom(code){
 if(!code)return;
+roomCode=String(code).trim().toUpperCase();
+isHost=false;
+onlineMode=true;
 try{
-room=self.joinRoom({appId:'test'},'test-room');
-alert('Connected!');
+mqttClient=mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+mqttClient.on('connect',function(){
+mqttClient.subscribe('chicken-mania/'+roomCode);
+alert('Connected to room: '+roomCode);
+twoPlayerMode=true;
+if(typeof P2==='undefined'||!P2){
+P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:CHARACTERS.chicken.speed,j:CHARACTERS.chicken.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:CHARACTERS.chicken.attack,character:'chicken',hitboxW:0.6,hitboxH:1.2,hitboxD:0.5};
+}
+mqttClient.publish('chicken-mania/'+roomCode,JSON.stringify({type:'joined'}));
+});
+mqttClient.on('message',function(topic,message){
+try{
+var data=JSON.parse(message.toString());
+receiveRemoteData(data);
+}catch(e){}
+});
 }catch(e){
-alert('Error: '+e.message);
+alert('Connection error: '+e.message);
 }
 }
 function receiveRemoteData(data){
-if(!window.I2)window.I2={left:false,right:false,forward:false,backward:false,jump:false,attack:false};
+if(!data||!data.type)return;
+if(data.type=='joined'){
+if(isHost){
+alert('Player 2 joined!');
+twoPlayerMode=true;
+if(typeof P2==='undefined'||!P2){
+P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:CHARACTERS.chicken.speed,j:CHARACTERS.chicken.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:CHARACTERS.chicken.attack,character:'chicken',hitboxW:0.6,hitboxH:1.2,hitboxD:0.5};
+}
+}
+}
 if(data.type=='hostPos'){
 if(typeof P2!=='undefined'&&P2){
 P2.x=data.x;
@@ -265,6 +302,7 @@ window.player2Group.position.set(P2.x,P2.y,P2.z);
 }
 }
 if(data.type=='guestInput'){
+if(!window.I2)window.I2={left:false,right:false,forward:false,backward:false,jump:false,attack:false};
 window.I2.left=data.left||false;
 window.I2.right=data.right||false;
 window.I2.forward=data.forward||false;
@@ -274,12 +312,17 @@ window.I2.attack=data.attack||false;
 }
 }
 function sendPlayerState(){
-if(!room||!onlineMode)return;
+if(!mqttClient||!mqttClient.connected)return;
+sendCounter++;
+if(sendCounter<3)return;
+sendCounter=0;
+try{
 if(isHost){
-room.send({type:'hostPos',x:typeof P!=='undefined'?P.x:0,z:typeof P!=='undefined'?P.z:0});
+mqttClient.publish('chicken-mania/'+roomCode,JSON.stringify({type:'hostPos',x:typeof P!=='undefined'?P.x:0,z:typeof P!=='undefined'?P.z:0}));
 }else{
-room.send({type:'guestInput',left:I.left,right:I.right,forward:I.forward,backward:I.backward,jump:I.jump,attack:I.attack});
+mqttClient.publish('chicken-mania/'+roomCode,JSON.stringify({type:'guestInput',left:I.left,right:I.right,forward:I.forward,backward:I.backward,jump:I.jump,attack:I.attack}));
 }
+}catch(e){}
 }
 function enterPropMode(){
 propModeActive=true;
