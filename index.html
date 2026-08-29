@@ -158,7 +158,8 @@ let mqttClient=null;
 let roomCode=null;
 let isHost=false;
 let onlineMode=false;
-let sendCounter=0;
+let lastSendTime=0;
+let lastSentData='';
 const diffData={enemyHpMult:1,enemyDmgMult:1,bossHpMult:1};
 const CHARACTERS={
 farmer:{name:'Farmer Joe',desc:'Balanced stats',icon:'👨‍🌾',speed:0.25,jump:0.5,attack:20,color:0x4A90E2},
@@ -241,11 +242,8 @@ alert('Room created! Share this code: '+roomCode);
 mqttClient.on('message',function(topic,message){
 try{
 var data=JSON.parse(message.toString());
-receiveRemoteData(data);
+if(data&&data.type)receiveRemoteData(data);
 }catch(e){}
-});
-mqttClient.on('error',function(err){
-console.error('MQTT error:',err);
 });
 }catch(e){
 alert('Room error: '+e.message);
@@ -274,7 +272,7 @@ mqttClient.publish('chicken-mania/'+roomCode,JSON.stringify({type:'joined'}));
 mqttClient.on('message',function(topic,message){
 try{
 var data=JSON.parse(message.toString());
-receiveRemoteData(data);
+if(data&&data.type)receiveRemoteData(data);
 }catch(e){}
 });
 }catch(e){
@@ -285,7 +283,6 @@ function receiveRemoteData(data){
 if(!data||!data.type)return;
 if(data.type=='joined'){
 if(isHost){
-alert('Player 2 joined!');
 twoPlayerMode=true;
 if(typeof P2==='undefined'||!P2){
 P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:CHARACTERS.chicken.speed,j:CHARACTERS.chicken.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:CHARACTERS.chicken.attack,character:'chicken',hitboxW:0.6,hitboxH:1.2,hitboxD:0.5};
@@ -313,14 +310,20 @@ window.I2.attack=data.attack||false;
 }
 function sendPlayerState(){
 if(!mqttClient||!mqttClient.connected)return;
-sendCounter++;
-if(sendCounter<3)return;
-sendCounter=0;
+var now=Date.now();
+if(now-lastSendTime<100)return;
+lastSendTime=now;
 try{
+var data;
 if(isHost){
-mqttClient.publish('chicken-mania/'+roomCode,JSON.stringify({type:'hostPos',x:typeof P!=='undefined'?P.x:0,z:typeof P!=='undefined'?P.z:0}));
+data={type:'hostPos',x:Math.round(P.x*10)/10,z:Math.round(P.z*10)/10};
 }else{
-mqttClient.publish('chicken-mania/'+roomCode,JSON.stringify({type:'guestInput',left:I.left,right:I.right,forward:I.forward,backward:I.backward,jump:I.jump,attack:I.attack}));
+data={type:'guestInput',left:I.left,right:I.right,forward:I.forward,backward:I.backward,jump:I.jump,attack:I.attack};
+}
+var dataStr=JSON.stringify(data);
+if(dataStr!==lastSentData){
+lastSentData=dataStr;
+mqttClient.publish('chicken-mania/'+roomCode,dataStr);
 }
 }catch(e){}
 }
@@ -2602,11 +2605,16 @@ ctx.fill();
 ctx.fillStyle='#00FF00';
 ctx.fillRect(95,22,5,15);
 }
+let frameCounter=0;
 function loop(){
 if(!running)return;
 updateGamepad();
-if(onlineMode&&peerConnection&&peerConnection.open){
+frameCounter++;
+if(frameCounter>=10){
+frameCounter=0;
+if(onlineMode&&mqttClient){
 sendPlayerState();
+}
 }
 if(S=='playing'){upd();}
 renderer.render(scene,camera);
