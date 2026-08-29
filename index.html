@@ -668,7 +668,6 @@ if(currentBeat>=song.melody.length)currentBeat=0;
 }
 function stopMusic(){if(musicInterval){clearInterval(musicInterval);musicInterval=null;}currentMusic=null;}
 function initGame(startLevel){
-try{
 if(typeof THREE==='undefined'){alert('3D engine not loaded. Reload page.');return;}
 if(gameInstance){gameInstance.stop();gameInstance=null;}
 const testCanvas=document.createElement('canvas');
@@ -766,10 +765,6 @@ scene.add(flower);decorations.push(flower);
 }
 mk(L);
 loop();
-}catch(e){
-console.error('INIT ERROR:',e.message,e.stack);
-alert('Game error: '+e.message);
-}
 }
 function createTree(x,z,far){
 const tree=new THREE.Group();
