@@ -943,40 +943,24 @@ const body=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.5),new THREE.MeshStand
 body.position.y=0.9;body.castShadow=true;playerGroup.add(body);
 const overall=new THREE.Mesh(new THREE.BoxGeometry(0.7,0.5,0.45),new THREE.MeshStandardMaterial({color:0x4169E1}));
 overall.position.y=0.7;playerGroup.add(overall);
-const strap1=new THREE.Mesh(new THREE.BoxGeometry(0.15,0.5,0.1),new THREE.MeshStandardMaterial({color:0x4169E1}));
-strap1.position.set(-0.25,1.1,0.25);playerGroup.add(strap1);
-const strap2=strap1.clone();strap2.position.x=0.25;playerGroup.add(strap2);
-const button1=new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8),new THREE.MeshStandardMaterial({color:0xFFD700,emissive:0xFFD700,emissiveIntensity:0.3}));
-button1.position.set(-0.25,1.1,0.35);playerGroup.add(button1);
-const button2=button1.clone();button2.position.x=0.25;playerGroup.add(button2);
 const head=new THREE.Mesh(new THREE.SphereGeometry(0.35,20,20),new THREE.MeshStandardMaterial({color:0xFFD2B3,roughness:0.4}));
 head.position.y=1.7;head.castShadow=true;playerGroup.add(head);
 playerParts.head=head;
-const eyeMat=new THREE.MeshStandardMaterial({color:0x000000});
-const leftEye=new THREE.Mesh(new THREE.SphereGeometry(0.06,10,10),eyeMat);
-leftEye.position.set(-0.12,1.75,0.3);playerGroup.add(leftEye);
-const rightEye=leftEye.clone();rightEye.position.x=0.12;playerGroup.add(rightEye);
-const eyeShine=new THREE.Mesh(new THREE.SphereGeometry(0.02,6,6),new THREE.MeshStandardMaterial({color:0xFFFFFF,emissive:0xFFFFFF,emissiveIntensity:0.5}));
-eyeShine.position.set(-0.1,1.77,0.34);playerGroup.add(eyeShine);
-const eyeShine2=eyeShine.clone();eyeShine2.position.x=0.14;playerGroup.add(eyeShine2);
-const mouth=new THREE.Mesh(new THREE.BoxGeometry(0.15,0.03,0.02),new THREE.MeshStandardMaterial({color:0xFF6347}));
-mouth.position.set(0,1.65,0.35);playerGroup.add(mouth);
 const hatMat=new THREE.MeshStandardMaterial({color:0x8B4513,roughness:0.7});
 const brim=new THREE.Mesh(new THREE.CylinderGeometry(0.45,0.45,0.08,20),hatMat);
 brim.position.y=2.05;brim.castShadow=true;playerGroup.add(brim);
 const hatTop=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.28,0.45,20),hatMat);
 hatTop.position.y=2.3;hatTop.castShadow=true;playerGroup.add(hatTop);
-const hatBand=new THREE.Mesh(new THREE.CylinderGeometry(0.21,0.21,0.06,20),new THREE.MeshStandardMaterial({color:0x654321}));
-hatBand.position.y=2.2;playerGroup.add(hatBand);
+const eyeMat=new THREE.MeshStandardMaterial({color:0x000000});
+const leftEye=new THREE.Mesh(new THREE.SphereGeometry(0.06,10,10),eyeMat);
+leftEye.position.set(-0.12,1.75,0.3);playerGroup.add(leftEye);
+const rightEye=leftEye.clone();rightEye.position.x=0.12;playerGroup.add(rightEye);
 const armMat=new THREE.MeshStandardMaterial({color:0xFFD2B3});
 const leftArm=new THREE.Mesh(new THREE.BoxGeometry(0.2,0.6,0.2),armMat);
 leftArm.position.set(-0.5,1.1,0);playerGroup.add(leftArm);
 playerParts.leftArm=leftArm;
 const rightArm=leftArm.clone();rightArm.position.x=0.5;playerGroup.add(rightArm);
 playerParts.rightArm=rightArm;
-const leftHand=new THREE.Mesh(new THREE.SphereGeometry(0.1,8,8),armMat);
-leftHand.position.set(-0.5,0.75,0);playerGroup.add(leftHand);
-const rightHand=leftHand.clone();rightHand.position.x=0.5;playerGroup.add(rightHand);
 const legMat=new THREE.MeshStandardMaterial({color:0x333333});
 const leftLeg=new THREE.Mesh(new THREE.BoxGeometry(0.25,0.5,0.25),legMat);
 leftLeg.position.set(-0.2,0.3,0);playerGroup.add(leftLeg);
@@ -1025,10 +1009,6 @@ leftLeg.position.set(-0.15,0.15,0);playerGroup.add(leftLeg);
 playerParts.leftLeg=leftLeg;
 const rightLeg=leftLeg.clone();rightLeg.position.x=0.15;playerGroup.add(rightLeg);
 playerParts.rightLeg=rightLeg;
-const tail1=new THREE.Mesh(new THREE.ConeGeometry(0.1,0.3,6),new THREE.MeshStandardMaterial({color:0xDDDDDD}));
-tail1.position.set(0,0.7,-0.4);tail1.rotation.x=Math.PI;playerGroup.add(tail1);
-const tail2=new THREE.Mesh(new THREE.ConeGeometry(0.08,0.25,6),new THREE.MeshStandardMaterial({color:0xDDDDDD}));
-tail2.position.set(0.1,0.8,-0.35);tail2.rotation.x=Math.PI;playerGroup.add(tail2);
 }
 if(selectedCharacter=='dog'){
 const body=new THREE.Mesh(new THREE.BoxGeometry(0.9,0.7,1.2),new THREE.MeshStandardMaterial({color:0x8B4513}));
@@ -1046,8 +1026,8 @@ leftEye.position.set(-0.15,1,0.6);playerGroup.add(leftEye);
 const rightEye=leftEye.clone();rightEye.position.x=0.15;playerGroup.add(rightEye);
 const earMat=new THREE.MeshStandardMaterial({color:0x4A2A0A});
 const leftEar=new THREE.Mesh(new THREE.ConeGeometry(0.1,0.3,6),earMat);
-leftEar.position.set(-0.2,1.2,0.5);leftEar.rotation.x=-0.3;playerGroup.add(leftEar);
-const rightEar=leftEar.clone();rightEar.position.x=0.2;rightEar.rotation.x=0.3;playerGroup.add(rightEar);
+leftEar.position.set(-0.2,1.2,0.5);playerGroup.add(leftEar);
+const rightEar=leftEar.clone();rightEar.position.x=0.2;playerGroup.add(rightEar);
 const legMat=new THREE.MeshStandardMaterial({color:0x4A2A0A});
 const leftLeg=new THREE.Mesh(new THREE.BoxGeometry(0.2,0.4,0.2),legMat);
 leftLeg.position.set(-0.3,0.2,0.4);playerGroup.add(leftLeg);
@@ -1109,6 +1089,7 @@ playerParts.leftLeg=ckLeg1;
 const ckLeg2=ckLeg1.clone();ckLeg2.position.x=0.15;playerGroup.add(ckLeg2);
 playerParts.rightLeg=ckLeg2;
 }
+scene.add(playerGroup);
 let player2Group=null;
 if(twoPlayerMode&&P2){
 player2Group=new THREE.Group();
@@ -1119,8 +1100,6 @@ const p2head=new THREE.Mesh(new THREE.SphereGeometry(0.25,10,10),new THREE.MeshS
 p2head.position.y=0.9;player2Group.add(p2head);
 const p2beak=new THREE.Mesh(new THREE.ConeGeometry(0.08,0.15,6),new THREE.MeshStandardMaterial({color:0xFFA500}));
 p2beak.position.set(0,0.9,0.2);p2beak.rotation.x=Math.PI/2;player2Group.add(p2beak);
-const p2comb=new THREE.Mesh(new THREE.SphereGeometry(0.07,6,6),new THREE.MeshStandardMaterial({color:0xFF0000}));
-p2comb.position.y=1.1;player2Group.add(p2comb);
 }else{
 const p2body=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.5),new THREE.MeshStandardMaterial({color:0x4A90E2}));
 p2body.position.y=0.9;p2body.castShadow=true;player2Group.add(p2body);
@@ -1128,6 +1107,7 @@ const p2head=new THREE.Mesh(new THREE.SphereGeometry(0.35,20,20),new THREE.MeshS
 p2head.position.y=1.7;p2head.castShadow=true;player2Group.add(p2head);
 const p2hat=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.45,0.3,12),new THREE.MeshStandardMaterial({color:0x8B4513}));
 p2hat.position.y=2.1;player2Group.add(p2hat);
+}
 player2Group.position.set(P2.x,P2.y,P2.z);
 scene.add(player2Group);
 }
