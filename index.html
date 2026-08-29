@@ -691,7 +691,7 @@ let cutscenesShown=JSON.parse(localStorage.getItem('cmcuts')||'{}');
 let checkpointX=0,hasCheckpoint=false;
 let screenShake=0;
 let achievements=JSON.parse(localStorage.getItem('cmachieve')||'{}');
-const charData=CHARACTERS[selectedCharacter];
+const charData=CHARACTERS[selectedCharacter]||CHARACTERS.farmer;
 const I={left:false,right:false,forward:false,backward:false,jump:false,attack:false,pause:false};
 const P={x:0,y:1,z:0,vx:0,vy:0,vz:0,s:charData.speed,j:charData.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,dj:selectedCharacter=='chicken',dja:true,au:selectedCharacter=='dog',su:false,attackCombo:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:charData.attack,character:selectedCharacter,hitboxW:0.8,hitboxH:1.8,hitboxD:0.6};
 if(twoPlayerMode){
@@ -769,7 +769,7 @@ scene.add(flower);decorations.push(flower);
 }
 mk(L);
 loop();
-}
+    }
 function createTree(x,z,far){
 const tree=new THREE.Group();
 const trunkHeight=far?3.5:3;
