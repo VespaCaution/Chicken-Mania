@@ -255,10 +255,13 @@ alert('Room error: '+e.message);
 }
 function joinRoomPrompt(){
 var code=prompt('Enter room code:');
-if(code)joinRoom(code);
+if(code&&code.trim()!==''){
+joinRoom(code.trim());
+}
 }
 function joinRoom(code){
-roomCode=code.toUpperCase();
+if(!code)return;
+roomCode=String(code).toUpperCase();
 isHost=false;
 onlineMode=true;
 try{
