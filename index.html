@@ -1115,7 +1115,6 @@ const p2head=new THREE.Mesh(new THREE.SphereGeometry(0.35,20,20),new THREE.MeshS
 p2head.position.y=1.7;p2head.castShadow=true;player2Group.add(p2head);
 const p2hat=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.45,0.3,12),new THREE.MeshStandardMaterial({color:0x8B4513}));
 p2hat.position.y=2.1;player2Group.add(p2hat);
-}
 player2Group.position.set(P2.x,P2.y,P2.z);
 scene.add(player2Group);
 }
