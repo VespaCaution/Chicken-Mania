@@ -78,6 +78,8 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 <p style="color:#FFD700;font-size:11px;margin-top:5px" id="charDesc">Farmer Joe - Balanced stats</p>
 </div>
 <button class="sb" id="sb" style="pointer-events:auto" onclick="startGameBtn()">▶️ Start Game</button>
+<button class="sb" id="createRoomBtn" style="pointer-events:auto;background:linear-gradient(145deg,#4285F4,#1a73e8);color:#fff;font-size:14px;padding:10px 20px" onclick="createRoom()">🎮 Create Room</button>
+<button class="sb" id="joinRoomBtn" style="pointer-events:auto;background:linear-gradient(145deg,#34A853,#1e7e34);color:#fff;font-size:14px;padding:10px 20px" onclick="joinRoomPrompt()">🔑 Join Room</button>
 <button class="sb" id="twoPlayerBtn" style="pointer-events:auto;background:linear-gradient(145deg,#FF6600,#FF3300);color:#fff" onclick="toggleTwoPlayerMode()">👥 2 Player: OFF</button>
 <button class="sb" id="propModeBtn" style="pointer-events:auto;background:linear-gradient(145deg,#9370DB,#6A0DAD);color:#fff" onclick="enterPropMode()">🎭 Prop Battle</button>
 <button class="ib" id="ib" style="pointer-events:auto" onclick="installApp()">📲 Install App</button>
@@ -138,10 +140,16 @@ if(typeof THREE==='undefined'){
 document.write('<script src="https://unpkg.com/three@0.128.0/build/three.min.js"><\/script>');
 }
 </script>
+<script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
 <script>
 let globalSkipFn=null,deferredPrompt=null,gameInstance=null,currentLang='en';
 let audioContext=null,musicInterval=null,currentMusic=null,currentBeat=0;
 let selectedCharacter='farmer';
+let peer=null;
+let peerConnection=null;
+let roomCode=null;
+let isHost=false;
+let onlineMode=false;
 let twoPlayerMode=false;
 let P2=null;
 let propModeActive=false;
@@ -209,6 +217,71 @@ if(el)el.classList.toggle('ac',key==c);
 }
 if(document.getElementById('charDesc'))document.getElementById('charDesc').textContent=CHARACTERS[c].name+' - '+CHARACTERS[c].desc;
 localStorage.setItem('cmchar',c);
+}
+function createRoom(){
+roomCode=Math.random().toString(36).substring(2,8).toUpperCase();
+isHost=true;
+onlineMode=true;
+peer=new Peer('chicken-mania-'+roomCode);
+peer.on('open',function(){
+alert('Room created! Share this code: '+roomCode);
+twoPlayerMode=true;
+});
+peer.on('connection',function(conn){
+peerConnection=conn;
+conn.on('open',function(){
+alert('Player 2 joined!');
+twoPlayerMode=true;
+});
+conn.on('data',function(data){receiveRemoteData(data);});
+});
+peer.on('error',function(err){alert('Room error: '+err.type);});
+}
+function joinRoomPrompt(){
+var code=prompt('Enter room code:');
+if(code)joinRoom(code);
+}
+function joinRoom(code){
+roomCode=code.toUpperCase();
+isHost=false;
+onlineMode=true;
+peer=new Peer();
+peer.on('open',function(){
+peerConnection=peer.connect('chicken-mania-'+roomCode);
+peerConnection.on('open',function(){
+alert('Connected to room: '+roomCode);
+twoPlayerMode=true;
+});
+peerConnection.on('data',function(data){receiveRemoteData(data);});
+});
+peer.on('error',function(err){alert('Connection error: '+err.type);});
+}
+
+function receiveRemoteData(data){
+if(data.type=='hostPos'){
+if(typeof P2!=='undefined'&&P2){
+P2.x=data.x;
+P2.z=data.z;
+}
+}
+if(data.type=='guestInput'){
+if(!window.I2)window.I2={left:false,right:false,forward:false,backward:false,jump:false,attack:false};
+window.I2.left=data.left||false;
+window.I2.right=data.right||false;
+window.I2.forward=data.forward||false;
+window.I2.backward=data.backward||false;
+window.I2.jump=data.jump||false;
+window.I2.attack=data.attack||false;
+}
+}
+function sendPlayerState(){
+if(peerConnection&&peerConnection.open){
+if(isHost){
+peerConnection.send({type:'hostPos',x:typeof P!=='undefined'?P.x:0,z:typeof P!=='undefined'?P.z:0});
+}else{
+peerConnection.send({type:'guestInput',left:I.left,right:I.right,forward:I.forward,backward:I.backward,jump:I.jump,attack:I.attack});
+}
+}
 }
 function togglePauseMenu(){
 const pm=document.getElementById('pauseMenu');
