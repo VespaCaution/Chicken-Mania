@@ -78,8 +78,6 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 <p style="color:#FFD700;font-size:11px;margin-top:5px" id="charDesc">Farmer Joe - Balanced stats</p>
 </div>
 <button class="sb" id="sb" style="pointer-events:auto" onclick="startGameBtn()">▶️ Start Game</button>
-<button class="sb" id="createRoomBtn" style="pointer-events:auto;background:linear-gradient(145deg,#4285F4,#1a73e8);color:#fff;font-size:14px;padding:10px 20px" onclick="createRoom()">🎮 Create Room</button>
-<button class="sb" id="joinRoomBtn" style="pointer-events:auto;background:linear-gradient(145deg,#34A853,#1e7e34);color:#fff;font-size:14px;padding:10px 20px" onclick="joinRoomPrompt()">🔑 Join Room</button>
 <button class="sb" id="twoPlayerBtn" style="pointer-events:auto;background:linear-gradient(145deg,#FF6600,#FF3300);color:#fff" onclick="toggleTwoPlayerMode()">👥 2 Player: OFF</button>
 <button class="sb" id="propModeBtn" style="pointer-events:auto;background:linear-gradient(145deg,#9370DB,#6A0DAD);color:#fff" onclick="enterPropMode()">🎭 Prop Battle</button>
 <button class="ib" id="ib" style="pointer-events:auto" onclick="installApp()">📲 Install App</button>
@@ -93,7 +91,6 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 <div class="h"><span>🪙</span><span id="cc">0</span></div>
 <div class="h"><span>⭐</span><span id="bc">0/3</span></div>
 <div class="h"><span>🏆</span><span id="lv">Lv 1</span></div>
-<button onclick="togglePauseMenu()" style="background:#333;color:#FFD700;border:2px solid #FFD700;border-radius:50%;cursor:pointer;pointer-events:auto;width:30px;height:30px;font-size:14px;font-weight:bold">⏸️</button>
 </div>
 <div id="c"></div>
 <div id="b">
@@ -124,8 +121,6 @@ body{background:#1a0a00;display:flex;justify-content:center;align-items:center;h
 <button onclick="resumeGame()">▶️ Resume</button>
 <button onclick="restartLevel()">🔄 Restart Level</button>
 <button onclick="quitToMenu()">🏠 Main Menu</button>
-<button onclick="createRoom()">🎮 Create Room</button>
-<button onclick="joinRoomPrompt()">🔑 Join Room</button>
 </div>
 </div>
 </div>
@@ -143,7 +138,6 @@ if(typeof THREE==='undefined'){
 document.write('<script src="https://unpkg.com/three@0.128.0/build/three.min.js"><\/script>');
 }
 </script>
-<script src="https://cdn.jsdelivr.net/npm/mqtt@4.3.7/dist/mqtt.min.js"></script>
 <script>
 let globalSkipFn=null,deferredPrompt=null,gameInstance=null,currentLang='en';
 let audioContext=null,musicInterval=null,currentMusic=null,currentBeat=0;
@@ -152,16 +146,8 @@ let twoPlayerMode=false;
 let P2=null;
 let propModeActive=false;
 let propObjects=[];
-let propP1={x:250,y:150,hp:50,emoji:'👨‍🌾'};
+let propP1={x:250,y:150,hp:100,emoji:'👨‍🌾'};
 let propP2=null;
-let mqttClient=null;
-let roomCode=null;
-let isHost=false;
-let onlineMode=false;
-window.player2Group=null;
-window.scene=null;
-let lastSendTime=0;
-let lastSentData='';
 const diffData={enemyHpMult:1,enemyDmgMult:1,bossHpMult:1};
 const CHARACTERS={
 farmer:{name:'Farmer Joe',desc:'Balanced stats',icon:'👨‍🌾',speed:0.25,jump:0.5,attack:20,color:0x4A90E2},
@@ -173,11 +159,31 @@ chickencat:{name:'Chicken-Cat',desc:'Meow-cluck!',icon:'🐔🐱',speed:0.3,jump
 function skipCutscene(){if(globalSkipFn){globalSkipFn();globalSkipFn=null;}}
 function installApp(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;document.getElementById('ib').style.display='none';}else{alert('To install: Open in Chrome → Menu → "Add to Home Screen"');}}
 function startGameBtn(){
+document.getElementById('p2controls').style.display=twoPlayerMode?'flex':'none';
 document.getElementById('ss').style.display='none';
 document.getElementById('gs').style.display='block';
 if(document.getElementById('propMode'))document.getElementById('propMode').style.display='none';
 if(gameInstance){gameInstance.stop();gameInstance=null;}
 initGame();
+}
+function toggleTwoPlayerMode(){
+twoPlayerMode=!twoPlayerMode;
+const btn=document.getElementById('twoPlayerBtn');
+if(btn){
+if(twoPlayerMode){btn.textContent='👥 2 Player: ON';btn.style.background='linear-gradient(145deg,#00FF00,#00AA00)';}
+else{btn.textContent='👥 2 Player: OFF';btn.style.background='linear-gradient(145deg,#FF6600,#FF3300)';}
+}
+}
+function exitTwoPlayer(){
+twoPlayerMode=false;
+const btn=document.getElementById('twoPlayerBtn');
+if(btn){btn.textContent='👥 2 Player: OFF';btn.style.background='linear-gradient(145deg,#FF6600,#FF3300)';}
+document.getElementById('p2controls').style.display='none';
+window.I2=null;
+P2=null;
+if(gameInstance){gameInstance.stop();gameInstance=null;}
+document.getElementById('gs').style.display='none';
+document.getElementById('ss').style.display='flex';
 }
 function restartGame(){if(confirm(currentLang=='en'?'Restart from beginning?':'Recommencer ?')){localStorage.removeItem('cmsave');localStorage.removeItem('cmcuts');location.reload();}}
 function setLang(l){
@@ -187,6 +193,7 @@ document.getElementById('st').textContent=TRANSLATIONS[l].st;
 document.getElementById('sb').textContent=TRANSLATIONS[l].sb;
 document.getElementById('rb').textContent=TRANSLATIONS[l].rb;
 document.getElementById('skb').textContent=TRANSLATIONS[l].sk;
+if(document.getElementById('charSelectTitle'))document.getElementById('charSelectTitle').textContent=TRANSLATIONS[l].charSelect;
 }
 document.getElementById('le').classList.toggle('ac',l=='en');
 document.getElementById('lf').classList.toggle('ac',l=='fr');
@@ -230,136 +237,52 @@ const d=document.getElementById('npcDialogue');
 if(d)d.remove();
 if(typeof S!=='undefined')S='playing';
 if(typeof npcs!=='undefined'){for(let n of npcs){n.userData.isTalking=false;}}
+if(typeof startMusic==='function'){startMusic(typeof L!=='undefined'&&(L==3||L==7||L==10||L==15||L==20||L==25||L==30)?'boss':'farm');}
 }
-function createRoom(){
-roomCode=Math.random().toString(36).substring(2,8).toUpperCase();
-isHost=true;
-onlineMode=true;
-try{
-mqttClient=mqtt.connect('wss://broker.emqx.io:8084/mqtt');
-mqttClient.on('connect',function(){
-mqttClient.subscribe('chicken-mania/'+roomCode);
-alert('Room created! Share this code: '+roomCode);
-});
-mqttClient.on('message',function(topic,message){
-try{
-var data=JSON.parse(message.toString());
-if(data&&data.type)receiveRemoteData(data);
-}catch(e){}
-});
-}catch(e){
-alert('Room error: '+e.message);
+function buyItem(type){
+if(typeof coins==='undefined')return;
+if(typeof P==='undefined')return;
+if(type=='speed'){
+let cost=50+(P.speedLevel||0)*25;
+if(coins>=cost){
+coins-=cost;
+P.speedLevel=(P.speedLevel||0)+1;
+P.s=CHARACTERS[selectedCharacter].speed+0.05*P.speedLevel;
+playVictorySound();
+alert(t('purchased')+' Speed Lv'+P.speedLevel);
+}else{alert(t('insufficient'));}
 }
+else if(type=='attack'){
+let cost=50+(P.attackLevel||0)*25;
+if(coins>=cost){
+coins-=cost;
+P.attackLevel=(P.attackLevel||0)+1;
+P.attackDmg=CHARACTERS[selectedCharacter].attack+P.attackLevel*5;
+P.au=true;
+playVictorySound();
+alert(t('purchased')+' Attack Lv'+P.attackLevel);
+}else{alert(t('insufficient'));}
 }
-function joinRoomPrompt(){
-var code=prompt('Enter room code:');
-if(code&&code.trim()!=='')joinRoom(code.trim());
+else if(type=='shield'){
+let cost=75+(P.shieldLevel||0)*25;
+if(coins>=cost){
+coins-=cost;
+P.shieldLevel=(P.shieldLevel||0)+1;
+P.hasShield=true;
+playVictorySound();
+alert(t('purchased')+' Shield Lv'+P.shieldLevel);
+}else{alert(t('insufficient'));}
 }
-function joinRoom(code){
-if(!code)return;
-roomCode=String(code).trim().toUpperCase();
-isHost=false;
-onlineMode=true;
-try{
-mqttClient=mqtt.connect('wss://broker.emqx.io:8084/mqtt');
-mqttClient.on('connect',function(){
-mqttClient.subscribe('chicken-mania/'+roomCode);
-alert('Connected to room: '+roomCode);
-twoPlayerMode=true;
-if(typeof P2==='undefined'||!P2){
-P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:CHARACTERS.chicken.speed,j:CHARACTERS.chicken.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:CHARACTERS.chicken.attack,character:'chicken',hitboxW:0.6,hitboxH:1.2,hitboxD:0.5};
-}
-mqttClient.publish('chicken-mania/'+roomCode,JSON.stringify({type:'joined'}));
-});
-mqttClient.on('message',function(topic,message){
-try{
-var data=JSON.parse(message.toString());
-if(data&&data.type)receiveRemoteData(data);
-}catch(e){}
-});
-}catch(e){
-alert('Connection error: '+e.message);
-}
-}
-function receiveRemoteData(data){
-if(!data||!data.type)return;
-if(data.type=='joined'){
-if(isHost){
-twoPlayerMode=true;
-if(typeof P2==='undefined'||!P2){
-P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:CHARACTERS.chicken.speed,j:CHARACTERS.chicken.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:CHARACTERS.chicken.attack,character:'chicken',hitboxW:0.6,hitboxH:1.2,hitboxD:0.5};
-}
-createP2Mesh('chicken');
-}
-}
-if(data.type=='hostPos'){
-if(typeof P2==='undefined'||!P2){
-P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:0.25,j:0.5,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:20,character:'farmer',hitboxW:0.8,hitboxH:1.8,hitboxD:0.6};
-}
-P2.x=data.x;
-P2.z=data.z;
-createP2Mesh('farmer');
-}
-if(data.type=='guestInput'){
-if(!window.I2)window.I2={left:false,right:false,forward:false,backward:false,jump:false,attack:false};
-window.I2.left=data.left||false;
-window.I2.right=data.right||false;
-window.I2.forward=data.forward||false;
-window.I2.backward=data.backward||false;
-window.I2.jump=data.jump||false;
-window.I2.attack=data.attack||false;
-if(data.x!==undefined&&typeof P2!=='undefined'&&P2){
-P2.x=data.x;
-P2.z=data.z;
-}
-}
-}
-function createP2Mesh(type){
-if(typeof window.scene==='undefined'||!window.scene)return;
-if(typeof window.player2Group!=='undefined'&&window.player2Group)return;
-window.player2Group=new THREE.Group();
-if(type=='chicken'){
-const p2body=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
-p2body.position.y=0.5;p2body.castShadow=true;window.player2Group.add(p2body);
-const p2head=new THREE.Mesh(new THREE.SphereGeometry(0.25,10,10),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
-p2head.position.y=0.9;window.player2Group.add(p2head);
-const p2beak=new THREE.Mesh(new THREE.ConeGeometry(0.08,0.15,6),new THREE.MeshStandardMaterial({color:0xFFA500}));
-p2beak.position.set(0,0.9,0.2);p2beak.rotation.x=Math.PI/2;window.player2Group.add(p2beak);
-}else{
-const p2body=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.5),new THREE.MeshStandardMaterial({color:0x4A90E2}));
-p2body.position.y=0.9;p2body.castShadow=true;window.player2Group.add(p2body);
-const p2head=new THREE.Mesh(new THREE.SphereGeometry(0.35,20,20),new THREE.MeshStandardMaterial({color:0xFFD2B3}));
-p2head.position.y=1.7;window.player2Group.add(p2head);
-const p2hat=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.45,0.3,12),new THREE.MeshStandardMaterial({color:0x8B4513}));
-p2hat.position.y=2.1;window.player2Group.add(p2hat);
-}
-window.player2Group.position.set(P2.x,P2.y,P2.z);
-window.scene.add(window.player2Group);
-}
-function sendPlayerState(){
-if(!mqttClient||!mqttClient.connected)return;
-var now=Date.now();
-if(now-lastSendTime<100)return;
-lastSendTime=now;
-try{
-var data;
-if(isHost){
-data={type:'hostPos',x:Math.round(P.x*10)/10,z:Math.round(P.z*10)/10};
-}else{
-data={type:'guestInput',left:I.left,right:I.right,forward:I.forward,backward:I.backward,jump:I.jump,attack:I.attack,x:Math.round(P.x*10)/10,z:Math.round(P.z*10)/10};
-}
-var dataStr=JSON.stringify(data);
-if(dataStr!==lastSentData){
-lastSentData=dataStr;
-mqttClient.publish('chicken-mania/'+roomCode,dataStr);
-}
-}catch(e){}
+closeDialogue();
+if(typeof saveGame==='function')saveGame();
 }
 function enterPropMode(){
 propModeActive=true;
 document.getElementById('ss').style.display='none';
 document.getElementById('gs').style.display='block';
 document.getElementById('propMode').style.display='block';
+document.getElementById('t').style.display='none';
+document.getElementById('p2controls').style.display=twoPlayerMode?'flex':'none';
 if(gameInstance){gameInstance.stop();gameInstance=null;}
 setTimeout(function(){
 try{initPropMode();}catch(e){alert('Prop mode error: '+e.message);}
@@ -368,6 +291,7 @@ try{initPropMode();}catch(e){alert('Prop mode error: '+e.message);}
 function exitPropMode(){
 propModeActive=false;
 document.getElementById('propMode').style.display='none';
+document.getElementById('t').style.display='flex';
 document.getElementById('gs').style.display='none';
 document.getElementById('ss').style.display='flex';
 }
@@ -397,6 +321,9 @@ scene.add(new THREE.AmbientLight(0xffffff,0.6));
 const sun=new THREE.DirectionalLight(0xffffff,0.9);
 sun.position.set(20,30,10);
 sun.castShadow=true;
+sun.shadow.camera.left=-40;sun.shadow.camera.right=40;
+sun.shadow.camera.top=40;sun.shadow.camera.bottom=-40;
+sun.shadow.mapSize.width=2048;sun.shadow.mapSize.height=2048;
 scene.add(sun);
 scene.add(new THREE.HemisphereLight(0x87CEEB,0x228B22,0.4));
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(50,50),new THREE.MeshStandardMaterial({color:0x8B4513,roughness:0.9}));
@@ -428,48 +355,112 @@ trunk.position.y=1.5;tree.add(trunk);
 const leafMat=new THREE.MeshStandardMaterial({color:'#1a5a1a',roughness:0.7});
 const leaf1=new THREE.Mesh(new THREE.SphereGeometry(2.5,10,10),leafMat);
 leaf1.position.y=4;leaf1.castShadow=true;tree.add(leaf1);
+const leaf2=new THREE.Mesh(new THREE.SphereGeometry(1.8,8,8),leafMat);
+leaf2.position.set(1.2,3.5,0.7);tree.add(leaf2);
+const leaf3=new THREE.Mesh(new THREE.SphereGeometry(1.5,8,8),leafMat);
+leaf3.position.set(-1,4,0.5);tree.add(leaf3);
+const leaf4=new THREE.Mesh(new THREE.SphereGeometry(1.2,8,8),leafMat);
+leaf4.position.set(0.5,4.5,-0.8);tree.add(leaf4);
 tree.position.set(Math.random()*40-20,0,Math.random()*40-20);
 scene.add(tree);
-propColliders.push({x:tree.position.x,z:tree.position.z,radius:0.5,height:1.5});
+propColliders.push({x:tree.position.x,z:tree.position.z,radius:1,height:1.5});
 }
 for(let i=0;i<6;i++){
 const plat=new THREE.Mesh(new THREE.BoxGeometry(2,0.4,1.5),new THREE.MeshStandardMaterial({color:0xD2691E,roughness:0.6}));
 plat.position.set(Math.random()*24-12,0.5+Math.random()*1,Math.random()*24-12);
 plat.castShadow=true;plat.receiveShadow=true;
+const edgeMat=new THREE.MeshStandardMaterial({color:0x8B4513});
+const edge1=new THREE.Mesh(new THREE.BoxGeometry(2.1,0.1,0.1),edgeMat);
+edge1.position.set(0,0,0.7);plat.add(edge1);
+const edge2=edge1.clone();edge2.position.z=-0.7;plat.add(edge2);
+const grassTop=new THREE.Mesh(new THREE.BoxGeometry(1.8,0.05,1.3),new THREE.MeshStandardMaterial({color:0x90EE90}));
+grassTop.position.y=0.2;plat.add(grassTop);
 scene.add(plat);
-propColliders.push({x:plat.position.x,z:plat.position.z,radius:1,height:plat.position.y+0.4});
+propColliders.push({x:plat.position.x,z:plat.position.z,radius:1.5,height:plat.position.y+0.4});
 }
 for(let i=0;i<4;i++){
 const rock=new THREE.Mesh(new THREE.SphereGeometry(0.5+Math.random()*0.5,8,8),new THREE.MeshStandardMaterial({color:0x888888,roughness:0.9}));
 rock.position.set(Math.random()*24-12,0.4,Math.random()*24-12);
 rock.castShadow=true;scene.add(rock);
-propColliders.push({x:rock.position.x,z:rock.position.z,radius:0.5,height:1});
+propColliders.push({x:rock.position.x,z:rock.position.z,radius:0.8,height:1});
 }
 for(let i=0;i<3;i++){
 const pipeGroup=new THREE.Group();
 const pipeMat=new THREE.MeshStandardMaterial({color:0x00CC00,roughness:0.5});
 const pipe=new THREE.Mesh(new THREE.CylinderGeometry(1,1,4,20),pipeMat);
 pipe.position.y=2;pipe.castShadow=true;pipeGroup.add(pipe);
+const rim=new THREE.Mesh(new THREE.CylinderGeometry(1.2,1.2,0.5,20),pipeMat);
+rim.position.y=4;rim.castShadow=true;pipeGroup.add(rim);
+const highlight=new THREE.Mesh(new THREE.CylinderGeometry(0.9,0.9,4.2,20),new THREE.MeshStandardMaterial({color:0x00EE00,roughness:0.3}));
+highlight.position.set(0.2,2,0.2);pipeGroup.add(highlight);
 pipeGroup.position.set(Math.random()*16-8,0,Math.random()*16-8);
 scene.add(pipeGroup);
-propColliders.push({x:pipeGroup.position.x,z:pipeGroup.position.z,radius:1.2,height:4});
+propColliders.push({x:pipeGroup.position.x,z:pipeGroup.position.z,radius:2,height:4});
 }
-const charColor=CHARACTERS[selectedCharacter].color;
 const p1Mesh=new THREE.Group();
-const p1Body=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.5),new THREE.MeshStandardMaterial({color:charColor}));
-p1Body.position.y=0.9;p1Mesh.add(p1Body);
+if(selectedCharacter=='farmer'){
+const p1Body=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.5),new THREE.MeshStandardMaterial({color:0x4A90E2,roughness:0.5}));
+p1Body.position.y=0.9;p1Body.castShadow=true;p1Mesh.add(p1Body);
+const p1Overall=new THREE.Mesh(new THREE.BoxGeometry(0.7,0.5,0.45),new THREE.MeshStandardMaterial({color:0x4169E1}));
+p1Overall.position.y=0.7;p1Mesh.add(p1Overall);
 const p1Head=new THREE.Mesh(new THREE.SphereGeometry(0.35,20,20),new THREE.MeshStandardMaterial({color:0xFFD2B3}));
-p1Head.position.y=1.7;p1Mesh.add(p1Head);
+p1Head.position.y=1.7;p1Head.castShadow=true;p1Mesh.add(p1Head);
+const p1Hat=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.45,0.3,12),new THREE.MeshStandardMaterial({color:0x8B4513}));
+p1Hat.position.y=2.1;p1Mesh.add(p1Hat);
+const p1EyeMat=new THREE.MeshStandardMaterial({color:0x000000});
+const p1Eye1=new THREE.Mesh(new THREE.SphereGeometry(0.05,8,8),p1EyeMat);
+p1Eye1.position.set(-0.12,1.75,0.3);p1Mesh.add(p1Eye1);
+const p1Eye2=p1Eye1.clone();p1Eye2.position.x=0.12;p1Mesh.add(p1Eye2);
+}else if(selectedCharacter=='chicken'){
+const p1Body=new THREE.Mesh(new THREE.SphereGeometry(0.5,16,16),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
+p1Body.position.y=0.6;p1Body.castShadow=true;p1Mesh.add(p1Body);
+const p1Head=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,12),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
+p1Head.position.y=1.1;p1Mesh.add(p1Head);
+const beak=new THREE.Mesh(new THREE.ConeGeometry(0.1,0.2,6),new THREE.MeshStandardMaterial({color:0xFFA500}));
+beak.position.set(0,1.1,0.25);beak.rotation.x=Math.PI/2;p1Mesh.add(beak);
+const comb=new THREE.Mesh(new THREE.SphereGeometry(0.1,8,8),new THREE.MeshStandardMaterial({color:0xFF0000}));
+comb.position.y=1.4;p1Mesh.add(comb);
+}else if(selectedCharacter=='dog'){
+const p1Body=new THREE.Mesh(new THREE.BoxGeometry(0.9,0.7,1.2),new THREE.MeshStandardMaterial({color:0x8B4513}));
+p1Body.position.y=0.5;p1Body.castShadow=true;p1Mesh.add(p1Body);
+const p1Head=new THREE.Mesh(new THREE.SphereGeometry(0.35,12,12),new THREE.MeshStandardMaterial({color:0x8B4513}));
+p1Head.position.set(0,0.9,0.5);p1Mesh.add(p1Head);
+const snout=new THREE.Mesh(new THREE.BoxGeometry(0.2,0.15,0.3),new THREE.MeshStandardMaterial({color:0x4A2A0A}));
+snout.position.set(0,0.85,0.8);p1Mesh.add(snout);
+const nose=new THREE.Mesh(new THREE.SphereGeometry(0.06,6,6),new THREE.MeshStandardMaterial({color:0x000000}));
+nose.position.set(0,0.85,0.95);p1Mesh.add(nose);
+}else if(selectedCharacter=='cat'){
+const p1Body=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.6,0.8),new THREE.MeshStandardMaterial({color:0xFF6600}));
+p1Body.position.y=0.4;p1Body.castShadow=true;p1Mesh.add(p1Body);
+const p1Head=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,12),new THREE.MeshStandardMaterial({color:0xFF6600}));
+p1Head.position.y=0.8;p1Mesh.add(p1Head);
+const ear1=new THREE.Mesh(new THREE.ConeGeometry(0.12,0.25,6),new THREE.MeshStandardMaterial({color:0xFF6600}));
+ear1.position.set(-0.15,1,0);p1Mesh.add(ear1);
+const ear2=ear1.clone();ear2.position.x=0.15;p1Mesh.add(ear2);
+}else if(selectedCharacter=='chickencat'){
+const p1Body=new THREE.Mesh(new THREE.SphereGeometry(0.45,16,16),new THREE.MeshStandardMaterial({color:0xFFD700}));
+p1Body.position.y=0.5;p1Body.castShadow=true;p1Mesh.add(p1Body);
+const p1Head=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,12),new THREE.MeshStandardMaterial({color:0xFF6600}));
+p1Head.position.y=1;p1Mesh.add(p1Head);
+const ckEar1=new THREE.Mesh(new THREE.ConeGeometry(0.12,0.25,6),new THREE.MeshStandardMaterial({color:0xFF6600}));
+ckEar1.position.set(-0.15,1.25,0);p1Mesh.add(ckEar1);
+const ckEar2=ckEar1.clone();ckEar2.position.x=0.15;p1Mesh.add(ckEar2);
+}
 p1Mesh.position.set(0,0,0);
 scene.add(p1Mesh);
 let p2Mesh=null;
-if(twoPlayerMode&&isHost){
+if(twoPlayerMode){
 p2Mesh=new THREE.Group();
 const p2body=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
-p2body.position.y=0.5;p2Mesh.add(p2body);
+p2body.position.y=0.5;p2body.castShadow=true;p2Mesh.add(p2body);
+const p2head=new THREE.Mesh(new THREE.SphereGeometry(0.25,10,10),new THREE.MeshStandardMaterial({color:0xFFFFFF}));
+p2head.position.y=0.9;p2Mesh.add(p2head);
+const p2beak=new THREE.Mesh(new THREE.ConeGeometry(0.08,0.15,6),new THREE.MeshStandardMaterial({color:0xFFA500}));
+p2beak.position.set(0,0.9,0.2);p2beak.rotation.x=Math.PI/2;p2Mesh.add(p2beak);
+const p2comb=new THREE.Mesh(new THREE.SphereGeometry(0.07,6,6),new THREE.MeshStandardMaterial({color:0xFF0000}));
+p2comb.position.y=1.1;p2Mesh.add(p2comb);
 p2Mesh.position.set(1,0,0);
 scene.add(p2Mesh);
-propP2={x:1,y:0,z:0,hp:50};
 }
 let propP1HP=50;
 let propP2HP=50;
@@ -483,14 +474,24 @@ p.position.set(x,y,z);
 scene.add(p);
 setTimeout(function(){scene.remove(p);},200);
 }
-window.propI1={left:false,right:false,up:false,down:false,attack:false,jump:false,jumpRequested:false};
-window.propI2=twoPlayerMode?{left:false,right:false,up:false,down:false,attack:false,jump:false,jumpRequested:false}:null;
+window.propI1={left:false,right:false,up:false,down:false,attack:false,jump:false};
+window.propI2=twoPlayerMode?{left:false,right:false,up:false,down:false,attack:false,jump:false}:null;
 function bindPropBtn(id,action,target){
 const el=document.getElementById(id);
 if(!el)return;
-el.addEventListener('touchstart',function(e){e.preventDefault();target[action]=true;if(action=='jump'){target.jumpRequested=true;}},{passive:false});
-el.addEventListener('touchend',function(e){e.preventDefault();target[action]=false;},{passive:false});
-el.addEventListener('mousedown',function(){target[action]=true;if(action=='jump'){target.jumpRequested=true;}});
+el.addEventListener('touchstart',function(e){
+e.preventDefault();
+target[action]=true;
+if(action=='jump'){target.jumpRequested=true;}
+},{passive:false});
+el.addEventListener('touchend',function(e){
+e.preventDefault();
+target[action]=false;
+},{passive:false});
+el.addEventListener('mousedown',function(){
+target[action]=true;
+if(action=='jump'){target.jumpRequested=true;}
+});
 el.addEventListener('mouseup',function(){target[action]=false;});
 }
 bindPropBtn('l','left',window.propI1);
@@ -499,6 +500,14 @@ bindPropBtn('fw','up',window.propI1);
 bindPropBtn('bw','down',window.propI1);
 bindPropBtn('a','attack',window.propI1);
 bindPropBtn('j','jump',window.propI1);
+if(window.propI2){
+bindPropBtn('p2l','left',window.propI2);
+bindPropBtn('p2r','right',window.propI2);
+bindPropBtn('p2fw','up',window.propI2);
+bindPropBtn('p2bw','down',window.propI2);
+bindPropBtn('p2a','attack',window.propI2);
+bindPropBtn('p2j','jump',window.propI2);
+}
 function propRenderLoop(){
 if(!propModeActive)return;
 if(p1AttackCooldown>0)p1AttackCooldown--;
@@ -527,11 +536,14 @@ let p1dz=p1Mesh.position.z-col.z;
 let p1dist=Math.sqrt(p1dx*p1dx+p1dz*p1dz);
 if(p1dist<col.radius&&p1dist>0){
 if(p1Mesh.position.y<col.height-0.5){
-p1Mesh.position.x+=p1dx/p1dist*(col.radius-p1dist);
-p1Mesh.position.z+=p1dz/p1dist*(col.radius-p1dist);
+let pushX=p1dx/p1dist*(col.radius-p1dist);
+let pushZ=p1dz/p1dist*(col.radius-p1dist);
+p1Mesh.position.x+=pushX;
+p1Mesh.position.z+=pushZ;
 }
 if(p1Mesh.position.y>=col.height-0.8&&p1Mesh.position.y<=col.height+0.3){
-p1Mesh.position.y=col.height;p1vy=0;
+p1Mesh.position.y=col.height;
+p1vy=0;
 }
 }
 if(p2Mesh){
@@ -540,21 +552,28 @@ let p2dz=p2Mesh.position.z-col.z;
 let p2dist=Math.sqrt(p2dx*p2dx+p2dz*p2dz);
 if(p2dist<col.radius&&p2dist>0){
 if(p2Mesh.position.y<col.height-0.5){
-p2Mesh.position.x+=p2dx/p2dist*(col.radius-p2dist);
-p2Mesh.position.z+=p2dz/p2dist*(col.radius-p2dist);
+let pushX=p2dx/p2dist*(col.radius-p2dist);
+let pushZ=p2dz/p2dist*(col.radius-p2dist);
+p2Mesh.position.x+=pushX;
+p2Mesh.position.z+=pushZ;
 }
 if(p2Mesh.position.y>=col.height-0.8&&p2Mesh.position.y<=col.height+0.3){
-p2Mesh.position.y=col.height;p2vy=0;
+p2Mesh.position.y=col.height;
+p2vy=0;
 }
 }
 }
 }
 if(window.propI1&&window.propI1.jumpRequested){
-if(p1vy<=0.01&&p1vy>=-0.01){p1vy=0.25;}
+if(p1vy<=0.01&&p1vy>=-0.01){
+p1vy=0.25;
+}
 window.propI1.jumpRequested=false;
 }
 if(window.propI2&&window.propI2.jumpRequested){
-if(p2vy<=0.01&&p2vy>=-0.01){p2vy=0.25;}
+if(p2vy<=0.01&&p2vy>=-0.01){
+p2vy=0.25;
+}
 window.propI2.jumpRequested=false;
 }
 p1Mesh.position.x=Math.max(-18,Math.min(18,p1Mesh.position.x));
@@ -570,7 +589,7 @@ if(window.propI1.attack&&p1AttackCooldown<=0){
 propP2HP-=10;p1AttackCooldown=30;window.propI1.attack=false;
 createHitParticle(p2Mesh.position.x,p2Mesh.position.y+0.5,p2Mesh.position.z,0xFF0000);
 }
-if(window.propI2&&window.propI2.attack&&p2AttackCooldown<=0){
+if(window.propI2.attack&&p2AttackCooldown<=0){
 propP1HP-=10;p2AttackCooldown=30;window.propI2.attack=false;
 createHitParticle(p1Mesh.position.x,p1Mesh.position.y+0.5,p1Mesh.position.z,0xFF0000);
 }
@@ -582,7 +601,7 @@ camera.position.set(p1Mesh.position.x,8,p1Mesh.position.z+12);
 camera.lookAt(p1Mesh.position.x,0,p1Mesh.position.z);
 renderer.render(scene,camera);
 requestAnimationFrame(propRenderLoop);
-}
+    }
 propRenderLoop();
 }
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;document.getElementById('ib').style.display='block';});
@@ -739,16 +758,14 @@ let achievements=JSON.parse(localStorage.getItem('cmachieve')||'{}');
 const charData=CHARACTERS[selectedCharacter];
 const I={left:false,right:false,forward:false,backward:false,jump:false,attack:false,pause:false};
 const P={x:0,y:1,z:0,vx:0,vy:0,vz:0,s:charData.speed,j:charData.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,dj:selectedCharacter=='chicken',dja:true,au:selectedCharacter=='dog',su:false,attackCombo:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:charData.attack,character:selectedCharacter,hitboxW:0.8,hitboxH:1.8,hitboxD:0.6};
-const scene=new THREE.Scene();
-window.scene=scene;
-window.player2Group=null;
+if(twoPlayerMode){
+P2={x:0,y:1,z:2,vx:0,vy:0,vz:0,s:CHARACTERS.chicken.speed,j:CHARACTERS.chicken.jump,hp:100,mh:100,ac:0,ad:0,f:1,g:false,i:0,rotY:0,hasShield:false,walkCycle:0,isWalking:false,attackDmg:CHARACTERS.chicken.attack,character:'chicken',hitboxW:0.6,hitboxH:1.2,hitboxD:0.5};
+}
 let platforms=[],enemies=[],coinList=[],bonusList=[],healthList=[],projectiles=[],particles=[],boss=null,lw=0,gx=0,weatherEffects=[],decorations=[],npcs=[],powerUps=[],bridges=[],waterAreas=[],gameObjects=[],loreFound=[];
 const save=JSON.parse(localStorage.getItem('cmsave')||'null');
 if(save&&!startLevel){L=save.L||1;coins=save.coins||0;tc=save.tc||0;bc=save.bc||0;tb=save.tb||0;deaths=save.deaths||0;tt=save.tt||0;}
 if(startLevel){L=startLevel;coins=save?save.coins:0;tc=save?save.tc:0;bc=save?save.bc:0;tb=save?save.tb:0;}
 const scene=new THREE.Scene();
-window.scene=scene;
-window.player2Group=null;
 scene.background=new THREE.Color(0x87CEEB);
 scene.fog=new THREE.Fog(0x87CEEB,30,100);
 const camera=new THREE.PerspectiveCamera(50,W/H,0.1,200);
@@ -1934,8 +1951,8 @@ if(P2.z<-8)P2.z=-8;if(P2.z>8)P2.z=8;
 if(P2.y<-5){P2.hp=0;}
 if(P2.i>0)P2.i--;
 if(P2.hp<=0){P2.hp=100;P2.x=P.x;P2.y=P.y;P2.z=P.z+1;}
-if(window.player2Group){window.player2Group.position.set(P2.x,P2.y,P2.z);window.player2Group.rotation.y=P2.rotY;}
-if(P2.isWalking&&P2.g&&window.player2Group){window.player2Group.position.y=P2.y+Math.sin(tt*0.2)*0.05;}
+if(player2Group){player2Group.position.set(P2.x,P2.y,P2.z);player2Group.rotation.y=P2.rotY;}
+if(P2.isWalking&&P2.g){player2Group.position.y=P2.y+Math.sin(tt*0.2)*0.05;}
 for(let c of coinList){
 if(!c.c){let dx=P2.x-c.x,dy=P2.y-c.y,dz=P2.z-c.z;if(Math.sqrt(dx*dx+dy*dy+dz*dz)<1.5){c.c=true;coins+=5;tc+=5;lC+=5;createHitParticle(c.x,c.y,c.z,0xFFD700);playCoinSound();scene.remove(c.mesh);}}
 }
@@ -2635,20 +2652,9 @@ ctx.fill();
 ctx.fillStyle='#00FF00';
 ctx.fillRect(95,22,5,15);
 }
-let frameCounter=0;
 function loop(){
 if(!running)return;
 updateGamepad();
-frameCounter++;
-if(frameCounter>=10){
-frameCounter=0;
-if(onlineMode&&mqttClient){
-sendPlayerState();
-}
-}
-if(twoPlayerMode&&P2&&window.player2Group){
-window.player2Group.position.set(P2.x,P2.y,P2.z);
-}
 if(S=='playing'){upd();}
 renderer.render(scene,camera);
 document.getElementById('hp').style.width=(P.hp/P.mh*100)+'%';
